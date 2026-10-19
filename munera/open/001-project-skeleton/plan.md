@@ -2,18 +2,28 @@
 
 ## Approach
 
-Write the files in the order of their dependencies. Verify each part with its acceptance criterion before you
-start the next part.
+Write the files in the order of their dependencies. Verify each slice with its acceptance criteria before the
+next slice.
 
-1. `deps.edn` with the base dependency and the aliases `:test`, `:nrepl`, `:clj-1.12` and `:clj-1.13`.
-   Use `:override-deps` for the Clojure version in the version aliases, so the aliases compose.
-2. `src/closed_record/core.cljc` with the namespace docstring.
-3. `test/closed_record/core_test.clj` with the smoke test. Obey the test standards in
-   `.psi/skills/clojure-coding-standards/SKILL.md`: no docstring on `deftest`, and an intention comment first.
-4. `.gitignore` entries.
-5. `.psi/project.edn`.
-6. `README.md` "Development" section.
-7. `mementum/state.md` and `munera/plan.md`.
+Key decisions (from design.md):
+
+- Pin all dependency versions: Clojure 1.11.4, scry 0.1.61, nREPL 1.8.0. No `RELEASE`.
+- Version aliases `:clj-1.12` and `:clj-1.13` use `:override-deps`, so they compose with `:test` and `:nrepl`.
+- `:test` alias has no `:main-opts`, so it composes with `:nrepl`.
+- Edit only `:agent-session :project-nrepl :start-command` in `.psi/project.edn`. Keep `:version`,
+  `:session-profiles` and the `#_` forms.
+- The smoke test exists because the scry CLI fails with zero tests.
+- Obey the test standards in `.psi/skills/clojure-coding-standards/SKILL.md`: no docstring on `deftest`, an
+  intention comment first.
+
+## Slice order
+
+1. Classpath: `deps.edn` with base dependency and aliases `:test`, `:nrepl`, `:clj-1.12`, `:clj-1.13`.
+2. Code: `src/closed_record/core.cljc` (docstring, no vars) and `test/closed_record/core_test.clj` (smoke test).
+3. Tooling: `.gitignore` entries and `.psi/project.edn` start command.
+4. Verification: acceptance criteria 1 to 7 (test runs, version checks, lint, format, psi REPL, clean tree).
+5. Documentation: `README.md` "Development" section and `mementum/state.md`. `munera/plan.md` lists this task
+   already and needs no change.
 
 ## Verification
 
