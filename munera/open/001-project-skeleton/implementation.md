@@ -96,3 +96,55 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
 - Pass 4 added no design steps. `design-steps.md` has no open items. There is no design-steps fix to do.
 - Next step: plan review. The pass 3 carry-over is still open: `plan.md` item 5 (`` `.psi/project.edn`. ``) and
   `steps.md` ("Write `.psi/project.edn`.") do not yet say "change only the start command" (design Scope 4).
+
+## Plan review, pass 1 (2026-10-19)
+
+- ambiguity review added 1 new design step
+  - Context for the inconsistency turn (not filed as ambiguity): `steps.md` criterion 1 omits "`.scry-results/` is
+    empty". No step and no plan item checks AC 10. The README step says "test commands"; AC 8 also needs the in-REPL
+    command from Decisions. The pass 3 carry-over (`plan.md` item 5, "write") is resolved by commit `d8ae2bf`.
+- inconsistency review added 3 new design steps
+  - Not filed: `plan.md` Approach says "verify each slice before the next slice", but all checks are in Slice 4.
+    AC 1 needs Slice 2, so early checks are partial only. The order in `steps.md` is sufficient.
+
+## Notes for the plan-review design-steps fix
+
+- The 4 open plan-review steps change `plan.md` and `steps.md` only. Do not change `design.md`: the design is stable
+  after pass 4, and each step is a missing check or rule, not a design change. Use the principles in "Notes for the
+  design-steps fix" (edit in place, frozen scope, simplified technical English).
+- `steps.md` items stay unchecked. Add the new checks to the slice that the step names.
+- `git status` rule: the "commit slices 1 to 3 first" option agrees with `.psi/skills/work-independently/SKILL.md`
+  (commit after every step). If you select it, write the commit step in `steps.md` before the `git status` step.
+- AC 10 check: `find src test -type f` works before the commit, and `git ls-files src test` works after it.
+
+## Plan-review design-steps fix (2026-10-19)
+
+- All 4 plan-review steps resolved in `plan.md` and `steps.md`. `design.md` is not changed. `steps.md` items stay
+  unchecked (no implementation yet).
+- Selected `git status` rule: commit slices 1 to 3 (new last step of Slice 3) before the Slice 4 checks. Edits after
+  that commit (fixes, `README.md`, `mementum/state.md`, `implementation.md`) are modified files, not untracked files,
+  so criterion 7 is not affected.
+- AC 10 check uses `find src test -type f` (it also finds untracked files), not `git grep defclosedrecord`: the
+  `core.cljc` namespace docstring can name `defclosedrecord` and give a false failure.
+- Repository now: no `src/`, no `test/`, no `deps.edn`. `.gitignore` has only `/.psi/project.local.edn` and
+  `/.psi/metrics.edn`.
+
+## Plan review, pass 2 (2026-10-19)
+
+- no ambiguity review feedback
+  - Checked for the smoke test (criterion 4): with clj-kondo, `[closed-record.core :as core]` gives the warning
+    "required but never used". A bare `[closed-record.core]` with `(is (find-ns 'closed-record.core))` gives no
+    errors and no warnings. cljfmt passes.
+  - Checked for criterion 6: psi reads the start command when `project-repl start` runs (merge: user < project).
+    `.psi/project.local.edn` has no `:project-nrepl` key, so the Slice 3 edit is the command that psi uses.
+- no inconsistency review feedback
+
+## Notes after plan review, pass 2
+
+- Plan review pass 2 added no design steps. `design-steps.md` has no open items. There is no design-steps fix to do.
+  Next step: implementation (`steps.md`, Slice 1).
+- `README.md`: add the "Development" section only. Do not change the existing text (its typos are out of scope).
+- `mementum/state.md` "Status" has the line "No source code yet." Replace it. Obey the rule in that file: no task
+  progress there.
+- Paths for the implementer: `.psi/skills/scry/SKILL.md` (CLI contract), `.psi/skills/clojure-coding-standards/SKILL.md`
+  (test style), psi config merge in `~/projects/hugoduncan/psi/*/components/project-nrepl/src/psi/project_nrepl/config.clj`.

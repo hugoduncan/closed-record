@@ -20,15 +20,22 @@ Key decisions (from design.md):
 
 1. Classpath: `deps.edn` with base dependency and aliases `:test`, `:nrepl`, `:clj-1.12`, `:clj-1.13`.
 2. Code: `src/closed_record/core.cljc` (docstring, no vars) and `test/closed_record/core_test.clj` (smoke test).
-3. Tooling: `.gitignore` entries and `.psi/project.edn` start command.
-4. Verification: acceptance criteria 1 to 7 (test runs, version checks, lint, format, psi REPL, clean tree).
+3. Tooling: `.gitignore` entries and `.psi/project.edn` start command. Then commit slices 1 to 3.
+4. Verification: acceptance criteria 1 to 7 and 10 (test runs, version checks, lint, format, psi REPL, clean tree,
+   no other source).
 5. Documentation: `README.md` "Development" section and `mementum/state.md`. `munera/plan.md` lists this task
    already and needs no change.
 
 ## Verification
 
-Run the commands in design acceptance criteria 1 to 7. For test failures, read `.scry-results/*.edn`. Do not read
-the terminal output for details.
+Run the commands in design acceptance criteria 1 to 7 and 10. For test failures, read `.scry-results/*.edn`. Do
+not read the terminal output for details.
+
+- Commit slices 1 to 3 before the checks. Then the `git status` check (criterion 7) shows no untracked files. If
+  tool output shows (`.cpcache/`, `.scry-results/`, `.nrepl-port`, `.clj-kondo/.cache/`), an ignore entry is
+  missing.
+- Criterion 10: `find src test -type f` gives only `src/closed_record/core.cljc` and
+  `test/closed_record/core_test.clj`. `core.cljc` has no vars.
 
 ## Risks
 

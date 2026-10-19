@@ -25,3 +25,16 @@
   describe `.psi/project.edn` as it is now: it exists, it has the start command
   `["clojure" "-M:run:dev:test-paths" "--nrepl"]` with the aliases `:run`, `:dev` and `:test-paths` that do not exist,
   and it has `:session-profiles`. Remove the statement about the root file.
+- [x] Ambiguity (plan review): the `git status` step in Slice 4 (criterion 7). The plan does not say if slices 1 to
+  3 are committed before the check. If they are not committed, `git status` shows `deps.edn`, `src/` and `test/` as
+  untracked, and the step "no new untracked files" fails. State one rule in `plan.md` or `steps.md`: commit slices 1
+  to 3 before the check, or "no untracked files other than the files that slices 1 to 3 add" (only tool output, for
+  example `.cpcache/`, `.scry-results/`, `.nrepl-port`, `.clj-kondo/.cache/`, must not show).
+- [x] Inconsistency (plan review): `steps.md` Slice 4, criterion 1. The step lists "exits 0, one or more tests, zero
+  failures", but design AC 1 also requires "`.scry-results/` is empty". Add the check to the step.
+- [x] Inconsistency (plan review): design AC 10 has no step and no plan item. `plan.md` Verification covers AC 1 to 7.
+  Slice 5 covers AC 8 and 9. Add a check for AC 10 (no other source namespaces, no `defclosedrecord`), for example
+  in Slice 4: the only files under `src/` and `test/` are `closed_record/core.cljc` and `closed_record/core_test.clj`.
+- [x] Inconsistency (plan review): `steps.md` Slice 5, README step. The step lists the test commands, the
+  version-alias test commands and the REPL start command. Design AC 8 requires all the commands in Decisions, which
+  include the in-REPL test command `(require '[scry.core :as scry]) (scry/run)`. Add the in-REPL command to the step.
