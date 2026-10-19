@@ -179,3 +179,9 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
 ## Code-shaper review (2026-10-19)
 
 - no code-shaper review feedback
+
+## Criterion 6 correction (2026-10-19)
+
+- Mistake in the earlier entries: `psi-tool` is an LLM-callable tool, not a shell command. A PATH check is not valid.
+- Verified with the tool: `project-repl start` gave `:lifecycle-state :ready` (port from `.nrepl-port`). `eval` of
+  `(scry/run)` gave `:pass? true`, 1 test, 0 fail, 0 error. Criterion 6 is now fully verified.

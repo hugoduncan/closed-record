@@ -38,7 +38,9 @@ This page gives the rules that the commands do not show.
 - The start command in `.psi/project.edn` and in `README.md` must be the same: `clojure -M:test:nrepl`.
 - psi reads the port from `.nrepl-port` in the repository root. Start the REPL from the root.
 - Keep `:session-profiles` and the `#_` forms in `.psi/project.edn`. The task-lifecycle workflows use them.
-- `psi-tool` can be absent from PATH in a harness. Then verify with the same start command and an nREPL client.
+- ❌ `psi-tool` is an LLM-callable tool of the psi harness. It is not a shell command. Do not look for it on PATH.
+  Verify the REPL with the tool: `psi-tool` action `project-repl`, op `start`, then op `eval` with
+  `(require '[scry.core :as scry]) (:pass? (scry/run))`. Op `stop` stops the REPL.
 
 ## Git ignore checks
 
