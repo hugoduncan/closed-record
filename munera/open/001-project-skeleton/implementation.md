@@ -158,3 +158,24 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
   `clojure -M:test:nrepl` and an nREPL client: `(:pass? (scry/run))` gave `true`. nREPL deletes `.nrepl-port` at
   stop. A psi-managed start is still worth a check at review.
 - 1.13.0-alpha9 works with scry 0.1.61 and nREPL 1.8.0.
+
+## Implementation review (2026-10-19)
+
+- no implementation review feedback
+  - Criterion 6 is still not verified by a psi-managed start: `psi-tool` is not available in this harness either.
+
+## Test review (2026-10-19)
+
+- no test review feedback
+
+## Test-shaper review (2026-10-19)
+
+- no test-shaper review feedback
+
+## Docs review (2026-10-19)
+
+- no docs review feedback
+
+## Code-shaper review (2026-10-19)
+
+- no code-shaper review feedback
