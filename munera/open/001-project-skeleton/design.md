@@ -7,9 +7,9 @@ run the tests and start a REPL with one command each. Scry is the test runner.
 
 ## Problem
 
-The repository has documents only. It has no `deps.edn`, no source and no tests. The emitter, the tests (V-01 to
-V-15) and the benchmarks need a classpath, a test runner and a REPL first. If each later task adds a part of the
-skeleton, the tasks change the same files and use different conventions.
+The repository has documents and tool configuration only. It has no `deps.edn`, no source and no tests. The
+emitter, the tests (V-01 to V-15) and the benchmarks need a classpath, a test runner and a REPL first. If each later
+task adds a part of the skeleton, the tasks change the same files and use different conventions.
 
 ## Context
 
@@ -21,7 +21,12 @@ skeleton, the tasks change the same files and use different conventions.
 - Scry: `org.hugoduncan/scry` on Clojars. Source: `~/projects/hugoduncan/scry`. The project skill is
   `.psi/skills/scry/SKILL.md`.
 - psi starts the managed project REPL with the command in
-  `.psi/project.edn` → `:agent-session :project-nrepl :start-command`. Psi reads the port from `.nrepl-port`.
+  `.psi/project.edn` → `:agent-session :project-nrepl :start-command`. Psi reads the port from `.nrepl-port` in the
+  repository root.
+- Root `project.edn`: commit `4b09778` added it. It has `:agent-session :project-nrepl :start-command
+  ["clojure" "-M:run:dev:test-paths" "--nrepl"]` and `:session-profiles`. The aliases `:run`, `:dev` and `:test-paths`
+  do not exist. Psi reads the project REPL start command only from `.psi/project.edn`, not from the root
+  `project.edn`. This task does not change the root `project.edn`.
 
 ### Observed facts (2026-10-19)
 
@@ -41,8 +46,10 @@ In scope:
    - Dependency `org.clojure/clojure` 1.11.4 (K-01).
    - Alias `:test`: adds the path `test` and the dependency `org.hugoduncan/scry` 0.1.61. Pin the version.
      Do not use `RELEASE`.
-   - Alias `:nrepl`: adds `nrepl/nrepl` 1.8.0 and starts an nREPL server.
-   - Aliases `:clj-1.12` and `:clj-1.13`: replace the Clojure version with 1.12.6 and 1.13.0-alpha9.
+   - Alias `:nrepl`: adds `nrepl/nrepl` 1.8.0 and `:main-opts ["-m" "nrepl.cmdline"]`. The nREPL server writes
+     `.nrepl-port` in the current directory.
+   - Aliases `:clj-1.12` and `:clj-1.13`: `:override-deps` replaces the `org.clojure/clojure` version with 1.12.6 and
+     1.13.0-alpha9.
 2. Source namespace `closed-record.core` in `src/closed_record/core.cljc`. It has a namespace docstring and no vars.
 3. Test namespace `closed-record.core-test` in `test/closed_record/core_test.clj`. It has one smoke test.
    The smoke test requires `closed-record.core` and checks that the namespace is loaded.
@@ -51,7 +58,7 @@ In scope:
    `.clj-kondo/.cache/`.
 6. A "Development" section in `README.md`. It gives the commands to run the tests, to run them on each Clojure
    version and to start a REPL.
-7. An update of `mementum/state.md` and `munera/plan.md`.
+7. An update of `mementum/state.md`. `munera/plan.md` lists this task already. It needs no change.
 
 ## Out of scope
 
@@ -81,8 +88,11 @@ Later tasks own this work. This task must not block it:
 - Test commands:
   - Clojure 1.11: `clojure -M:test -m scry.cli`.
   - Other versions: `clojure -M:test:clj-1.12 -m scry.cli` and `clojure -M:test:clj-1.13 -m scry.cli`.
-  - REPL: `(require '[scry.core :as scry]) (scry/run)`.
+  - In the REPL: `(require '[scry.core :as scry]) (scry/run)`.
+- REPL start command: `clojure -M:test:nrepl`, from the repository root. `README.md` and `.psi/project.edn` use the
+  same command.
 - Version aliases: one alias for each version, not a parameter. A version alias composes with `:test` and `:nrepl`.
+  The aliases use `:override-deps`, not `:extra-deps`.
 - The skeleton has no `dev` path and no `user` namespace. Add them when a task needs them.
 - The smoke test is necessary because the scry CLI fails with zero tests. A later task can remove it when other
   tests exist.
@@ -93,6 +103,9 @@ Later tasks own this work. This task must not block it:
 1. `clojure -M:test -m scry.cli` exits 0. The summary shows one or more tests and zero failures. `.scry-results/` is
    empty.
 2. `clojure -M:test:clj-1.12 -m scry.cli` and `clojure -M:test:clj-1.13 -m scry.cli` exit 0.
+   `clojure -M:clj-1.12 -e '(print (clojure-version))'` prints `1.12.6`. With `-M:test:clj-1.12`, it also prints
+   `1.12.6`. `clojure -M:clj-1.13 -e '(print (clojure-version))'` prints `1.13.0-alpha9`. With `-M:test:clj-1.13`, it
+   also prints `1.13.0-alpha9`.
 3. `clojure -M -e '(print (clojure-version))'` prints `1.11.4`. With `-M:test`, it also prints `1.11.4`.
 4. `clj-kondo --lint src test` reports no errors and no warnings.
 5. `cljfmt check src test` passes.
