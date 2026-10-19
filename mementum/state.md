@@ -14,12 +14,13 @@ Main form: `defclosedrecord`.
 - Protocol directories initialised: ramora, mementum, munera.
 - Design document: `ramora/defclosedrecord/` (status intended).
 - No source code yet.
-- No tasks yet.
 
-## Next
+## Tasks
 
-- Create munera tasks from `ramora/defclosedrecord/` (skeleton, JVM emitter, tests, benchmarks).
-- Create the project skeleton (deps.edn, src, test).
+Munera tracks the tasks. Do not record tasks or task progress in this file.
+
+- Task order: `munera/plan.md`.
+- Open tasks: `munera/open/`. Progress: the `steps.md` file of each task.
 
 ## Key design facts
 
