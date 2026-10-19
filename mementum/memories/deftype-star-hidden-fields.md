@@ -13,5 +13,8 @@ Observed on Clojure 1.11.4 tests and 1.13.0-alpha6 source (Compiler.java, LispRe
 - `Compiler.emitValue` rebuilds record constants in code with `create`. Without `create`, code that
   embeds a record value does not compile.
 - Record literals require `*read-eval*` true.
+- `Compiler.emitValue` checks `IType` before `IRecord`. Do not add `IType` to the type, or constants
+  skip `create`. `defrecord` does not implement `IType`. The `IRecord` path builds the constant from
+  the `java.util.Map` view, so that view must show declared keys only.
 
-Related: ramora/defclosedrecord/context.md (K-06, K-07), decisions.md (D-01, D-09).
+Related: ramora/defclosedrecord/context.md (K-06, K-07, K-08, E-03), decisions/ (D-01, D-06, D-09), invariants.md (I-09).
