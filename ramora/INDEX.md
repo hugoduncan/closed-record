@@ -4,5 +4,5 @@ Index of project documentation. Read this file first. Read the other files only 
 
 ## Entries
 
-- [defclosedrecord design](defclosedrecord/INDEX.md): architecture of `defclosedrecord`.
+- [defclosedrecord design](defclosedrecord.md): architecture of `defclosedrecord`.
   Contains purpose, context, decisions, embodiment, invariants and qualities.

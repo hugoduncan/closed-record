@@ -9,16 +9,13 @@ Purpose + Context → Architecture → Embodiment → Observed qualities
 
 Read this file first. Then read only the documents that you need.
 
-- [Purpose](purpose.md): mission, capabilities, scope, behaviour, success criteria.
-- [Context](context.md): users, interacting systems, constraints.
-- [Decisions](decisions.md): architectural decisions D-01 to D-16.
-- [Embodiment](embodiment.md): artifacts, generated type layout, interfaces.
-- [Invariants](invariants.md): invariants as assertion records, with enforcement points.
-- [Qualities](qualities.md): quality targets, trade-offs, verification, risks.
+- [Purpose](defclosedrecord/purpose.md): mission, capabilities, scope, behaviour, success criteria.
+- [Context](defclosedrecord/context.md): users, interacting systems, constraints.
+- [Decisions](defclosedrecord/decisions.md): architectural decisions D-01 to D-16.
+- [Embodiment](defclosedrecord/embodiment.md): artifacts, generated type layout, interfaces.
+- [Invariants](defclosedrecord/invariants.md): invariants as assertion records, with enforcement points.
+- [Qualities](defclosedrecord/qualities.md): quality targets, trade-offs, verification, risks.
 
-## Status
-
-- No code exists. The design is `intended`.
 - Assertions marked `observed` come from two sources (2026-10-19):
   - tests on Clojure 1.11.4,
   - the Clojure 1.13.0-alpha6 source (`Compiler.java`, `LispReader.java`, `core_deftype.clj`, `RT.java`).
