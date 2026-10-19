@@ -13,7 +13,10 @@ Main form: `defclosedrecord`.
 - Repository initialised: README, AGENTS, psi extension config.
 - Protocol directories initialised: ramora, mementum, munera.
 - Design document: `ramora/defclosedrecord/` (status intended).
-- No source code yet.
+- Project skeleton: `deps.edn` (Clojure 1.11.4, aliases `:test`, `:nrepl`, `:clj-1.12`, `:clj-1.13`),
+  `src/closed_record/core.cljc`, `test/closed_record/core_test.clj`. Test runner: scry.
+- Tests: `clojure -M:test -m scry.cli`. Other versions: add `:clj-1.12` or `:clj-1.13`.
+- REPL: `clojure -M:test:nrepl`. In the REPL: `(require '[scry.core :as scry]) (scry/run)`.
 
 ## Tasks
 

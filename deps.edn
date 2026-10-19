@@ -1,0 +1,9 @@
+{:paths ["src"]
+ :deps {org.clojure/clojure {:mvn/version "1.11.4"}}
+ :aliases
+ {:test {:extra-paths ["test"]
+         :extra-deps {org.hugoduncan/scry {:mvn/version "0.1.61"}}}
+  :nrepl {:extra-deps {nrepl/nrepl {:mvn/version "1.8.0"}}
+          :main-opts ["-m" "nrepl.cmdline"]}
+  :clj-1.12 {:override-deps {org.clojure/clojure {:mvn/version "1.12.6"}}}
+  :clj-1.13 {:override-deps {org.clojure/clojure {:mvn/version "1.13.0-alpha9"}}}}}

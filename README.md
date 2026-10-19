@@ -11,3 +11,25 @@ detail, and catches issues with incorrect assoc, dissoc, etc.
 It is intend as a complement to clojure's new required :keys!, :select,
 :all destructing directives. It is not intended as an antagonist to
 these.
+
+## Development
+
+Use the Clojure CLI. Run all commands from the repository root.
+
+Run the tests on Clojure 1.11 (the minimum version):
+
+    clojure -M:test -m scry.cli
+
+Run the tests on Clojure 1.12 and on Clojure 1.13:
+
+    clojure -M:test:clj-1.12 -m scry.cli
+    clojure -M:test:clj-1.13 -m scry.cli
+
+Start a REPL. The nREPL server writes the port to `.nrepl-port`:
+
+    clojure -M:test:nrepl
+
+Run the tests in the REPL:
+
+    (require '[scry.core :as scry])
+    (scry/run)

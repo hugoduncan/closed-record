@@ -1,2 +1,6 @@
 /.psi/project.local.edn
 /.psi/metrics.edn
+/.cpcache/
+/.scry-results/
+/.nrepl-port
+/.clj-kondo/.cache/

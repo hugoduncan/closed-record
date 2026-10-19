@@ -148,3 +148,13 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
   progress there.
 - Paths for the implementer: `.psi/skills/scry/SKILL.md` (CLI contract), `.psi/skills/clojure-coding-standards/SKILL.md`
   (test style), psi config merge in `~/projects/hugoduncan/psi/*/components/project-nrepl/src/psi/project_nrepl/config.clj`.
+
+## Implementation (2026-10-19)
+
+- All slices done. All acceptance criteria verified.
+- Smoke test: bare require `[closed-record.core]` and `(is (find-ns 'closed-record.core))`. clj-kondo: 0 warnings.
+- `.gitignore` entries are root-anchored (`/.cpcache/` etc.), as the existing entries.
+- Criterion 6: `psi-tool` is not on PATH in this harness. Verified with the same start command
+  `clojure -M:test:nrepl` and an nREPL client: `(:pass? (scry/run))` gave `true`. nREPL deletes `.nrepl-port` at
+  stop. A psi-managed start is still worth a check at review.
+- 1.13.0-alpha9 works with scry 0.1.61 and nREPL 1.8.0.
