@@ -23,10 +23,9 @@ task adds a part of the skeleton, the tasks change the same files and use differ
 - psi starts the managed project REPL with the command in
   `.psi/project.edn` → `:agent-session :project-nrepl :start-command`. Psi reads the port from `.nrepl-port` in the
   repository root.
-- Root `project.edn`: commit `4b09778` added it. It has `:agent-session :project-nrepl :start-command
-  ["clojure" "-M:run:dev:test-paths" "--nrepl"]` and `:session-profiles`. The aliases `:run`, `:dev` and `:test-paths`
-  do not exist. Psi reads the project REPL start command only from `.psi/project.edn`, not from the root
-  `project.edn`. This task does not change the root `project.edn`.
+- `.psi/project.edn` exists and is committed. It has `:version 1`, `:agent-session :project-nrepl :start-command
+  ["clojure" "-M:run:dev:test-paths" "--nrepl"]` and `:agent-session :session-profiles`. The aliases `:run`, `:dev`
+  and `:test-paths` do not exist. The task-lifecycle workflows use `:session-profiles`.
 
 ### Observed facts (2026-10-19)
 
@@ -53,7 +52,9 @@ In scope:
 2. Source namespace `closed-record.core` in `src/closed_record/core.cljc`. It has a namespace docstring and no vars.
 3. Test namespace `closed-record.core-test` in `test/closed_record/core_test.clj`. It has one smoke test.
    The smoke test requires `closed-record.core` and checks that the namespace is loaded.
-4. `.psi/project.edn` with `:version 1` and the project REPL start command `["clojure" "-M:test:nrepl"]`.
+4. `.psi/project.edn`: change only the value of `:agent-session :project-nrepl :start-command` to
+   `["clojure" "-M:test:nrepl"]`. Keep all other content, including `:version 1`, `:session-profiles` and the
+   `#_` forms.
 5. `.gitignore` entries for the files that the tools make: `.cpcache/`, `.scry-results/`, `.nrepl-port`,
    `.clj-kondo/.cache/`.
 6. A "Development" section in `README.md`. It gives the commands to run the tests, to run them on each Clojure
@@ -96,7 +97,7 @@ Later tasks own this work. This task must not block it:
 - The skeleton has no `dev` path and no `user` namespace. Add them when a task needs them.
 - The smoke test is necessary because the scry CLI fails with zero tests. A later task can remove it when other
   tests exist.
-- `.psi/project.edn` is committed. `.psi/project.local.edn` stays ignored.
+- `.psi/project.edn` stays committed. `.psi/project.local.edn` stays ignored.
 
 ## Acceptance criteria
 

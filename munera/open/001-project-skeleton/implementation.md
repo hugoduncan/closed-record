@@ -48,3 +48,51 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
 - Not filed, do not raise again: Intent says "load the source" with one command. The REPL and test commands load it.
 - `.cpcache/` is already ignored by the global `~/.gitignore_global` on this machine. Keep the repository entry
   (Scope 5). Do not use local `git status` alone as proof that the repository ignores it.
+
+## Design review, pass 3 (2026-10-19)
+
+- no architectural review feedback
+  - `design.md` has not changed since pass 2. The fit to `ramora/defclosedrecord/` (embodiment, D-13, D-14, D-16, K-01) is the same.
+  - Context for the later turns: commit `27e1b9d` moved the root `project.edn` to `.psi/project.edn`. The root file
+    does not exist now. `.psi/project.edn` has the start command `-M:run:dev:test-paths --nrepl` and `:session-profiles`
+    (the lifecycle model profiles). The Context paragraph about the root `project.edn` is stale. Scope 4 reads as
+    "create the file". This is a fact or wording mismatch, not an architectural misfit, so it is left to the
+    inconsistency turn. A fix must keep `:session-profiles` and change only the start command.
+- ambiguity review added 1 new design step
+  - Classified as ambiguity: Scope 4 does not tell the implementer what to do with the existing keys. The stale
+    Context paragraph about the root `project.edn` is a separate inconsistency for the next turn.
+- inconsistency review added 1 new design step
+  - Fix this step together with the `.psi/project.edn` ambiguity step. Both edit the same facts in `design.md`.
+
+## Notes for the pass 3 design-steps fix
+
+- Read `.psi/project.edn` before you edit `design.md`. It is the only psi project configuration now. Do not
+  re-create a root `project.edn`.
+- Keep `:session-profiles` and the `#_` commented-out profile blocks. The task-lifecycle workflows use the profiles.
+  The only change in that file is the value of `:agent-session :project-nrepl :start-command`.
+- `.gitignore` already ignores `/.psi/project.local.edn` and `/.psi/metrics.edn`. Scope 5 adds entries only.
+- After the design fix: `plan.md` item 5 and `steps.md` ("Write `.psi/project.edn`") say "write". The plan review
+  must make them say "edit the start command".
+
+## Design-steps fix, pass 3 (2026-10-19)
+
+- Both pass 3 design steps resolved in `design.md` (Context, Scope 4, Decisions). No `SCOPE_QUESTION:` items.
+- `design.md` no longer refers to a root `project.edn` or to commit `4b09778`. The root file does not exist.
+- Still open for the plan review: `plan.md` item 5 and `steps.md` ("Write `.psi/project.edn`") say "write". Change
+  them to "edit the start command only". Verify with `git diff .psi/project.edn`: one changed line.
+
+## Design review, pass 4 (2026-10-19)
+
+- no architectural review feedback
+  - Since pass 3, only the `.psi/project.edn` facts changed (Context, Scope 4, Decisions). An edit of the start
+    command only is minimal and agrees with the principles. Fit to the embodiment, D-13, D-14, D-16 and K-01 is unchanged.
+- no ambiguity review feedback
+  - AC 1 ("`.scry-results/` is empty") is exact: the scry CLI clears and recreates the directory at run start and
+    leaves it empty on a passing run (`.psi/skills/scry/SKILL.md`).
+- no inconsistency review feedback
+
+## Notes after design review, pass 4
+
+- Pass 4 added no design steps. `design-steps.md` has no open items. There is no design-steps fix to do.
+- Next step: plan review. The pass 3 carry-over is still open: `plan.md` item 5 (`` `.psi/project.edn`. ``) and
+  `steps.md` ("Write `.psi/project.edn`.") do not yet say "change only the start command" (design Scope 4).

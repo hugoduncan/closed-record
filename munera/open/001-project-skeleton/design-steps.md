@@ -14,3 +14,14 @@
   `:session-profiles`. This conflicts with the Problem ("documents only"), with Scope 4 (`.psi/project.edn`,
   `-M:test:nrepl`) and with the Decision "no `dev` path": the aliases `:run`, `:dev` and `:test-paths` do not exist.
   psi reads only `.psi/project.edn`. Record this file in Context, and state that this task does not change it.
+- [x] Ambiguity: the content of `.psi/project.edn`. Commit `27e1b9d` moved the root `project.edn` to
+  `.psi/project.edn`. The file exists now, with `:version 1`, the start command `["clojure" "-M:run:dev:test-paths"
+  "--nrepl"]` and `:session-profiles`. Scope 4 and the Decision "`.psi/project.edn` is committed" read as "create the
+  file". They do not say if the task replaces the file or changes only the start command. State that the task changes
+  only `:agent-session :project-nrepl :start-command` to `["clojure" "-M:test:nrepl"]` and keeps `:session-profiles`.
+- [x] Inconsistency: the Context paragraph "Root `project.edn`" and the repository. Commit `27e1b9d` moved the root
+  `project.edn` to `.psi/project.edn`. The root file does not exist now. The paragraph says that the root file exists,
+  that psi does not read it, and that "this task does not change the root `project.edn`". Change the paragraph to
+  describe `.psi/project.edn` as it is now: it exists, it has the start command
+  `["clojure" "-M:run:dev:test-paths" "--nrepl"]` with the aliases `:run`, `:dev` and `:test-paths` that do not exist,
+  and it has `:session-profiles`. Remove the statement about the root file.
