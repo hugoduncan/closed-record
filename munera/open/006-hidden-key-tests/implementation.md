@@ -85,3 +85,33 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
 - Plan review pass 3 (2026-10-19): no new design steps; design-steps.md has no open items. Plan and steps are
   stable. Next step: implementation (`implement-task`), Slice 1. Principle: do not edit plan.md or steps.md again
   unless the approach changes; record discoveries here.
+- Slice 1 and 2 (2026-10-19, one commit): `test/closed_record/hidden_key_test.clj`, 7 deftests, 49 assertions,
+  all pass on 1.11 with no emitter fix. `lit` is a fn (fresh read per test). Helper `same` takes `label fn`
+  pairs and asserts `(= (f plain) (f v))`; the label is the `testing` string, so a mutation failure names the
+  operation. A macro that binds `x` was rejected: clj-kondo reports `x` unresolved. Every test calls
+  `assert-extra-z` on `lit` first; `retention-test` checks all five Scope 4 cases. Kondo and cljfmt clean on
+  the file. Next: Slice 3 mutations; run them with `-n closed-record.hidden-key-test` in the `/tmp` copy.
+- Slice 3 and 4 (2026-10-19). Mutation runs: one JVM per change in a `/tmp` copy (`cp -R`, `git checkout src`
+  between runs), `scry.cli -n closed-record.hidden-key-test`, failures read from `.scry-results`. Do not reload
+  the emitter in one JVM: the reader resolves the literal class by name and gets a stale class, so the results do
+  not change after the first mutation. All changes in `generated-methods`; each row lists the failed assertions
+  (`testing` label of `same`, or `retention-test` context):
+  - `count` → `(+ n (count __extmap))`: `(count x)`, `.size`, `(.equals x {:a 1 :b 2})`.
+  - `seq` → `(seq (concat [entries] __extmap))`: `seq`, `keys`, `vals`, `.keySet`, `.values`, `.entrySet`,
+    `.containsValue 3`, `pr-str` (print goes through `seq`), `.hashCode`, `.equals x {..}`.
+  - `iterator` → `RecordIterator` gets `(RT/iter __extmap)`: `(into {} x)`, `iterator-seq`, `reduce-kv`, `hash`.
+  - `valAt` default → `(get __extmap k nf)`: `(get x :z :nf)`, `(:z x)`, `.get :z`.
+  - `containsKey` default → `(contains? __extmap k)`: `contains?`, `.containsKey :z`.
+  - `entryAt` default → `(find __extmap k)`: `find`.
+  - `equiv` also compares `__extmap`: `(= x plain)`.
+  - `hasheq` XORs `(hash __extmap)`: `hash`. `hashCode` adds `(hash __extmap)` (`unchecked-add-int`): `.hashCode`.
+  - `equals` → `(and (mapEquals this o) (empty? __extmap))`: `.equals x {:a 1 :b 2}`.
+  - `containsValue`, `keySet`, `values`, `entrySet` each concat the `__extmap` part alone: only its own row fails.
+  - `(.equals {:a 1 :b 2 :z 3} x)`: multi-method change (`count` + `containsKey` + `valAt` above, together)
+    fails it; each part alone does not (rows above).
+  - Retention: `assoc` with `__extmap` → nil: `assoc`, `conj`, `merge`. `withMeta` nil: `with-meta`. `without`
+    returns `(new T fields __meta nil)`: `dissoc` (both `identical?` and check). `cons` vector branch starts from
+    `(new T fields __meta nil)`: only `conj`. `cons` `:else` loop starts from it: only `merge`.
+  - No operation without a valid change. No emitter fix was necessary.
+- Slice 4: kondo 0/0, cljfmt clean, scry exit 0 on 1.11/1.12/1.13 (76 tests, 303 assertions on 1.11).
+  `mementum/state.md` lists V-14 done.

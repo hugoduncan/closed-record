@@ -19,8 +19,9 @@ Main form: `defclosedrecord`.
 - Tests: `test/closed_record/compiler_rules_test.clj` (K-06..K-08 compiler rules),
   `test/closed_record/defclosedrecord_test.clj` (behaviour, errors, factories),
   `test/closed_record/literal_test.clj` (V-04, V-05: print, read and code constants),
-  `test/closed_record/field_value_test.clj` (V-06, V-08, V-09: field values).
-- Verification plan done: V-01, V-04, V-05, V-06, V-08, V-09, V-10, V-12, V-13, V-15. Not done: V-02, V-03, V-07, V-11, V-14.
+  `test/closed_record/field_value_test.clj` (V-06, V-08, V-09: field values),
+  `test/closed_record/hidden_key_test.clj` (V-14: hidden extra keys of a literal, and their retention).
+- Verification plan done: V-01, V-04, V-05, V-06, V-08, V-09, V-10, V-12, V-13, V-14, V-15. Not done: V-02, V-03, V-07, V-11.
 - Tests: `clojure -M:test -m scry.cli`. Other versions: add `:clj-1.12` or `:clj-1.13`.
 - REPL: `clojure -M:test:nrepl`. In the REPL: `(require '[scry.core :as scry]) (scry/run)`.
 
