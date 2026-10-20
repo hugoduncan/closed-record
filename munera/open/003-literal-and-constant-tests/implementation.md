@@ -181,3 +181,68 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
 - Rejected changes: `seq` drops `:n` (NPE at namespace load, no per-test signal); `IType` in the interfaces
   (VerifyError at namespace load: `emitValue` emits all fields); `iterator` adds `__extmap` (no test fails:
   `emitValue` does not use `iterator`).
+
+## Implementation review (2026-10-19)
+
+- Added 1 step. Not a finding: `in-test-ns`, `read-literal` and `thrown` are now in three test files; the design
+  says to copy them.
+
+## Implementation review follow-up (2026-10-19)
+
+- Addressed 1 review step.
+- `extra-key-literal-print-test`: added a first assertion: `check` of `lit` throws `extra-keys`.
+- Mutation "`seq` adds `__extmap` entries" (`(seq (concat [...] __extmap))`, reverted): in
+  `extra-key-literal-print-test`, `(= (pr-str (->T 1 2)) s)` fails (`s` has `:x 3`) and
+  `(identical? v (check v))` throws `extra-keys`. Also, in `extra-key-constant-test`, `check` of the compiled
+  result throws (`entrySet` = `(set this)`). The other tests pass.
+- Suite (`clojure -M:test -m scry.cli`) exit 0; clj-kondo and cljfmt clean.
+
+## Implementation review, pass 2 (2026-10-19)
+
+- Added 1 step.
+
+## Implementation review pass 2 follow-up (2026-10-19)
+
+- Addressed 1 review step: `mementum/state.md` `Tests:` line lists `literal_test.clj`.
+
+## Implementation review, pass 3 (2026-10-19)
+
+- No findings.
+
+## Test review (2026-10-19)
+
+- No findings.
+
+## Test review, pass 2 (2026-10-19)
+
+- Added 1 step.
+
+## Test review pass 2 follow-up (2026-10-19)
+
+- Addressed 1 review step.
+- `print-dup-round-trip-test`: prefix assertion is now `(= prefix (subs s 0 ...))`. Temporary check (prefix `{`,
+  reverted): the failure shows `(not (= "#closed_record.literal_test.T{" "#closed_record.literal_test.T["))`.
+- Suite exit 0; clj-kondo and cljfmt clean.
+
+## Test review, pass 3 (2026-10-19)
+
+- No findings.
+
+## Docs review (2026-10-19)
+
+- No findings.
+
+## Code-shaper review (2026-10-19)
+
+- Added 2 steps.
+
+## Code-shaper review follow-up (2026-10-19)
+
+- Addressed 2 review steps.
+- `check-error-type` replaces `thrown`; both extra-keys tests use it.
+- `round-trip-values` holds the shared values of `round-trip-test` and `print-dup-round-trip-test`.
+- Suite exit 0; clj-kondo and cljfmt clean.
+
+## Code-shaper review, pass 2 (2026-10-19)
+
+- No findings.

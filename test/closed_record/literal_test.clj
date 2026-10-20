@@ -17,10 +17,14 @@
 
 (defn- read-literal [s] (in-test-ns #(read-string s)))
 
-(defn- thrown
-  "Call `f`; return the exception that it throws, or nil."
-  [f]
-  (try (f) nil (catch Throwable t t)))
+(defn- check-error-type
+  "Return the `:type` of the exception that `check` of `x` throws, or nil."
+  [x]
+  (try (check x) nil (catch Throwable t (:type (ex-data t)))))
+
+(def ^:private round-trip-values
+  "Values without metadata: a plain record and a nested record."
+  [(->T 1 2) (->T (->T 3 4) 5)])
 
 (defmacro ^:private constant
   "Read the literal string `s` at expansion time and return the record
@@ -31,7 +35,7 @@
 
 (deftest round-trip-test
   ;; I-06. Each `r` has no metadata.
-  (doseq [r [(->T 1 2) (->T (->T 3 4) 5)]]
+  (doseq [r round-trip-values]
     (testing (pr-str r)
       (let [v (read-literal (pr-str r))]
         (is (= r v))
@@ -40,11 +44,12 @@
 (deftest print-dup-round-trip-test
   ;; Positional form: an observed printer fact, kept as a change signal.
   ;; The read-back verifies I-06 through the positional constructor (C-07).
-  (doseq [r [(->T 1 2) (->T (->T 3 4) 5)]]
+  (doseq [r round-trip-values]
     (testing (pr-str r)
       (let [s (binding [*print-dup* true] (pr-str r))
-            v (read-literal s)]
-        (is (.startsWith ^String s (str "#" (.getName ^Class T) "[")))
+            v (read-literal s)
+            prefix (str "#" (.getName ^Class T) "[")]
+        (is (= prefix (subs s 0 (min (count s) (count prefix)))))
         (is (= r v))
         (is (= T (class v)))))))
 
@@ -58,6 +63,7 @@
   (let [lit (read-literal "#closed_record.literal_test.T{:a 1 :n 2 :x 3}")
         s   (pr-str lit)
         v   (read-literal s)]
+    (is (= :closed-record/extra-keys (check-error-type lit)))
     (is (= (pr-str (->T 1 2)) s))
     (is (= lit v))
     (is (identical? v (check v)))))
@@ -73,8 +79,8 @@
   ;; I-07, I-09: emitValue builds the constant from the Map view.
   (let [form '(closed-record.literal-test/constant
                "#closed_record.literal_test.T{:a 1 :n 2 :x 3}")
-        e    (thrown #(check (in-test-ns (fn [] (macroexpand-1 form)))))]
-    (is (= :closed-record/extra-keys (:type (ex-data e)))))
+        c    (in-test-ns #(macroexpand-1 form))]
+    (is (= :closed-record/extra-keys (check-error-type c))))
   (let [v (constant "#closed_record.literal_test.T{:a 1 :n 2 :x 3}")]
     (is (= (->T 1 2) v))
     (is (= T (class v)))
