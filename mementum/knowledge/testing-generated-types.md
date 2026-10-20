@@ -2,8 +2,8 @@
 title: Tests of eval'ed forms and compiler-generated types
 status: active
 category: testing
-tags: [scry, eval, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site, equality, hash, withMeta, extmap, iterator, test.check, property]
-related: [mementum/knowledge/dev-tooling.md, test/closed_record/compiler_rules_test.clj, test/closed_record/defclosedrecord_test.clj, test/closed_record/literal_test.clj, test/closed_record/field_value_test.clj, test/closed_record/equality_test.clj, test/closed_record/hidden_key_test.clj, test/closed_record/property_test.clj, ramora/defclosedrecord/invariants.md]
+tags: [scry, eval, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site, equality, hash, withMeta, extmap, iterator, test.check, property, keyword-invoke, map-views]
+related: [mementum/knowledge/dev-tooling.md, test/closed_record/compiler_rules_test.clj, test/closed_record/defclosedrecord_test.clj, test/closed_record/literal_test.clj, test/closed_record/field_value_test.clj, test/closed_record/equality_test.clj, test/closed_record/hidden_key_test.clj, test/closed_record/property_test.clj, test/closed_record/differential_test.clj, ramora/defclosedrecord/invariants.md]
 depends-on: [mementum/knowledge/dev-tooling.md]
 ---
 
@@ -141,6 +141,9 @@ Observed in task 007 (test.check 1.1.3, Clojure 1.11.4; suite passes on 1.12 and
   (result-data [_] {:check id}))`. Its data is at `[:shrunk :result-data]`. A throw in the body gives only
   `{:clojure.test.check.properties/error e}`, with no check name. Thus each check catches any `Throwable` from its
   own operation and fails with its name and `:ex`. Do not catch around setup (factory call, model update).
+- ❌ Also run the comparison (`=`, the `ok?` predicate) in the catch, not only the operation. `(seq x)` and
+  `(.values x)` can give a lazy seq, and `=` realizes it. A fault that throws during realization then escapes the
+  check with no name (task 008 implementation review).
 - ❌ Shrinking keeps any failure, not the first one. `[:shrunk :result-data]` can name a different check than the
   first failed trial. Read the check name from the shrunk result.
 - ❌ To find a failure among other return values, use `(instance? clojure.test.check.results.Result r)`. Do not use
@@ -152,6 +155,21 @@ Observed in task 007 (test.check 1.1.3, Clojure 1.11.4; suite passes on 1.12 and
 - Mutation run: in a new JVM, call `quick-check` on the property var (`@#'ns/var` for a private var) and print
   `[:shrunk :result-data]`. The property stops at the first failed check, so the change must show first in the check
   under test. Change the body of a view method (`size`, `keySet`, `values`, `entrySet`), not `seq` or `count`.
+
+## Differential property (closed type vs `defrecord`)
+
+Observed in task 008 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern:
+`test/closed_record/differential_test.clj` (V-02). It uses the property model above, with a real `defrecord` in
+place of a model map, and compares the two values after the start and after each generated step.
+
+- 💡 Keyword lookup with no call site: `(k x nf)` with `k` a local calls `Keyword.invoke`, not `getLookupThunk`.
+  A property can then use it in each trial, and no call-site state carries between trials.
+- 💡 The `java.util.Map` views of the two types have the same classes (`.keySet` `PersistentHashSet`, `.values`
+  `APersistentMap$ValSeq`). Compare them with `=`, with no conversion. `=` of a Clojure set and a `HashSet`, or of a
+  seq and an `ArrayList`, is true in both orders.
+- `(.containsValue x nil)` is false on both types, also when a field is nil (`defrecord` uses
+  `(some #{v} (vals x))`). It is not a difference.
+- `defrecord` `hash` is also type hash XOR `mapHasheq`. Compare `hash` only inside each type (D-07).
 
 ## Expansion-time errors
 
