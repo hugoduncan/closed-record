@@ -69,3 +69,73 @@
 - [x] Complete `implementation.md`: for each table row, Scope 4 operation and Scope 5 case, list the `src` change and the assertion that failed (or the reason none exists).
 - [x] Update `mementum/state.md`: mark V-06, V-08 and V-09 as done.
 - [x] Final full run of all three test aliases, clj-kondo and cljfmt; confirm all pass.
+
+## Review follow-up
+
+- [x] Isolate the V-06 keyword call sites. `call-site-type-change-test` and `call-site-boxed-value-test` use `get-a`
+  and `get-n`, which `nil-lookup-test` and `keyword-call-hint-test` also call (with `N`, `DN`, `C`, `DC`). Thus the
+  site state at the start of each V-06 test depends on the test order, and "A, then B, then A" is not the first
+  sequence that the site sees (design Scope 5). Give each V-06 test its own site (a local `(fn [x] (:a x))` in the
+  `deftest`). Run M6 and M7 again and update `implementation.md` if the failed tests change.
+- [x] Add `test/closed_record/field_value_test.clj` (V-06, V-08, V-09: field values) to the "Tests:" list in
+  `mementum/state.md`.
+
+## Implementation review 2
+
+- [x] Make a differential failure show both outcomes in the test report. `same-outcome?` prints the two outcomes
+  with `println` and returns `false`, so `(is (c-diff ...))` and `(is (n-diff ...))` report only `actual: false`, and
+  the outcomes are not in `.scry-results/`. `mementum/knowledge/testing-generated-types.md` ("Test design") gives the
+  existing rule: assert with `=`, so a failure shows the values. Change the helper to give the two outcomes (for
+  example `[closed-outcome record-outcome]`) and assert `(is (= a b))` in a small wrapper or macro, then remove the
+  `println`. Run the three aliases, clj-kondo and cljfmt.
+
+## Test review
+
+- [x] Remove `smoke-test` from `test/closed_record/field_value_test.clj`. Its assertion
+  `(is (= [:ok [5 Long]] (outcome (constantly 5))))` tests the test helper `outcome`, not `src` (no tests that cover
+  tests). Its other assertion `(is-c-diff #(c-new %))` (all values valid) checks no row of the type hint table and no
+  Scope 4 or Scope 5 item; the V-09 rows already call `c-new` and the helper. Run the three aliases, clj-kondo and
+  cljfmt.
+
+## Test review 2
+
+- [x] Remove the second assertion of `nil-print-read-test` in `test/closed_record/field_value_test.clj`:
+  `(is (true? (let [x (->N nil nil)] (= x (in-test-ns ...)))))`. It repeats the closed half of the `is-n-diff`
+  assertion above it. The `defrecord` side gives `true`, so the differential assertion already fails when the closed
+  value does not read back `=` (M14 fails both). Design Scope 4 states that each V-08 test uses the helper, and no
+  other V-08 test has a fixed assertion. Run the three aliases, clj-kondo and cljfmt.
+
+## Code-shaper review
+
+- [x] Remove the duplicate default input in `test/closed_record/field_value_test.clj`. `c-new` (:58) and `c-map`
+  (:64) each hold the literal `{:a 1 :n 2 :d 3.0 :i (int 4) :b true :s "s"}`. A change to one default (for example
+  `:i`, which must stay an `Integer`, design Context) can miss the other. Keep one source: for example, `c-new`
+  calls `(apply (:new fs) (map (apply c-map (mapcat identity kvs)) [:a :n :d :i :b :s]))`, or both use one private
+  `c-defaults`. Run the three aliases, clj-kondo and cljfmt.
+- [x] Remove the side test from the V-08 `.field` case (`nil-lookup-test`, :112). The function branches on
+  `(= % n-factories)` (equality of two maps of functions) to pick the `^N` or `^DN` hint. Thus the test body knows
+  which side of the differential it runs on, and it mixes flow control with the computation under test. Put the
+  hinted reader in the factory maps (for example `:fields (fn [^N x] [(.-a x) (.-b x)])` in `n-factories` and the
+  `^DN` form in `dn-factories`) and call `((:fields %) (nil-value %))`, as the other cases call `(:new %)`. Check with
+  clj-kondo that no reflection warning is added. Run the three aliases, clj-kondo and cljfmt.
+
+## Code-shaper review 2
+
+- [x] Remove the unused `:map` entries from `n-factories` and `dn-factories` in
+  `test/closed_record/field_value_test.clj` (:24, :26). No V-08 case calls `(:map %)`; only `:new` (`nil-value`) and
+  `:fields` are used. The unused entry suggests a `map->Name` path that the V-08 tests do not check. Run the three
+  aliases, clj-kondo and cljfmt.
+- [x] Remove the two remaining copies of the default `C` input. `vals-hint-test` (:95) gives
+  `((:new %) 1 2 3 4 true "s")` and `call-site-boxed-value-test` (:147) gives `(->C 1 (int 2) 3.0 (int 4) true "s")`.
+  Each repeats the `c-map` defaults positionally, so the first code-shaper step left three sources. Use `c-new`:
+  `(c-new % :d 3 :i 4)` for `vals` (the `Long` inputs that M1 needs stay) and `(c-new c-factories :n (int 2))` for
+  the V-06 boxed value. Run M1 again for `vals-hint-test` and `call-site-boxed-value-test`, then the three aliases,
+  clj-kondo and cljfmt.
+
+## Code-shaper review 3
+
+- [x] Use one idiom for the keyword call sites in `test/closed_record/field_value_test.clj`. The V-06 tests use a
+  site local to the `deftest` (`(fn [x] (:n x))`, :146, :154). The V-09 and V-08 keyword tests use top-level
+  `get-n` (:97) and `get-a` (:103), each with one user, defined away from the assertion. Put each site in its
+  `deftest` as a local `(fn [x] ...)` and remove `get-n` and `get-a`. Then each test holds its own site, and no later
+  test can share it. Run M6 and M8 again, then the three aliases, clj-kondo and cljfmt.

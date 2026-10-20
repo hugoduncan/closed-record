@@ -139,3 +139,95 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
     M15: nil ≠ `false`.
 - No mutation breaks (reasons in plan.md "Mutation map"): `assoc ^String ← 5` (object field, no cast), V-08 `.field`
   (compiler field read, no emitter code), V-08 equal `hash` (equal values hash equal by construction).
+
+## Implementation review
+
+- 2026-10-19 added 2 steps to be addressed. Tests, clj-kondo and cljfmt pass on 1.11.4; `src` unchanged.
+
+## Review follow-up
+
+- 2026-10-19 addressed 2 review steps. V-06 tests use a local site (`(fn [x] ...)` in the `deftest`), not
+  `get-a`/`get-n`. M6 and M7 run again: same failed tests (M6: V-09 keyword call, V-06 boxed; M7: V-06 A → B → A
+  errors with `ClassCastException`, also V-09/V-08 keyword sites). `state.md` "Tests:" lists `field_value_test.clj`.
+
+## Implementation review 2
+
+- 2026-10-19 added 1 step to be addressed.
+
+## Review follow-up 2
+
+- 2026-10-19 addressed 1 review step. `same-outcome?` is replaced by `outcomes` (gives `[closed record]`) and the
+  macros `is-diff`, `is-c-diff`, `is-n-diff` (`(is (= c r))`); no `println`. A probe mismatch gave
+  `:actual (not (= [:ok [1 Long]] [:ex ExceptionInfo]))` in `.scry-results/`, with the call-site line. Three
+  aliases (66 tests, 0 failures), clj-kondo and cljfmt pass.
+
+## Implementation review 3
+
+- 2026-10-19 no new issues.
+
+## Test review
+
+- 2026-10-19 added 1 step to be addressed.
+
+## Test review follow-up
+
+- 2026-10-19 addressed 1 review step. `smoke-test` removed. Three aliases (65 tests, 0 failures), clj-kondo and
+  cljfmt pass.
+
+## Test review 2
+
+- 2026-10-20 added 1 step to be addressed.
+
+## Test review 2 follow-up
+
+- 2026-10-20 addressed 1 review step. The fixed second assertion of `nil-print-read-test` is removed; the `is-n-diff`
+  assertion stays (M14 fails it). Three aliases (65 tests, 238 assertions, 0 failures), clj-kondo and cljfmt pass.
+
+## Test review 3
+
+- 2026-10-20 no new issues.
+
+## Test review 4
+
+- 2026-10-20 no new issues.
+
+## Docs review
+
+- 2026-10-20 no new issues.
+
+## Code-shaper review
+
+- 2026-10-20 added 2 steps to be addressed.
+
+## Code-shaper review follow-up
+
+- 2026-10-20 addressed 2 review steps. `c-map` holds the only default input; `c-new` gives `(c-map kvs)` as
+  positional arguments. `n-factories`/`dn-factories` hold a hinted `:fields` reader (`^N`/`^DN`); the `.field` case
+  calls `((:fields %) (nil-value %))`. No reflection warning (checked with `*warn-on-reflection*`). Three aliases
+  (65 tests, 238 assertions, 0 failures), clj-kondo and cljfmt pass.
+
+## Code-shaper review 2
+
+- 2026-10-20 added 2 steps to be addressed.
+
+## Code-shaper review 2 follow-up
+
+- 2026-10-20 addressed 2 review steps. `n-factories`/`dn-factories` have no `:map`. `vals-hint-test` uses
+  `(c-new % :d 3 :i 4)`; `call-site-boxed-value-test` uses `(c-new c-factories :n (int 2))`. M1 again: 16 failed,
+  `vals-hint-test` and `call-site-boxed-value-test` among them. Three aliases (65 tests, 238 assertions, 0 failures),
+  clj-kondo and cljfmt pass.
+
+## Code-shaper review 3
+
+- 2026-10-20 added 1 step to be addressed.
+
+## Code-shaper review 3 follow-up
+
+- 2026-10-20 addressed 1 review step. `get-n` and `get-a` removed; `keyword-call-hint-test` and the V-08 keyword
+  case each use a local `(fn [x] ...)` site. M6 and M8 again (mutation at :139 only; the same form is also in
+  `equiv` at :169): M6 fails `keyword-call-hint-test` and `call-site-boxed-value-test`; M8 fails the V-08 keyword
+  call. Three aliases (65 tests, 238 assertions, 0 failures), clj-kondo and cljfmt pass.
+
+## Code-shaper review 4
+
+- 2026-10-20 no new issues.
