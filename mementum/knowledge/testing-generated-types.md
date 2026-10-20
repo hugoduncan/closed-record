@@ -3,7 +3,7 @@ title: Tests of eval'ed forms and compiler-generated types
 status: active
 category: testing
 tags: [scry, eval, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site, equality, hash, withMeta, extmap, iterator, test.check, property, keyword-invoke, map-views]
-related: [mementum/knowledge/dev-tooling.md, test/closed_record/compiler_rules_test.clj, test/closed_record/defclosedrecord_test.clj, test/closed_record/literal_test.clj, test/closed_record/field_value_test.clj, test/closed_record/equality_test.clj, test/closed_record/hidden_key_test.clj, test/closed_record/property_test.clj, test/closed_record/differential_test.clj, ramora/defclosedrecord/invariants.md]
+related: [mementum/knowledge/dev-tooling.md, test/closed_record/compiler_rules_test.clj, test/closed_record/defclosedrecord_test.clj, test/closed_record/literal_test.clj, test/closed_record/field_value_test.clj, test/closed_record/equality_test.clj, test/closed_record/hidden_key_test.clj, test/closed_record/property_test.clj, test/closed_record/differential_test.clj, test/closed_record/malli_test.clj, ramora/defclosedrecord/invariants.md]
 depends-on: [mementum/knowledge/dev-tooling.md]
 ---
 
@@ -201,6 +201,10 @@ place of a model map, and compares the two values after the start and after each
 - ❌ Run each mutation in a new JVM. Do not reload the emitter and the test namespace in one JVM: `read-string` of a
   record literal resolves the class by name and gets the old class, so the results stay the same after the first
   mutation. Between runs, `git checkout src` in the copy (task 006).
+- 🔁 When the docs give a fix for a failure case, test the fix too. Put the failure test and the fix test on one
+  case table (`[label input-setup expected-failure expected-fix]`), so each failure case has a fix check and both
+  checks use the same inputs. Make variant inputs from a base value (for example a closed schema from the open
+  schema), not a second literal. Pattern: `throwing-cases` in `test/closed_record/malli_test.clj` (task 009).
 - 🎯 Test source must not refer to task design sections ("Scope 3", "the first Context table"). The reader cannot
   find them after the task closes. Describe each case in the source. Keep durable ids (V-nn, I-nn, D-nn).
 - ❌ `(is (.startsWith s p))` reports only `actual: false`: `clojure.test` shows the arguments only of a var call.
