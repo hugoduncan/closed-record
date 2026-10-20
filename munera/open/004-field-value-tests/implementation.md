@@ -119,3 +119,23 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
 - 2026-10-19 pass 3 added no design steps; `design-steps.md` has no open items, so there is no design-steps fix.
   Next lifecycle step: implementation (steps.md Slice 1). Do not change the plan inputs (decisions 2 to 4) without
   a new mutation run (plan Risks, "Mutation map drift").
+
+## Implementation
+
+- 2026-10-19 all slices done in one pass. `test/closed_record/field_value_test.clj`, 12 `deftest`s, 34 assertions.
+  No emitter defect found; `src` not changed. All three aliases: 66 tests, 0 failures; clj-kondo and cljfmt clean.
+- Helper: `same-outcome?` takes factory maps `{:new ->X :map map->X}`; `outcome` gives `[:ok v]` / `[:ex class]`
+  (record → `update-vals (into {} x) (juxt identity class)`, else `[x (class x)]`). On mismatch it prints both.
+  `c-new`/`c-map` build inputs with only the field under test changed (`:i` is `(int 4)`).
+- `.field` row: the function branches on the factory map to give `^N`/`^DN` hints (no reflection).
+- Mutation check: scripted (`python3`, string replace in `jvm.clj`, run `-n closed-record.field-value-test`,
+  revert). Failed assertion counts, on 1.11.4:
+  - M1 (no hints): 16 failed = all V-09 rows except `assoc ^String ← 5`, plus V-06 boxed value.
+  - M2 (`->Name` via `create`): `->Name` `2.7`, `3` rows; also `vals`, V-09 keyword, V-06 boxed (Long inputs).
+  - M3: `assoc` `9.9`, `5000000000`. M4: `assoc` `"x"`, `5000000000`. M5: `map->Name` `2.5`, `^int ← 1`.
+  - M6: V-09 keyword call, V-06 boxed. M7: V-06 A → B → A (also V-09/V-08 keyword sites).
+  - M8: V-08 keyword call. M9: V-08 `get` not-found. M10: `contains?` (+ `.equals` map-first).
+    M11: `count` (+ `.equals` map-first). M12: `.equals`. M13: `.hashCode`. M14: `=` and print/read.
+    M15: nil ≠ `false`.
+- No mutation breaks (reasons in plan.md "Mutation map"): `assoc ^String ← 5` (object field, no cast), V-08 `.field`
+  (compiler field read, no emitter code), V-08 equal `hash` (equal values hash equal by construction).
