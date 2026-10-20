@@ -4,13 +4,15 @@
 
 Show with tests that a closed record works with malli map schemas (V-07, S-04, D-11). Validation and explanation
 treat the record as a map. A transformer that adds an undeclared key or removes a declared key throws, and the
-user can see why. The README names these cases, as the trade-offs in `qualities.md` require.
+user can see why. The README names these cases. This is the malli part of the trade-off "Closed maps in an
+open-map ecosystem" in `qualities.md`.
 
 ## Problem
 
 V-07 has no test. D-11 rejects a built-in schema because "tests show that the type works with malli map schemas",
-but no test shows this. The trade-off "closed maps in an open-map ecosystem" says that the docs must name the malli
-transformers that throw. The README does not name them.
+but no test shows this. The trade-off "Closed maps in an open-map ecosystem" says: "The docs must name the common
+cases: malli default-value transformers and code that adds keys such as `:db/id`." The README names neither case.
+This task covers the malli part. The `:db/id` case is not part of this task.
 
 ## Context
 
@@ -50,8 +52,10 @@ In scope:
    `(defclosedrecord P [a b c])`. Example tests, one `deftest` for each group:
    - Validation: `m/validate` with an open and a closed `[:map ...]` schema of the declared keys gives true.
      A schema with a key that is not declared, or a closed schema with fewer keys, gives false.
-   - Explanation: `m/explain` gives nil for a valid record. For a field value that is not valid, and for a
-     missing schema key, `me/humanize` names the key and the error.
+   - Explanation: `m/explain` gives nil for a valid record. For a field value that is not valid
+     (`(m/explain s (->P "x" nil 3))`) and for a missing schema key (`(m/explain [:map [:a :int] [:d :int]] p)`),
+     the test checks that the `me/humanize` result is `=` to the full map in the table:
+     `{:a ["should be an integer"]}` and `{:d ["missing required key"]}`.
    - nil fields: a nil field is valid for `[:maybe :int]` and not valid for `:int`.
    - Permitted transformers: `string-transformer` decode and `default-value-transformer` for a declared nil field
      give a `P` with the expected entries. `json-transformer` encode and `m/coerce` give `p`.
@@ -59,8 +63,12 @@ In scope:
      (`:type`, `:record`, `:key` when present), as the V-01 tests do.
 3. A short `malli` section in `README.md`. It says that map schemas validate a closed record, and names the three
    throwing cases: a default for an undeclared key, `strip-extra-keys-transformer` with a schema that does not have
-   all the declared keys, and `key-transformer`. It gives the fix: decode a plain map (`(into {} r)`). Then call
-   `map->Name` on the result only if it has no undeclared keys.
+   all the declared keys, and `key-transformer`. It gives the fix: decode a plain map (`(into {} r)`), and keep the
+   result as a plain map. It also says what `map->Name` does with the result (D-08):
+   - An undeclared key throws `:closed-record/extra-keys`. The `ex-data` names the keys. This is the error the user
+     sees.
+   - A missing declared key gives nil. Thus `map->Name` on the result of `strip-extra-keys-transformer` adds the
+     removed declared keys again, with nil values. Call `map->Name` only when the result has all the declared keys.
 4. Update `ramora/defclosedrecord/embodiment.md` (Artifacts row for `malli_test.clj` (V-07); the `deps.edn` row
    names malli in the `:test` alias) and `mementum/state.md` (V-07 done).
 
@@ -68,6 +76,8 @@ In scope:
 
 - Generated values (`malli.generator`), function schemas, and schemas made from a record type.
 - Other schema libraries (spec).
+- The `:db/id` case of the trade-off "Closed maps in an open-map ecosystem" (code that adds keys). The README
+  section names only the malli cases.
 - A malli integration in `src` (a schema for `P`, or a transformer that rebuilds a record). D-11 rejects it.
 - Changes to the emitter. If a test finds a fault, stop and record it in `implementation.md`.
 - Performance (V-11).
