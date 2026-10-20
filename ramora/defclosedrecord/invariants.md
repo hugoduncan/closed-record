@@ -24,7 +24,8 @@ status: intended
 subject: every operation on r except check
 predicate: result does not depend on
 object: __extmap
-scope: all methods of T. assoc and withMeta copy __extmap but do not expose it.
+scope: all methods of T. assoc and withMeta copy __extmap but do not expose it. cons (conj, merge) copies __extmap
+  through assoc. without (dissoc) of a key outside D(T) returns the same instance.
 basis: D-09
 enforced-by: code review; only -extra-keys returns __extmap
 verified-by: V-14
@@ -88,7 +89,8 @@ id: I-07
 status: intended
 subject: __extmap
 predicate: non-empty only if made by
-object: create from a map literal with extra keys, or assoc and withMeta of such an instance
+object: create from a map literal with extra keys, or assoc and withMeta of such an instance (cons, so conj and
+  merge, copies __extmap through assoc; without of a key outside D(T) returns the same instance)
 scope: all instances. Print, code constants and positional reads drop __extmap; after that, check passes. A code
   constant is a constant that the compiler emits into a class (Compiler.emitValue). A constant that Clojure evaluates
   without a class keeps the object (observed: only the init of a top-level def, when the init is not compiled into a

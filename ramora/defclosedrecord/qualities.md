@@ -43,7 +43,7 @@
 | V-11 | Performance | criterium: lookup, `.field`, `assoc`, `hash`, `=`, against `defrecord`. Pass criterion S-03. |
 | V-12 | Equality and hash | `=`, `.equals`, `hash` and `.hashCode` against `defrecord` and against plain maps. Metadata has no effect. |
 | V-13 | Compiler rules | Fix K-06 to K-08: the 4-field rule, `create` behaviour, `IType` order in `emitValue`, `defrecord` without `IType`. |
-| V-14 | Hidden keys | Literal with extra keys: `count`, `seq`, `=`, hash, print and the `java.util.Map` views show declared keys only. `assoc` and `withMeta` keep the extra keys for `check`. |
+| V-14 | Hidden keys | Literal with extra keys: `count`, `seq`, `keys`, `vals`, the iterator, `reduce-kv`, lookup (`get`, keyword call, `contains?`, `find`), `=`, hash, print and the `java.util.Map` views show declared keys only. `assoc`, `with-meta`, `dissoc`, `conj` and `merge` keep the extra keys for `check`. |
 | V-15 | `check` | Closed record → returns it. Extra keys → `extra-keys`. Other value → `not-closed-record`. |
 
 ## Risks

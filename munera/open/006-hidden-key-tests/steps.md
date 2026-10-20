@@ -67,3 +67,62 @@ failure in a Slice 3 mutation run is the expected signal, not a defect.
   the rule for emitter fixes.
 - [x] Update `mementum/state.md`: list V-14 as done; mention the new test namespace.
 - [x] Commit slice 4.
+
+## Review follow-up
+
+- [x] Use the existing pattern for `check` error data. `defclosedrecord_test.clj` has `thrown` and `data-of`, and
+  asserts the full `ex-data` map in one `is` (for example `{:type :closed-record/extra-keys :record R :keys #{:z}}`).
+  `hidden_key_test.clj` adds a new helper `check-data` and splits the assertion in `assert-extra-z` into two `is`
+  forms without `:record`. Copy `thrown` and `data-of` (implementation.md, plan review pass 2, says to copy
+  `data-of`), and assert `{:type :closed-record/extra-keys :record E :keys #{:z}}` in one `is`.
+- [x] Remove `guard-test` or its comment. Each other deftest calls `assert-extra-z` on `lit` first, so the comment
+  "Without this, every other test could pass with no hidden key" is not true, and the test repeats the guard.
+
+## Docs review follow-up
+
+- [x] Make the ramora text for V-14 agree with what the tests verify. `hidden_key_test.clj` verifies retention for
+  `assoc`, `with-meta`, `dissoc`, `conj` and `merge`, and hidden keys also for lookup (`get`, keyword call,
+  `contains?`, `find`), the iterator and `reduce-kv`. Three places name only `assoc` and `withMeta`:
+  `ramora/defclosedrecord/qualities.md` (V-14 row), `ramora/defclosedrecord/invariants.md` I-02 `scope` and I-07
+  `object`. Update the V-14 row to list the operations that it verifies. In I-02 and I-07, state that `conj` and
+  `merge` copy `__extmap` through `assoc` (`cons`), and that `dissoc` of a key outside `D(T)` returns the same
+  instance (`without`). Do not change the invariant ids or the `verified-by` lines.
+- [x] Make the `__extmap` row in `ramora/defclosedrecord/embodiment.md` ("State" table) agree with I-02 and I-07. It
+  names only `assoc` and `withMeta` as the operations that keep `__extmap`. Add, as in I-02 and I-07, that `cons`
+  (`conj`, `merge`) copies `__extmap` through `assoc`, and that `without` (`dissoc`) of a key outside `D(T)` returns
+  the same instance.
+- [x] Add the hidden-key tests to the "Artifacts" table in `ramora/defclosedrecord/embodiment.md`. The
+  `test/closed_record/*_test.clj` row lists the test kinds ("Behaviour, differential, equality, malli, nil, literal
+  and constant tests"), but not the new hidden-key tests. Add them, for example as a row
+  `test/closed_record/hidden_key_test.clj` | "Tests that fix hidden keys of a literal and their retention (V-14)",
+  as the `compiler_rules_test.clj` row does for V-13.
+
+## Code-shaper review follow-up
+
+- [x] Simplify the `same` calls in `test/closed_record/hidden_key_test.clj`. Each label repeats the code of its fn
+  (for example `"(count x)" (fn [x] (count x))`), so a label and its fn can drift apart. Line 60 is 121 characters,
+  the only line over 100 in `src` and `test`. Use a short operation name as the label, as in the design Context
+  table and the mutation records in implementation.md (for example `"count"`). Where the fn only calls one
+  function on `x`, pass the function (for example `count`, `seq`, `keys`, `vals`, `hash`, `pr-str`).
+- [x] Make `same` fail on an odd number of `label f` arguments. `(partition 2 label-fs)` drops a last label with no
+  fn, so an operation can be lost with no signal. Use `partition-all` and assert each pair has a fn, or take a
+  vector of `[label f]` pairs.
+
+## Code-shaper review pass 2 follow-up
+
+- [x] Remove the `(is (= 2 (count pair)) ...)` assertion from `same` in `test/closed_record/hidden_key_test.clj`.
+  The `[label f]` vector already shows the shape. A pair with no fn gives `f` nil, and `(f plain)` inside `is`
+  reports an error, so the row is not lost. The extra assertion adds one passing assertion for each row and mixes a
+  check of test data with the V-14 check.
+- [x] Use one name for the value with hidden keys in `test/closed_record/hidden_key_test.clj`. The labels (from the
+  design Context table) and `assert-extra-z` use `x`, but each `let` and `same` bind `v`, and the `same` docstring
+  says `(f v)`. Because `v` is taken, the `reduce-kv` fn names its value `w`. Bind `x` in each `let` and in `same`,
+  and name the `reduce-kv` value `v`.
+
+## Code-shaper review pass 3 follow-up
+
+- [x] Make the guard (design Scope 2) part of `same` in `test/closed_record/hidden_key_test.clj`. The five
+  hidden-key deftests each repeat `(let [x (lit)] (assert-extra-z x) (same x ...))`, so the guard holds only by
+  convention: a new deftest that calls `same` without `assert-extra-z` can pass with no hidden key. Let `same` take
+  only the `[label f]` pairs, read `(lit)`, call `assert-extra-z` on it, then assert each row. Each hidden-key
+  deftest is then one `same` call. Keep the explicit guard in `retention-test`.

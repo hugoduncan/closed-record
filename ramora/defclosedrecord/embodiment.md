@@ -8,6 +8,7 @@
 | `src/closed_record/impl/jvm.clj` | JVM emitter. Builds the `deftype*` form and the factories. |
 | `test/closed_record/*_test.clj` | Behaviour, differential, equality, malli, nil, literal and constant tests. |
 | `test/closed_record/compiler_rules_test.clj` | Tests that fix K-06 to K-08 (V-13). |
+| `test/closed_record/hidden_key_test.clj` | Tests that fix hidden keys of a literal and their retention (V-14). |
 | `dev/bench/` | criterium benchmarks against `defrecord`. |
 | `deps.edn` | Clojure 1.11 dependency. Test and bench aliases. |
 
@@ -99,7 +100,7 @@ The expansion has the shape of the `defrecord` expansion: `declare` of `->Name` 
 |---|---|---|---|
 | Declared fields | the instance | immutable | Set by a constructor. |
 | `__meta` | the instance | immutable | Set by `withMeta` (new instance). |
-| `__extmap` | the instance | immutable | Set only by `create` from a map literal (I-07). `assoc` and `withMeta` copy it to the new instance, so `check` still finds it. Only `-extra-keys` gives its value (I-02). |
+| `__extmap` | the instance | immutable | Set only by `create` from a map literal (I-07). `assoc` and `withMeta` copy it to the new instance, so `check` still finds it. `cons` (`conj`, `merge`) copies it through `assoc`. `without` (`dissoc`) of a key outside `D(T)` returns the same instance. Only `-extra-keys` gives its value (I-02). |
 | `__hash`, `__hasheq` | the instance | unsynchronized mutable cache | 0 means not calculated. A race can calculate the same value twice. This is benign, as with `defrecord`. |
 
 ## Allocation

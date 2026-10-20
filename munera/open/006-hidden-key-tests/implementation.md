@@ -115,3 +115,29 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
   - No operation without a valid change. No emitter fix was necessary.
 - Slice 4: kondo 0/0, cljfmt clean, scry exit 0 on 1.11/1.12/1.13 (76 tests, 303 assertions on 1.11).
   `mementum/state.md` lists V-14 done.
+- Implementation review (2026-10-19): added 2 steps to be addressed. Checked: kondo 0/0, cljfmt clean, scry
+  exit 0 on `closed-record.hidden-key-test` (1.11).
+- Addressed 2 review steps: copied `thrown`/`data-of`; `assert-extra-z` asserts the full `ex-data` with
+  `:record E` in one `is`; removed `guard-test`. Kondo 0/0, cljfmt clean, scry 6 tests 36 assertions 0 failures.
+- Implementation review pass 2 (2026-10-20): no new steps.
+- Test review (2026-10-20): no new steps.
+- Test review pass 2 (2026-10-19): no new steps.
+- Docs review (2026-10-20): added 1 step to be addressed.
+- Addressed 1 docs review step: V-14 row, I-02 scope and I-07 object name conj/merge (via assoc) and dissoc (same instance).
+- Docs review pass 2 (2026-10-20): added 1 step to be addressed.
+- Addressed 1 docs review step: embodiment.md `__extmap` row names cons (conj, merge) via assoc and without (dissoc) same instance.
+- Docs review pass 3 (2026-10-20): added 1 step to be addressed.
+- Addressed 1 docs review step: embodiment.md Artifacts table has a `hidden_key_test.clj` row (V-14).
+- Docs review pass 4 (2026-10-20): no new steps.
+- Code-shaper review (2026-10-19): added 2 steps to be addressed.
+- Addressed 2 code-shaper review steps: `same` takes a vector of `[label f]` pairs and asserts each pair has a fn;
+  labels are short operation names; single-call fns passed directly. No line over 100. Kondo 0/0, cljfmt clean,
+  scry exit 0 (75 tests, 314 assertions).
+- Code-shaper review pass 2 (2026-10-20): added 2 steps to be addressed.
+- Addressed 2 code-shaper review steps: removed the pair-count assertion from `same`; bind `x` in each `let` and
+  in `same`; `reduce-kv` value is `v`. Kondo 0/0, cljfmt clean, scry 0 failures (75 tests, 290 assertions).
+- Code-shaper review pass 3 (2026-10-20): added 1 step to be addressed.
+- Addressed 1 code-shaper review step: `same` takes only `[label f]` pairs, reads `(lit)` and calls
+  `assert-extra-z` (guard); each hidden-key deftest is one `same` call; `retention-test` keeps its guard. Kondo 0/0,
+  cljfmt clean, scry 0 failures (6 tests, 36 assertions).
+- Code-shaper review pass 4 (2026-10-20): no new steps.

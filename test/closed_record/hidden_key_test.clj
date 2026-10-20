@@ -27,90 +27,79 @@
 
 (def ^:private plain (->E 1 2))
 
-(defn- check-data
-  "Return the `ex-data` of the exception that `check` of `x` throws, or nil."
-  [x]
-  (try (check x) nil (catch Throwable t (ex-data t))))
+(defn- thrown
+  "Call `f`; return the exception that it throws, or nil."
+  [f]
+  (try (f) nil (catch Throwable e e)))
+
+(defn- data-of [f] (ex-data (thrown f)))
 
 (defn- assert-extra-z
   "Assert that `check` of `x` throws `extra-keys` with `#{:z}`."
   [x]
-  (let [d (check-data x)]
-    (is (= :closed-record/extra-keys (:type d)))
-    (is (= #{:z} (:keys d)))))
+  (is (= {:type :closed-record/extra-keys :record E :keys #{:z}}
+         (data-of #(check x)))))
 
 (defn- same
-  "Assert `(= (f plain) (f v))` for each `label f` pair."
-  [v & label-fs]
-  (doseq [[label f] (partition 2 label-fs)]
-    (testing label
-      (is (= (f plain) (f v))))))
-
-(deftest guard-test
-  ;; Without this, every other test could pass with no hidden key.
-  (assert-extra-z (lit)))
+  "Read `x` from `lit`, assert that it has the hidden key `:z` (guard),
+  then assert `(= (f plain) (f x))` for each `[label f]` pair."
+  [pairs]
+  (let [x (lit)]
+    (assert-extra-z x)
+    (doseq [[label f] pairs]
+      (testing label
+        (is (= (f plain) (f x)))))))
 
 (deftest size-and-entries-test
-  (let [v (lit)]
-    (assert-extra-z v)
-    (same v
-          "(count x)" (fn [x] (count x))
-          "(seq x)" (fn [x] (seq x))
-          "(keys x)" (fn [x] (keys x))
-          "(vals x)" (fn [x] (vals x))
-          "(into {} x)" (fn [x] (into {} x))
-          "(iterator-seq (.iterator ^Iterable x))" (fn [x] (iterator-seq (.iterator ^Iterable x)))
-          "(reduce-kv (fn [acc k w] (conj acc [k w])) [] x)" (fn [x] (reduce-kv (fn [acc k w] (conj acc [k w])) [] x)))))
+  (same
+   [["count" count]
+    ["seq" seq]
+    ["keys" keys]
+    ["vals" vals]
+    ["(into {} x)" #(into {} %)]
+    ["iterator-seq of .iterator" #(iterator-seq (.iterator ^Iterable %))]
+    ["reduce-kv" #(reduce-kv (fn [acc k v] (conj acc [k v])) [] %)]]))
 
 (deftest lookup-test
-  (let [v (lit)]
-    (assert-extra-z v)
-    (same v
-          "(get x :z :nf)" (fn [x] (get x :z :nf))
-          "(:z x)" (fn [x] (:z x))
-          "(contains? x :z)" (fn [x] (contains? x :z))
-          "(find x :z)" (fn [x] (find x :z)))))
+  (same
+   [["(get x :z :nf)" #(get % :z :nf)]
+    ["(:z x)" :z]
+    ["contains?" #(contains? % :z)]
+    ["find" #(find % :z)]]))
 
 (deftest java-util-map-test
-  (let [v (lit)]
-    (assert-extra-z v)
-    (same v
-          "(.size ^java.util.Map x)" (fn [x] (.size ^java.util.Map x))
-          "(.keySet ^java.util.Map x)" (fn [x] (.keySet ^java.util.Map x))
-          "(.values ^java.util.Map x)" (fn [x] (.values ^java.util.Map x))
-          "(.entrySet ^java.util.Map x)" (fn [x] (.entrySet ^java.util.Map x))
-          "(.containsKey ^java.util.Map x :z)" (fn [x] (.containsKey ^java.util.Map x :z))
-          "(.get ^java.util.Map x :z)" (fn [x] (.get ^java.util.Map x :z))
-          "(.containsValue ^java.util.Map x 3)" (fn [x] (.containsValue ^java.util.Map x 3)))))
+  (same
+   [[".size" #(.size ^java.util.Map %)]
+    [".keySet" #(.keySet ^java.util.Map %)]
+    [".values" #(.values ^java.util.Map %)]
+    [".entrySet" #(.entrySet ^java.util.Map %)]
+    [".containsKey :z" #(.containsKey ^java.util.Map % :z)]
+    [".get :z" #(.get ^java.util.Map % :z)]
+    [".containsValue 3" #(.containsValue ^java.util.Map % 3)]]))
 
 (deftest equality-and-hash-test
-  (let [v (lit)]
-    (assert-extra-z v)
-    (same v
-          "(= x plain)" (fn [x] (= x plain))
-          "(hash x)" (fn [x] (hash x))
-          "(.hashCode ^Object x)" (fn [x] (.hashCode ^Object x))
-          "(.equals ^Object x {:a 1 :b 2})" (fn [x] (.equals ^Object x {:a 1 :b 2}))
-          "(.equals ^Object {:a 1 :b 2 :z 3} x)" (fn [x] (.equals ^Object {:a 1 :b 2 :z 3} x)))))
+  (same
+   [["(= x plain)" #(= % plain)]
+    ["hash" hash]
+    [".hashCode" #(.hashCode ^Object %)]
+    ["(.equals x {:a 1 :b 2})" #(.equals ^Object % {:a 1 :b 2})]
+    ["(.equals {:a 1 :b 2 :z 3} x)" #(.equals ^Object {:a 1 :b 2 :z 3} %)]]))
 
 (deftest print-test
-  (let [v (lit)]
-    (assert-extra-z v)
-    (same v
-          "(pr-str x)" (fn [x] (pr-str x)))))
+  (same [["pr-str" pr-str]]))
 
 (deftest retention-test
   ;; I-07: each case reaches a different emitter path.
-  (let [v (lit)]
-    (assert-extra-z v)
+  (let [x (lit)]
+    (assert-extra-z x)
     (testing "assoc"
-      (assert-extra-z (assoc v :a 5)))
+      (assert-extra-z (assoc x :a 5)))
     (testing "with-meta"
-      (assert-extra-z (with-meta v {:m 1})))
+      (assert-extra-z (with-meta x {:m 1})))
     (testing "dissoc of an undeclared key returns the same value"
-      (is (identical? v (dissoc v :z)))
-      (assert-extra-z (dissoc v :z)))
+      (is (identical? x (dissoc x :z)))
+      (assert-extra-z (dissoc x :z)))
     (testing "conj of a vector pair"
-      (assert-extra-z (conj v [:a 5])))
+      (assert-extra-z (conj x [:a 5])))
     (testing "merge of a map"
-      (assert-extra-z (merge v {:b 9})))))
+      (assert-extra-z (merge x {:b 9})))))
