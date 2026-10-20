@@ -161,3 +161,23 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
   items that passes 2 and 3 accepted.
 - Positional-literal mutation candidate: `positional-factory` in `src/closed_record/impl/jvm.clj` (the `new` form
   near line 231). Pass 3 entries above give its expected effect.
+
+## Implementation (2026-10-19)
+
+- All slices done in one pass. `test/closed_record/literal_test.clj`: 6 tests. No emitter defect; `src` not changed.
+- Round-trip and `print-dup` tests each loop over a plain and a nested `r`.
+- The constant macro is private; the extra-key test calls `macroexpand-1` on the fully qualified symbol.
+- I-07 `scope:`/`basis:` updated (continuation lines indented 2 spaces). `mementum/state.md`: V-04, V-05 done.
+- Mutation check (run with `clojure -M:test -e "(require ...) (run-tests ...)"`, each change reverted):
+  - round trip: `seq` maps keys to `(reverse fields)` → `(= r v)` fails (plain), nested errors. Also fails
+    `print-dup`, extra-key print and both constant tests (`emitValue` uses `entrySet` = `(set this)`).
+  - `print-dup`: `alter-var-root #'*verbose-defrecords*` true in the test ns → the prefix assertion fails.
+  - positional literal: `positional-factory` emits `(new classname ~@(reverse field-args))` → `(= (->T 1 2) v)`
+    fails (others fail or error too).
+  - extra-key print: the `seq` reverse change → `(= lit v)` fails.
+  - value constant: `withMeta` passes `nil` as meta → `(= {:m 1} (meta v))` fails (only this test).
+  - extra-key constant: `entrySet` = `(set (concat this __extmap))` → `check` of the compiled result throws
+    `extra-keys` (only this test). Confirms that `emitValue` reads `entrySet` (I-09).
+- Rejected changes: `seq` drops `:n` (NPE at namespace load, no per-test signal); `IType` in the interfaces
+  (VerifyError at namespace load: `emitValue` emits all fields); `iterator` adds `__extmap` (no test fails:
+  `emitValue` does not use `iterator`).

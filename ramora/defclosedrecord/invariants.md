@@ -89,8 +89,13 @@ status: intended
 subject: __extmap
 predicate: non-empty only if made by
 object: create from a map literal with extra keys, or assoc and withMeta of such an instance
-scope: all instances. Print, code constants and positional reads drop __extmap; after that, check passes.
-basis: K-07; E-03 (emitValue uses the java.util.Map view, I-09)
+scope: all instances. Print, code constants and positional reads drop __extmap; after that, check passes. A code
+  constant is a constant that the compiler emits into a class (Compiler.emitValue). A constant that Clojure evaluates
+  without a class keeps the object (observed: only the init of a top-level def, when the init is not compiled into a
+  function).
+basis: K-07; E-03 (emitValue uses the java.util.Map view, I-09); task 003 observation (2026-10-19, Clojure 1.11.4);
+  Compiler.eval path (DefExpr.eval evaluates the init, ConstantExpr.eval returns the object; other top-level forms
+  compile into a function)
 enforced-by: no method writes new keys to __extmap
 verified-by: V-04, V-05, V-14
 confidence: high
