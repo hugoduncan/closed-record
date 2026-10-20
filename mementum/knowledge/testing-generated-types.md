@@ -2,8 +2,8 @@
 title: Tests of eval'ed forms and compiler-generated types
 status: active
 category: testing
-tags: [scry, eval, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site]
-related: [mementum/knowledge/dev-tooling.md, test/closed_record/compiler_rules_test.clj, test/closed_record/defclosedrecord_test.clj, test/closed_record/literal_test.clj, test/closed_record/field_value_test.clj, ramora/defclosedrecord/invariants.md]
+tags: [scry, eval, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site, equality, hash, withMeta]
+related: [mementum/knowledge/dev-tooling.md, test/closed_record/compiler_rules_test.clj, test/closed_record/defclosedrecord_test.clj, test/closed_record/literal_test.clj, test/closed_record/field_value_test.clj, test/closed_record/equality_test.clj, ramora/defclosedrecord/invariants.md]
 depends-on: [mementum/knowledge/dev-tooling.md]
 ---
 
@@ -84,11 +84,33 @@ Observed in task 004 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `
   is false. Do not compare `hash` across types: `hasheq` includes the type hash (D-07). Compare exception classes,
   not messages.
 - Assert with a macro that expands to `(is (= closed-outcome record-outcome))`. A boolean helper reports only
-  `actual: false`.
+  `actual: false`. In the macro, bind the two outcomes to readable locals (`~'closed`, `~'record`), not `x#`:
+  `expected:` then shows `(= closed record)`, not a gensym. Return a map keyed by operation
+  (`{:= .. :hash= .. :equals ..}`), not a vector of booleans, so a failure names the operation that differs.
 - A keyword call site caches the types that it sees. Give each call-site test its own site (a local `fn` in the
   `deftest`). A shared top-level site makes the site state depend on the test order.
 - Run one namespace: `clojure -M:test -m scry.cli -n <ns>`. A scripted mutation run: replace a string in
   `src/closed_record/impl/jvm.clj`, run the namespace, read `.scry-results/`, revert with `git checkout`.
+
+## Equality and hash tests
+
+Observed in task 005 (Clojure 1.11.4; facts also hold on 1.13). Pattern: `test/closed_record/equality_test.clj`.
+
+- 💡 For most field values, `=` (`Util.equiv`) and `.equals` (`Util.equals`) give the same result, so a test does
+  not see a wrong comparison or a wrong map hash. Use field pairs that make them differ: `1`/`1N` and
+  `(int 1)`/`1` (`=` true, `.equals` false), `0.0`/`-0.0` (also `.hashCode` differs), `1`/`1.0` (all false).
+  `##NaN` gives no signal: `=` of a value with itself is true by identity.
+- 💡 Call paths from collections to the emitter methods of a record `r` (plain map `m`):
+  - `(= m r)` calls no method of `r`. `APersistentMap.equiv` returns false because `r` is not a `MapEquivalence`.
+    Only a change in `base-interfaces` (add `MapEquivalence`) can change the result.
+  - `(.equals m r)` and `HashMap.equals` call `size`, `containsKey` and `get` of `r`, not `equals`.
+  - `(contains? #{m} r)` calls `hasheq` of `r`, then `(.equiv r m)`. `HashSet.contains` calls `.hashCode`
+    and `.equals` of `r`.
+  - Read the Clojure source before you say that a call is in emitter code. One guess in task 005 was wrong.
+- ❌ `withMeta` copies the `__hash` and `__hasheq` caches. If a test calls `hash` before `with-meta`, the copied
+  cache hides a change that puts `__meta` into a hash. Make all values first, then call `hash` or `.hashCode`.
+- Do not compare `hash` of a closed value with `hash` of a `defrecord` value (type hash, D-07). Compare `hash`
+  equality inside each type, then compare the two results.
 
 ## Expansion-time errors
 
@@ -112,6 +134,13 @@ Observed in task 004 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `
 - 🔁 A mutation counts only if it breaks the path or property that the test asserts. A change that breaks `=` or
   `check` for all values does not count. A change that fails at namespace load (`VerifyError`, NPE) gives no
   signal for each test. Record, for each test, the change and the assertion that failed.
+- 🔁 A mutation that changes more than one method counts as one change only if each part alone does not make the
+  item fail. Run and record each part alone.
+- ❌ A hash method body must have type `int`: wrap a `bit-xor` in `(int ...)`. A `long` body fails at `deftype*`
+  compile (`ArrayIndexOutOfBoundsException`) and gives no signal.
+- To run a mutation without risk to the work tree, `cp -R` the repository to `/tmp` and change the copy.
+- 🎯 Test source must not refer to task design sections ("Scope 3", "the first Context table"). The reader cannot
+  find them after the task closes. Describe each case in the source. Keep durable ids (V-nn, I-nn, D-nn).
 - ❌ `(is (.startsWith s p))` reports only `actual: false`: `clojure.test` shows the arguments only of a var call.
   For a change-signal assertion, use `=` (for example on a prefix from `subs`), so a failure shows the new output.
 - A `defrecord` `Object/toString` that calls `str` on the record recurses (`StackOverflowError`). Use a protocol
