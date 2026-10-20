@@ -2,8 +2,8 @@
 title: Tests of eval'ed forms and compiler-generated types
 status: active
 category: testing
-tags: [scry, eval, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site, equality, hash, withMeta, extmap, iterator]
-related: [mementum/knowledge/dev-tooling.md, test/closed_record/compiler_rules_test.clj, test/closed_record/defclosedrecord_test.clj, test/closed_record/literal_test.clj, test/closed_record/field_value_test.clj, test/closed_record/equality_test.clj, test/closed_record/hidden_key_test.clj, ramora/defclosedrecord/invariants.md]
+tags: [scry, eval, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site, equality, hash, withMeta, extmap, iterator, test.check, property]
+related: [mementum/knowledge/dev-tooling.md, test/closed_record/compiler_rules_test.clj, test/closed_record/defclosedrecord_test.clj, test/closed_record/literal_test.clj, test/closed_record/field_value_test.clj, test/closed_record/equality_test.clj, test/closed_record/hidden_key_test.clj, test/closed_record/property_test.clj, ramora/defclosedrecord/invariants.md]
 depends-on: [mementum/knowledge/dev-tooling.md]
 ---
 
@@ -128,6 +128,30 @@ Observed in task 006 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `
   expected value from the same value without extra keys (`plain`), not from fixed values.
 - ❌ A variadic helper with `(partition 2 label-fs)` drops a last label with no fn, with no signal. Take a vector of
   `[label f]` pairs. Use the label in `testing`, so a mutation failure names the operation.
+
+## Property tests (test.check)
+
+Observed in task 007 (test.check 1.1.3, Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern:
+`test/closed_record/property_test.clj`.
+
+- 🎯 The property body returns `true` or a failure `Result`. Do not use `is` in the body: each trial and each shrink
+  step then adds assertions. The `deftest` has one `(is (:pass? result) msg)`. `msg` shows `:seed`,
+  `[:shrunk :smallest]` and `[:shrunk :result-data]`. scry counts the test as passed, not "unknown".
+- 💡 A failure that names its check: `(reify clojure.test.check.results/Result (pass? [_] false)
+  (result-data [_] {:check id}))`. Its data is at `[:shrunk :result-data]`. A throw in the body gives only
+  `{:clojure.test.check.properties/error e}`, with no check name. Thus each check catches any `Throwable` from its
+  own operation and fails with its name and `:ex`. Do not catch around setup (factory call, model update).
+- ❌ Shrinking keeps any failure, not the first one. `[:shrunk :result-data]` can name a different check than the
+  first failed trial. Read the check name from the shrunk result.
+- ❌ To find a failure among other return values, use `(instance? clojure.test.check.results.Result r)`. Do not use
+  `satisfies?`: test.check extends `Result` to `Object` and `nil`, so it is true for all values.
+- ❌ `gen/any` can give `##NaN`. `(= ##NaN ##NaN)` is false, so a model comparison fails with no fault. Use
+  `gen/small-integer` with `nil`, or `gen/any-equatable`.
+- 🔁 Run an operation once (`{:value v}` or `{:ex e}`), then give that outcome to each check. Do not let one check
+  keep a result (for example in a `volatile!`) for a later check.
+- Mutation run: in a new JVM, call `quick-check` on the property var (`@#'ns/var` for a private var) and print
+  `[:shrunk :result-data]`. The property stops at the first failed check, so the change must show first in the check
+  under test. Change the body of a view method (`size`, `keySet`, `values`, `entrySet`), not `seq` or `count`.
 
 ## Expansion-time errors
 
