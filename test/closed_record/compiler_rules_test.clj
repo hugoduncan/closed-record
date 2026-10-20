@@ -18,6 +18,11 @@
 
 (defn- eval-in-ns [form] (in-test-ns #(eval form)))
 
+(defn- thrown
+  "Call `f`; return the exception that it throws, or nil."
+  [f]
+  (try (f) nil (catch Throwable t t)))
+
 (defn- class-name [type-name]
   (str (namespace-munge test-ns) "." type-name))
 
@@ -92,16 +97,15 @@
         (eval-in-ns (deftype*-form type-name fields
                       '[clojure.lang.IRecord] []))
         (is (= VerifyError
-               (class (try (load-class type-name) nil
-                           (catch Throwable t t)))))))))
+               (class (thrown #(load-class type-name)))))))))
 
 (deftest k-06-reserved-names-test
   (doseq [field-name '[__meta __extmap __hash __hasheq]]
     (testing (str "deftype rejects " field-name)
-      (let [t (try
-                (in-test-ns #(macroexpand-1 (list 'deftype 'T ['a field-name])))
-                nil
-                (catch Throwable t t))]
+      (let [t (thrown
+               (fn []
+                 (in-test-ns
+                  #(macroexpand-1 (list 'deftype 'T ['a field-name])))))]
         (is (= AssertionError (class (ex-cause t))))))))
 
 (def ^:private k-07-methods
@@ -169,4 +173,4 @@
        [entry-set-method]))
     (let [v (eval-in-ns (list 'new (symbol (class-name 'K08NoIType)) 1))]
       (is (= NoSuchMethodError
-             (class (try (constant v) nil (catch Throwable t t))))))))
+             (class (thrown #(constant v))))))))

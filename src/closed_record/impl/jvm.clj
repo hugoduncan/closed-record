@@ -8,6 +8,13 @@
 (def ^:private protocol-interface
   'closed_record.core.ClosedRecord)
 
+(def hidden-fields
+  "The hidden fields of a closed record type, with their deftype* metadata,
+  in field order after the declared fields."
+  '[__meta __extmap
+    ^int ^:unsynchronized-mutable __hash
+    ^int ^:unsynchronized-mutable __hasheq])
+
 (def ^:private base-interfaces
   '[clojure.lang.IRecord
     clojure.lang.IHashEq
@@ -30,7 +37,7 @@
   [opts]
   (when-let [bad (seq (remove #{:no-print :load-ns} (keys opts)))]
     (throw (IllegalArgumentException.
-            (apply print-str "Unsupported option(s) -" bad)))))
+            ^String (apply print-str "Unsupported option(s) -" bad)))))
 
 (defn- maybe-destructured
   "Replace each non-symbol method parameter with a gensym, and destructure
@@ -57,9 +64,7 @@
 (defn- user-interfaces
   [impls]
   (->> (map (comp spec-interface first) impls)
-       (remove '#{Object java.lang.Object})
-       distinct
-       vec))
+       (remove '#{Object java.lang.Object})))
 
 (defn- user-methods
   [impls]
@@ -67,168 +72,181 @@
         [mname params & body] methods]
     (cons mname (maybe-destructured params body))))
 
-(defn- undeclared-key-throw
-  [cname-str k]
-  `(throw (ex-info (str "Undeclared key " ~k " for closed record " ~cname-str)
-                   {:type :closed-record/undeclared-key
-                    :record ~'(class this)
-                    :key ~k})))
+(defn- closed-throw
+  "A form that throws a closed-record ex-info. `msg-parts` are the arguments
+  of `str` for the message."
+  [msg-parts data]
+  `(throw (ex-info (str ~@msg-parts) ~data)))
+
+(defn- cached-hash
+  "A form that returns the hash cache `field`. If the cache is 0, it
+  calculates `expr`, sets the cache and returns the value."
+  [field expr]
+  `(let [c# ~field]
+     (if (zero? c#)
+       (let [h# ~expr]
+         (set! ~field h#)
+         h#)
+       c#)))
+
+(defn- key-case
+  "A `case` form on `k`, with one clause for each declared keyword and field
+  pair, and then `default`. `(clause-fn kw fld)` gives the clause expression."
+  [k kws fields clause-fn default]
+  `(case ~k
+     ~@(mapcat (fn [kw fld] [kw (clause-fn kw fld)]) kws fields)
+     ~default))
 
 (defn- generated-methods
-  "The methods of the generated type. Each method names its target
-  `this`; the field names are locals in the method bodies."
-  [tagname cname-str type-hash fields]
+  "The methods of the generated type. The field names are locals in the
+  method bodies, so every generated local is a gensym."
+  [tname cname-str type-hash fields]
   (let [kws (mapv keyword fields)
         n (count fields)
-        ctor-short (fn [replacements]
-                     `(new ~tagname
-                           ~@(replace replacements fields)
-                           ~'__meta
-                           ~'__extmap))
-        hinted-target (with-meta 'gtarget {:tag tagname})]
+        this (gensym "this__")
+        k (gensym "k__")
+        v (gensym "v__")
+        nf (gensym "nf__")
+        gtarget (gensym "gtarget__")
+        gclass (gensym "gclass__")
+        thunk (gensym "thunk__")
+        hinted-target (with-meta gtarget {:tag tname})]
     [;; IHashEq / Object
-     `(~'hasheq [~'this]
-                (let [hq# ~'__hasheq]
-                  (if (zero? hq#)
-                    (let [h# (int (bit-xor ~type-hash
-                                           (clojure.lang.APersistentMap/mapHasheq ~'this)))]
-                      (set! ~'__hasheq h#)
-                      h#)
-                    hq#)))
-     `(~'hashCode [~'this]
-                  (let [hc# ~'__hash]
-                    (if (zero? hc#)
-                      (let [h# (clojure.lang.APersistentMap/mapHash ~'this)]
-                        (set! ~'__hash h#)
-                        h#)
-                      hc#)))
-     `(~'equals [~'this o#] (clojure.lang.APersistentMap/mapEquals ~'this o#))
+     `(~'hasheq [~this]
+                ~(cached-hash '__hasheq
+                              `(int (bit-xor ~type-hash
+                                             (clojure.lang.APersistentMap/mapHasheq ~this)))))
+     `(~'hashCode [~this]
+                  ~(cached-hash '__hash
+                                `(clojure.lang.APersistentMap/mapHash ~this)))
+     `(~'equals [~this o#] (clojure.lang.APersistentMap/mapEquals ~this o#))
      ;; IObj
-     `(~'meta [~'this] ~'__meta)
-     `(~'withMeta [~'this m#]
-                  (new ~tagname ~@fields m# ~'__extmap ~'__hash ~'__hasheq))
+     `(~'meta [~this] ~'__meta)
+     `(~'withMeta [~this m#]
+                  (new ~tname ~@fields m# ~'__extmap ~'__hash ~'__hasheq))
      ;; ILookup / IKeywordLookup
-     `(~'valAt [~'this k#] (.valAt ~'this k# nil))
-     `(~'valAt [~'this k# nf#]
-               (case k# ~@(mapcat vector kws fields) nf#))
-     `(~'getLookupThunk [~'this k#]
-                        (let [~'gclass (class ~'this)]
-                          (case k#
-                            ~@(mapcat
-                               (fn [fld kw]
-                                 [kw
-                                  `(reify clojure.lang.ILookupThunk
-                                     (~'get [~'thunk ~'gtarget]
-                                       (if (identical? (class ~'gtarget) ~'gclass)
-                                         (. ~hinted-target ~(symbol (str "-" fld)))
-                                         ~'thunk)))])
-                               fields kws)
+     `(~'valAt [~this ~k] (.valAt ~this ~k nil))
+     `(~'valAt [~this ~k ~nf]
+               ~(key-case k kws fields (fn [_ fld] fld) nf))
+     `(~'getLookupThunk [~this ~k]
+                        (let [~gclass (class ~this)]
+                          ~(key-case
+                            k kws fields
+                            (fn [_ fld]
+                              `(reify clojure.lang.ILookupThunk
+                                 (~'get [~thunk ~gtarget]
+                                   (if (identical? (class ~gtarget) ~gclass)
+                                     (. ~hinted-target ~(symbol (str "-" fld)))
+                                     ~thunk))))
                             nil)))
      ;; IPersistentMap
-     `(~'count [~'this] ~n)
-     `(~'empty [~'this]
-               (throw (ex-info (str "Cannot create empty closed record " ~cname-str)
-                               {:type :closed-record/empty
-                                :record (class ~'this)})))
-     `(~'cons [~'this e#]
+     `(~'count [~this] ~n)
+     `(~'empty [~this]
+               ~(closed-throw ["Cannot create empty closed record " cname-str]
+                              `{:type :closed-record/empty
+                                :record (class ~this)}))
+     `(~'cons [~this e#]
               (cond
                 (map-entry? e#)
-                (.assoc ~'this (key e#) (val e#))
+                (assoc ~this (key e#) (val e#))
 
                 (instance? clojure.lang.IPersistentVector e#)
-                (.assoc ~'this (nth e# 0) (nth e# 1))
+                (assoc ~this (nth e# 0) (nth e# 1))
 
                 :else
-                (loop [r# ~'this
-                       o# e#]
-                  (if (seq o#)
-                    (let [^java.util.Map$Entry pair# (first o#)]
-                      (recur (assoc r# (.getKey pair#) (.getValue pair#)) (rest o#)))
+                (loop [r# ~this
+                       es# (seq e#)]
+                  (if es#
+                    (let [pair# (first es#)]
+                      (recur (assoc r# (key pair#) (val pair#)) (next es#)))
                     r#))))
-     `(~'equiv [~'this o#]
+     `(~'equiv [~this o#]
                (boolean
-                (or (identical? ~'this o#)
-                    (when (identical? (class ~'this) (class o#))
-                      (let [~hinted-target o#]
+                (or (identical? ~this o#)
+                    (when (identical? (class ~this) (class o#))
+                      (let [~gtarget o#]
                         (and ~@(map (fn [fld]
-                                      `(= ~fld (. ~'gtarget ~(symbol (str "-" fld)))))
+                                      `(= ~fld (. ~hinted-target ~(symbol (str "-" fld)))))
                                     fields)))))))
-     `(~'containsKey [~'this ~'k]
-                     ~(if (seq kws) `(case ~'k (~@kws) true false) false))
-     `(~'entryAt [~'this k#]
-                 (case k#
-                   ~@(mapcat (fn [kw fld] [kw `(clojure.lang.MapEntry/create ~kw ~fld)])
-                             kws fields)
-                   nil))
-     `(~'seq [~'this]
+     `(~'containsKey [~this ~k]
+                     ~(if (seq kws) `(case ~k (~@kws) true false) false))
+     `(~'entryAt [~this ~k]
+                 ~(key-case k kws fields
+                            (fn [kw fld] `(clojure.lang.MapEntry/create ~kw ~fld))
+                            nil))
+     `(~'seq [~this]
              (seq [~@(map (fn [kw fld] `(clojure.lang.MapEntry/create ~kw ~fld))
                           kws fields)]))
-     `(~'iterator [~'this]
-                  (clojure.lang.RecordIterator. ~'this ~kws (clojure.lang.RT/iter nil)))
-     (let [k (gensym "k__")
-           v (gensym "v__")]
-       `(~'assoc [~'this ~k ~v]
-                 (case ~k
-                   ~@(mapcat (fn [kw fld] [kw (ctor-short {fld v})]) kws fields)
-                   ~(undeclared-key-throw cname-str k))))
-     `(~'without [~'this ~'k]
-                 (case ~'k
-                   ~@(when (seq kws)
-                       [(apply list kws)
-                        `(throw (ex-info (str "Cannot dissoc declared key " ~'k
-                                              " from closed record " ~cname-str)
-                                         {:type :closed-record/declared-key-dissoc
-                                          :record (class ~'this)
-                                          :key ~'k}))])
-                   ~'this))
+     `(~'iterator [~this]
+                  (clojure.lang.RecordIterator. ~this ~kws (clojure.lang.RT/iter nil)))
+     `(~'assoc [~this ~k ~v]
+               ~(key-case k kws fields
+                          (fn [_ fld] `(new ~tname ~@(replace {fld v} fields) ~'__meta ~'__extmap))
+                          (closed-throw ["Undeclared key " k " for closed record " cname-str]
+                                        `{:type :closed-record/undeclared-key
+                                          :record (class ~this)
+                                          :key ~k})))
+     `(~'without [~this ~k]
+                 ~(if (seq kws)
+                    `(case ~k
+                       (~@kws)
+                       ~(closed-throw ["Cannot dissoc declared key " k
+                                       " from closed record " cname-str]
+                                      `{:type :closed-record/declared-key-dissoc
+                                        :record (class ~this)
+                                        :key ~k})
+                       ~this)
+                    this))
      ;; java.util.Map
-     `(~'size [~'this] (.count ~'this))
-     `(~'isEmpty [~'this] (= 0 (.count ~'this)))
-     `(~'containsValue [~'this v#] (boolean (some #{v#} (vals ~'this))))
-     `(~'get [~'this k#] (.valAt ~'this k#))
-     `(~'put [~'this k# v#] (throw (UnsupportedOperationException.)))
-     `(~'remove [~'this k#] (throw (UnsupportedOperationException.)))
-     `(~'putAll [~'this m#] (throw (UnsupportedOperationException.)))
-     `(~'clear [~'this] (throw (UnsupportedOperationException.)))
-     `(~'keySet [~'this] (set (keys ~'this)))
-     `(~'values [~'this] (vals ~'this))
-     `(~'entrySet [~'this] (set ~'this))
+     `(~'size [~this] (.count ~this))
+     `(~'isEmpty [~this] (= 0 (.count ~this)))
+     `(~'containsValue [~this ~v] (boolean (some #{~v} (vals ~this))))
+     `(~'get [~this ~k] (.valAt ~this ~k))
+     `(~'put [~this ~k ~v] (throw (UnsupportedOperationException.)))
+     `(~'remove [~this ~k] (throw (UnsupportedOperationException.)))
+     `(~'putAll [~this m#] (throw (UnsupportedOperationException.)))
+     `(~'clear [~this] (throw (UnsupportedOperationException.)))
+     `(~'keySet [~this] (set (keys ~this)))
+     `(~'values [~this] (vals ~this))
+     `(~'entrySet [~this] (set ~this))
      ;; ClosedRecord
-     `(~'-extra-keys [~'this] ~'__extmap)]))
+     `(~'-extra-keys [~this] ~'__extmap)]))
 
 (defn- positional-factory
-  [fn-name classname fields]
+  [fn-name classname cname-str fields]
   (let [[field-args over] (split-at 20 fields)
-        over-count (count over)]
+        over-count (count over)
+        overage (gensym "overage__")]
     `(defn ~fn-name
-       ~(str "Positional factory function for class " classname ".")
-       [~@field-args ~@(when (seq over) '[& overage])]
+       ~(str "Positional factory function for class " cname-str ".")
+       [~@field-args ~@(when (seq over) ['& overage])]
        ~(if (seq over)
-          `(if (= (count ~'overage) ~over-count)
+          `(if (= (count ~overage) ~over-count)
              (new ~classname
                   ~@field-args
-                  ~@(for [i (range over-count)] `(nth ~'overage ~i)))
+                  ~@(for [i (range over-count)] `(nth ~overage ~i)))
              (throw (clojure.lang.ArityException.
-                     (+ ~(count field-args) (count ~'overage))
+                     (+ ~(count field-args) (count ~overage))
                      ~(name fn-name))))
           `(new ~classname ~@field-args)))))
 
 (defn- map-factory
-  [fn-name classname fields]
-  (let [kws (set (map keyword fields))]
+  [fn-name classname cname-str fields]
+  (let [declared (set (map keyword fields))
+        m (gensym "m__")
+        extra (gensym "extra__")]
     `(defn ~fn-name
-       ~(str "Factory function for class " classname
+       ~(str "Factory function for class " cname-str
              ", taking a map of keywords to field values.")
-       [m#]
-       (let [m# (if (instance? clojure.lang.MapEquivalence m#) m# (into {} m#))
-             extra# (into #{} (remove ~kws) (keys m#))]
-         (when (seq extra#)
-           (throw (ex-info (str "Extra keys " extra# " for closed record "
-                                ~(str classname))
-                           {:type :closed-record/extra-keys
+       [~m]
+       (let [~m (if (instance? clojure.lang.MapEquivalence ~m) ~m (into {} ~m))
+             ~extra (into #{} (remove ~declared) (keys ~m))]
+         (when (seq ~extra)
+           ~(closed-throw ["Extra keys " extra " for closed record " cname-str]
+                          `{:type :closed-record/extra-keys
                             :record ~classname
-                            :keys extra#})))
-         (~(symbol (str classname "/create")) m#)))))
+                            :keys ~extra}))
+         (. ~classname ~'create ~m)))))
 
 (defn emit
   "Return the expansion form of a closed record type.
@@ -251,9 +269,7 @@
        (declare ~->name)
        (declare ~map->name)
        (deftype* ~(symbol (name (ns-name *ns*)) (name tname)) ~classname
-         ~(conj (vec fields) '__meta '__extmap
-                '^int ^:unsynchronized-mutable __hash
-                '^int ^:unsynchronized-mutable __hasheq)
+         ~(into (vec fields) hidden-fields)
          :implements ~(vec (distinct (concat base-interfaces
                                              [protocol-interface]
                                              (user-interfaces impls))))
@@ -261,6 +277,6 @@
          ~@methods
          ~@(user-methods impls))
        (import ~classname)
-       ~(positional-factory ->name classname plain-fields)
-       ~(map-factory map->name classname plain-fields)
+       ~(positional-factory ->name classname cname-str plain-fields)
+       ~(map-factory map->name classname cname-str plain-fields)
        ~classname)))

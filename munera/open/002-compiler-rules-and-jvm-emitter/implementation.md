@@ -555,3 +555,328 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
 - blocker: The architecture findings need a user decision before `ramora/` or `mementum/memories/deftype-star-hidden-fields.md` can change (rule from the design).
 - required-human-action: Read the architecture findings in implementation.md (lines 58, 109, 151, 199, 243, 329). Approve or reject each edit to `ramora/` and to the memory file.
 <!-- IMPLEMENTATION_BLOCKER: END -->
+
+## Implementation review (2026-10-19)
+
+- Added 2 steps to be addressed.
+
+## Review follow-ups (2026-10-19)
+
+- addressed 2 review steps.
+- `generated-methods`: the target, `k`, `gtarget`, `gclass`, `thunk` are gensyms. `positional-factory`: `overage` is
+  a gensym (same shadow defect for a field named `overage` in a type with >20 fields).
+- `cons` branch 3: `imap-cons` loop shape (`(seq e)`, `next`).
+- `generated-local-names-test` (type `S [this gtarget]`) fails before the fix (5 assertions), passes after.
+  CLI 1.11/1.12/1.13: 33 tests, 104 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+
+## Implementation review, pass 2 (2026-10-19)
+
+- No new steps.
+
+## Test review (2026-10-19)
+
+- Added 6 steps to be addressed.
+
+## Test review follow-ups (2026-10-19)
+
+- addressed 6 review steps.
+- `defclosedrecord_test.clj` new types: `U` (protocol `Shape`, `Comparable`, `Object/toString`, destructured
+  argument, `map->U` in a protocol body), `Z0 []`, `NP` (`:no-print true`), `LN` (`:load-ns true`).
+- New tests: `cons-branches-test`, `metadata-test`, `extra-key-retention-test`, `is-empty-test`,
+  `contains-value-test`, `entry-at-test`, `iterator-test`, `java-map-views-test`, `java-map-mutators-test`,
+  `user-implementations-test`, `accepted-options-test`; `map-factory-test` extended (nil, `HashMap`, pairs, `:x`).
+- All pass with no code change. CLI 1.11/1.12/1.13: 44 tests, 151 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+
+## Test review, pass 2 (2026-10-19)
+
+- Added 3 steps to be addressed.
+
+## Test review, pass 2 follow-ups (2026-10-19)
+
+- addressed 3 review steps.
+- New types: `R2 [a b]` (closed), `DR [a b]` (`defrecord`), `JO [a]` (`java.lang.Object` `toString`).
+- `equal-other-type-test`: `(not= r (->R2 1 2))`, `(not= r (->DR 1 2))`. `map-factory-test`: `(map->R r)`,
+  `(map->R (->DR 1 2))`. `user-implementations-test`: `(str (->JO 1))`.
+- All pass with no code change. CLI 1.11/1.12/1.13: 44 tests, 155 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+
+## Test review, pass 3 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Test review, pass 3 follow-ups (2026-10-19)
+
+- addressed 1 review step.
+- `assoc-test`: hash `h` (`hash`, `.hashCode`; asserted, so clj-kondo has no unused-value finding), then `hash` and
+  `.hashCode` of `(assoc h :a 5)` equal those of `(->R 5 2)`.
+- Passes with no code change. CLI 1.11/1.12/1.13: 44 tests, 159 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step. It is not a review follow-up and needs user approval.
+
+## Test review, pass 4 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Test review, pass 4 follow-ups (2026-10-19)
+
+- addressed 1 review step.
+- `serializable-test`: `ObjectOutputStream`/`ObjectInputStream` round trip of `(with-meta r {:m 1})` gives `=`,
+  class `R`, metadata `{:m 1}`, same `hash`.
+- Passes with no code change. CLI 1.11/1.12/1.13: 45 tests, 163 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step. It is not a review follow-up and needs user approval.
+
+## Test review, pass 5 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Test review, pass 5 follow-ups (2026-10-19)
+
+- addressed 1 review step.
+- New type `OV [overage f1 ... f21]`. `generated-local-names-test`: `(apply ->OV (range 22))` gives each field in order.
+- Passes with no code change. With the literal symbol `overage` in `positional-factory`, the test fails (checked, then
+  reverted). CLI 1.11/1.12/1.13: 45 tests, 164 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step. It is not a review follow-up and needs user approval.
+
+## Test review, pass 6 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Test review, pass 6 follow-ups (2026-10-19)
+
+- addressed 1 review step.
+- `load-ns-option-test`: `eval` in a new `create-ns` namespace (with `refer-clojure`). With `:load-ns true` →
+  `ex-cause` class `ExceptionInInitializerError`; without it → a class.
+- Passes with no code change. If the emitter drops the options, the test fails (checked, then reverted).
+  CLI 1.11/1.12/1.13: 46 tests, 166 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step. It is not a review follow-up and needs user approval.
+
+## Test review, pass 7 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Test review, pass 7 follow-ups (2026-10-19)
+
+- addressed 1 review step.
+- `metadata-test`: a new record `(->R 3 4)`; after `hash` and `.hashCode`, `(with-meta x {:m 1})` gives the same
+  `hash` and `.hashCode`.
+- Passes with no code change. With `__hash` and `__hasheq` swapped in `withMeta`, `metadata-test` alone fails
+  (checked, then reverted). CLI 1.11/1.12/1.13: 46 tests, 168 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step. It is not a review follow-up and needs user approval.
+
+## Test review, pass 8 (2026-10-19)
+
+- No new steps.
+
+## Test review, pass 9 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Test review, pass 9 follow-ups (2026-10-19)
+
+- addressed 1 review step.
+- `keyword-call-test`: one local `fn` with `(:a x)`, called on `r`, `(->R2 7 8)`, `(->DR 5 6)` and `{:a 3}` → `1`, `7`,
+  `5`, `3`.
+- Passes with no code change. With the thunk class check removed, the test errors (checked, then reverted).
+  CLI 1.11/1.12/1.13: 46 tests, 172 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step. It is not a review follow-up and needs user approval.
+
+## Test review, pass 10 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Test review, pass 10 follow-ups (2026-10-19)
+
+- addressed 1 review step.
+- `assoc-test`: the caches of `h` are filled by the `let` binding `_ [(hash h) (.hashCode ^Object h)]`, with no
+  assertion. Only the two assertions on `(assoc h :a 5)` stay.
+- With `assoc` copying `__hash` and `__hasheq`, `assoc-test` alone fails (checked, then reverted).
+  CLI 1.11/1.12/1.13: 46 tests, 170 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step. It is not a review follow-up and needs user approval.
+
+## Test review, pass 11 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Test review, pass 11 follow-ups (2026-10-19)
+
+- addressed 1 review step.
+- `load-ns-option-test` uses `(some-> (thrown ...) ex-cause class)`. `compiler_rules_test.clj` has a private `thrown`
+  helper, used in `k-06-three-hidden-fields-test`, `k-06-reserved-names-test` and `k-08-itype-before-irecord-test`.
+- No assertion changes. CLI 1.11/1.12/1.13: 46 tests, 170 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step. It is not a review follow-up and needs user approval.
+
+## Test review, pass 12 (2026-10-19)
+
+- Added 2 steps to be addressed.
+
+## Test review, pass 12 follow-ups (2026-10-19)
+
+- addressed 2 review steps.
+- `check-test` checks `(check (->DR 1 2))` → `not-closed-record` with `:value-class DR`. With `record?` in `check`,
+  the CLI run fails (checked, then reverted).
+- `eval-in-new-ns` removes its namespace in `finally` (`remove-ns`).
+- CLI 1.11/1.12/1.13: 46 tests, 171 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step. It is not a review follow-up and needs user approval.
+
+## Test review, pass 13 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Test review, pass 13 follow-ups (2026-10-19)
+
+- addressed 1 review step.
+- `equal-same-type-test` checks `(not= r (->R 9 2))`. With `equiv` on `(rest fields)`, the CLI run fails (checked, then
+  reverted).
+- CLI 1.11/1.12/1.13: 46 tests, 172 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step. It is not a review follow-up and needs user approval.
+
+## Test review, pass 14 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Test review, pass 14 follow-ups (2026-10-19)
+
+- addressed 1 review step.
+- Added `zero-fields-test` on `(->Z0)`: `contains?`, `dissoc`, `seq`, `=` with `map->Z0`, `check`, `assoc` `ex-data`.
+  With `containsKey` of a zero-field type changed to `true`, the CLI run fails (checked, then reverted).
+- CLI 1.11/1.12/1.13: 47 tests, 178 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step. It is not a review follow-up and needs user approval.
+
+## Test review, pass 15 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Test review, pass 15 follow-ups (2026-10-19)
+
+- addressed 1 review step.
+- Added `count-seq-test` on `r`: `count`, `seq`, `keys`, `vals`. With `count` giving `(inc n)`, and with `seq` in
+  reverse order, `count-seq-test` fails (checked, then reverted).
+- CLI 1.11/1.12/1.13: 48 tests, 182 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step. It is not a review follow-up and needs user approval.
+
+## Test review, pass 16 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Test review, pass 16 follow-ups (2026-10-19)
+
+- addressed 1 review step.
+- Added `NPS` (`:no-print true :load-ns false`, then `Shape`) and an `accepted-options-test` case: `area`, `=` with
+  `map->NPS`. With `(drop-while keyword? (nnext s))` in `split-opts+specs`, the CLI run fails (`NPS` macroexpansion
+  `ClassCastException`; checked, then reverted).
+- CLI 1.11/1.12/1.13: 48 tests, 184 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step. It is not a review follow-up and needs user approval.
+
+## Test review, pass 17 (2026-10-19)
+
+- No new steps.
+
+## Docs review (2026-10-19)
+
+- No new steps.
+
+## Code-shaper review (2026-10-19)
+
+- Added 4 steps to be addressed.
+
+## Code-shaper review follow-ups (2026-10-19)
+
+- addressed 4 review steps.
+- `generated-methods`: one gensym `k` and one gensym `v` in the outer `let` for every key/value parameter; the inner
+  `let` of `assoc` is gone.
+- One throw shape: helper `closed-throw` (message parts, `ex-data` form) for `empty`, `assoc`, `without` and
+  `map->Name`; `undeclared-key-throw` removed. `map-factory` takes `cname-str`. `map-factory` uses explicit gensyms
+  (`m__`, `extra__`): an auto-gensym does not cross the nested `~(closed-throw ...)`.
+- Type hint at the use site in both `getLookupThunk` and `equiv` (`equiv` binds the unhinted `gtarget`).
+  `*warn-on-reflection*` with types `[a ^long b]` + specs, `[]` and 22 fields: no warning.
+- `user-interfaces` has no `distinct`/`vec`.
+- CLI 1.11/1.12/1.13: 48 tests, 184 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step. It is not a review follow-up and needs user approval.
+
+## Code-shaper review, pass 2 (2026-10-19)
+
+- Added 4 steps to be addressed.
+
+## Code-shaper review, pass 2 follow-ups (2026-10-19)
+
+- addressed 4 review steps.
+- `getLookupThunk` maps `(fn [kw fld] ...)` over `kws fields`.
+- `cons`: all branches use `assoc`; branches 1 and 3 use `key`/`val` (no hint). Branch 2 keeps `nth` (a vector is
+  not a `Map$Entry`).
+- `containsKey` and `without`: group `(~@kws)`; zero-field test `(if (seq kws) ...)` around the whole `case`.
+- `impl.jvm/hidden-fields` (public, with `deftype*` metadata) is used by `emit` and `core/validate-fields`.
+- `*warn-on-reflection*` with `[a ^long b]` + specs, `[]` and 22 fields: no warning.
+- CLI 1.11/1.12/1.13: 48 tests, 184 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step (not a review follow-up; needs user approval).
+
+## Code-shaper review, pass 3 (2026-10-19)
+
+- Added 3 steps to be addressed.
+
+## Code-shaper review, pass 3 follow-ups (2026-10-19)
+
+- addressed 3 review steps.
+- `cached-hash [field expr]` (private) gives the cache form of `hasheq` and `hashCode`.
+- Helper arguments: `generated-methods [tname cname-str type-hash fields]`; `positional-factory` and `map-factory`
+  `[fn-name classname cname-str fields]`. `tagname` renamed to `tname`; docstrings use `cname-str`.
+- `split-opts+specs`: one `split-with seq?` for the methods of each spec.
+- `*warn-on-reflection*` with `[a ^long b]` + spec and `[]`: no warning from generated code.
+- CLI 1.11/1.12/1.13: 48 tests, 184 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step (not a review follow-up; needs user approval).
+
+## Code-shaper review, pass 4 (2026-10-19)
+
+- Added 3 steps to be addressed.
+
+## Code-shaper review, pass 4 follow-ups (2026-10-19)
+
+- addressed 3 review steps.
+- `check` messages use the private `class-name` (`.getName` on the JVM, `pr-str` on cljs, "nil" for nil):
+  "Extra keys #{:x} for closed record my_ns.R" (same as `map->Name`), "Not a closed record: java.lang.Long".
+  `ex-data` unchanged.
+- `-extra-keys` docstring: "The map of the extra entries of a map literal, or nil."
+- `map-factory`: the declared-keyword set is `declared`.
+- CLI 1.11/1.12/1.13: 48 tests, 184 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step (not a review follow-up; needs user approval).
+
+## Code-shaper review, pass 5 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Code-shaper review, pass 5 follow-ups (2026-10-19)
+
+- addressed 1 review step.
+- `key-case [k kws fields clause-fn default]` (private) gives the `case` of `valAt`, `getLookupThunk`, `entryAt`
+  and `assoc`. `valAt` uses the explicit gensym `nf` (an `nf#` in the nested syntax quote is a different symbol).
+- `*warn-on-reflection*` with `[a ^long b]` and `[]`: no warning from generated code. Existing warning in
+  `check-options` (`IllegalArgumentException.` of `apply print-str`, expansion time only): not changed.
+- CLI 1.11/1.12/1.13: 48 tests, 184 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step (not a review follow-up; needs user approval).
+
+## Code-shaper review, pass 6 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Code-shaper review, pass 6 follow-ups (2026-10-19)
+
+- addressed 1 review step.
+- `check-options`: `^String` hint on `(apply print-str ...)`. Load with `*warn-on-reflection*` true
+  (`:reload-all`): no warning. Message text not changed.
+- CLI 1.11/1.12/1.13: 48 tests, 184 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step (not a review follow-up; needs user approval).
+
+## Code-shaper review, pass 7 (2026-10-19)
+
+- Added 3 steps to be addressed.
+
+## Code-shaper review, pass 7 follow-ups (2026-10-19)
+
+- addressed 3 review steps.
+- `ctor-short` removed; `assoc` clause writes `(new tname ...replaced fields... __meta __extmap)` inline.
+- `map->Name` calls `(. classname create m)`; `cname-str` is now only message and docstring text.
+- `check` binds `c` once before the `if`.
+- `*warn-on-reflection*`: no warning on load or from generated `map->R`/`assoc`.
+- CLI 1.11/1.12/1.13: 48 tests, 184 assertions, exit 0; clj-kondo 0/0; cljfmt clean.
+- Not executed: Slice 7 "Architecture findings" step (not a review follow-up; needs user approval).
+
+## Code-shaper review, pass 8 (2026-10-19)
+
+- No new steps.

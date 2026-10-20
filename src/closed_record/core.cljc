@@ -5,12 +5,12 @@
 
 (defprotocol ClosedRecord
   "Internal. Implemented only by types that defclosedrecord generates."
-  (-extra-keys [r] "The extra keys of a map literal, or nil."))
+  (-extra-keys [r] "The map of the extra entries of a map literal, or nil."))
 
 #?(:clj
    (defn- validate-fields
      [fields]
-     (let [reserved '#{__meta __extmap __hash __hasheq}]
+     (let [reserved (set jvm/hidden-fields)]
        (when (some reserved fields)
          (throw (AssertionError.
                  (str "The names in " reserved
@@ -31,8 +31,8 @@
           (loop [impls []
                  s s]
             (if (seq s)
-              (recur (conj impls [(first s) (take-while seq? (next s))])
-                     (drop-while seq? (next s)))
+              (let [[methods more] (split-with seq? (next s))]
+                (recur (conj impls [(first s) methods]) more))
               impls))]))))
 
 #?(:clj
@@ -60,6 +60,13 @@
 (defn- value-class [x]
   #?(:clj (class x) :cljs (type x)))
 
+(defn- class-name
+  "The name of class c without a \"class \" prefix, or \"nil\"."
+  [c]
+  (if (nil? c)
+    "nil"
+    #?(:clj (.getName ^Class c) :cljs (pr-str c))))
+
 (defn check
   "Return x if x is a closed record with no extra literal keys.
 
@@ -68,16 +75,15 @@
   ex-info with :type :closed-record/not-closed-record (and :value-class)
   for any other value, including nil."
   [x]
-  (if (satisfies? ClosedRecord x)
-    (if-let [extra (seq (-extra-keys x))]
-      (let [ks (set (map key extra))
-            c (value-class x)]
-        (throw (ex-info (str "Extra keys " ks " in closed record " c)
-                        {:type :closed-record/extra-keys
-                         :record c
-                         :keys ks})))
-      x)
-    (let [c (value-class x)]
-      (throw (ex-info (str "Not a closed record: " c)
+  (let [c (value-class x)]
+    (if (satisfies? ClosedRecord x)
+      (if-let [extra (seq (-extra-keys x))]
+        (let [ks (set (map key extra))]
+          (throw (ex-info (str "Extra keys " ks " for closed record " (class-name c))
+                          {:type :closed-record/extra-keys
+                           :record c
+                           :keys ks})))
+        x)
+      (throw (ex-info (str "Not a closed record: " (class-name c))
                       {:type :closed-record/not-closed-record
                        :value-class c})))))
