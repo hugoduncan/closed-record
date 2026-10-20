@@ -51,3 +51,34 @@ Follow-up items from design reviews. Tick an item when design.md is updated.
   Change the Scope 4 text and the Decision so that they agree with the observation: only the init of a top-level
   `def` keeps the object. Say if I-07 states this as a fact or only limits "code constants" to constants that the
   compiler emits into a class. See also the architecture step on the I-07 assertion-record shape.
+
+## Plan ambiguity review (2026-10-19)
+
+- [x] Metadata on the round-trip records. Plan slice 1 says "round trip (plain, nested, metadata-free)". The design,
+  plan Approach and steps.md do not say what "metadata-free" means. Observed (2026-10-19, Clojure 1.11.4,
+  `defrecord`): with `*print-dup*` true, `pr-str` of a record with metadata gives
+  `^#=(clojure.lang.PersistentArrayMap/create {:m 1}) #user.P[1, 2]`. Then the output does not start with `#` and
+  the class name, and the read-back goes through `#=` (`*read-eval*`). Without `*print-dup*`, metadata is not
+  printed. Say in plan.md (and the `print-dup` step) that the `r` of each round-trip test has no metadata, and that no
+  test asserts on the metadata of a read-back value (no invariant names it, D-16). Or remove "metadata-free" from the
+  plan.
+
+## Plan inconsistency review (2026-10-19)
+
+- [x] Task summary in `munera/plan.md`. The entry says "Tests only, unless a test finds an emitter defect". Design
+  Scope 4, Acceptance 5, plan slice 3 and the I-07 step in steps.md change `ramora/defclosedrecord/invariants.md`,
+  and Acceptance 6 changes `mementum/state.md`. The entry dates from task creation (`27529f1`), before the design
+  review added Scope 4. Change the entry so that it names the I-07 wording change.
+
+## Plan ambiguity review, pass 2 (2026-10-19)
+
+- [x] Criterion for a valid mutation. Acceptance 3 says that each new test "fails when the behaviour that it checks
+  is broken", and gives path-specific examples (`seq` returns `__extmap` entries, the type implements `IType`). The
+  plan Approach and the steps.md mutation step say only "a temporary breaking change". They do not say that the
+  change must break the behaviour that the test checks. A change that breaks all values (for example `.equals`
+  returns false, or `check` always throws) makes each of the 6 tests fail, and it agrees with the step text, but it
+  does not show that a change in the printer, reader, positional constructor or `emitValue` path causes a failure
+  (Intent). The Risks say that the value-constant test may be hard to break, which makes such a change more likely.
+  Say in plan.md and in the mutation step that each change breaks the path or property that the test checks, and
+  that a change that makes all tests fail through `=` or `check` does not count. Say also if `implementation.md`
+  records the assertion that failed for each change.
