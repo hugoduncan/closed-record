@@ -207,3 +207,19 @@
   (plan review 2, ambiguity).
 - Next: Slice 1. Model source: `test/closed_record/property_test.clj`. Rules:
   `mementum/knowledge/testing-generated-types.md` ("Property tests", "Equality and hash tests").
+
+## Implementation (2026-10-20)
+
+- `test/closed_record/differential_test.clj` added. All 21 checks and 7 step kinds as in design Scope 2 and 3.
+  No difference found on unchanged `src`; no emitter change. Three aliases: 77 tests, 292 assertions, 0 failures.
+- Helpers: `compare-outcomes` (two outcomes → failure or nil), `judge` (one op on both sides), `judge-one`
+  (`:type`, `:equals`: `x` only), `judge-each` (per key/value, adds `:key`/`:value`). `:start-equal` and
+  `:start-hash` use `compare-outcomes` directly, so a throw in `=` or `hash` is not hidden.
+- `:keyword` calls `(k x ::nf)` with `k` a local: `Keyword.invoke`, no call site.
+- Mutation run: `clojure -M:test -m scry.cli -n closed-record.differential-test`; failure data in
+  `.scry-results/*.edn`. `git diff src` empty after each.
+  - M1 `seq` reversed (`(seq (reverse [...]))`): seed 1792531723058,
+    `{:check :seq, :closed ([:c nil] [:b nil] [:a nil]), :record ([:a nil] [:b nil] [:c nil])}`.
+  - M2 `valAt k nf` default `nf` → `nil`: seed 1792531714074,
+    `{:check :get, :key :x, :closed nil, :record :closed-record.differential-test/nf}`.
+- clj-kondo: 0 errors, 0 warnings. cljfmt: passes.

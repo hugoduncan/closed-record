@@ -10,6 +10,7 @@
 | `test/closed_record/compiler_rules_test.clj` | Tests that fix K-06 to K-08 (V-13). |
 | `test/closed_record/hidden_key_test.clj` | Tests that fix hidden keys of a literal and their retention (V-14). |
 | `test/closed_record/property_test.clj` | Property test of random `assoc` and `dissoc` sequences (V-03). |
+| `test/closed_record/differential_test.clj` | Differential property test against `defrecord` after random permitted steps (V-02). |
 | `dev/bench/` | criterium benchmarks against `defrecord`. |
 | `deps.edn` | Clojure 1.11 dependency. Test and bench aliases. The `:test` alias has scry and `test.check`. |
 
