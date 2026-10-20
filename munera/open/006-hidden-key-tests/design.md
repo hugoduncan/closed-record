@@ -65,7 +65,7 @@ In scope:
 ## Out of scope
 
 - Code constants and print with `*print-dup*` (V-04, V-05, task 003).
-- `map->Name` of a map with extra keys. It throws `undeclared-key` (V-01).
+- `map->Name` of a map with extra keys. It throws `extra-keys` (V-01).
 - Retention through serialization (`java.io.Serializable`).
 - Changes to existing tests, also where a row repeats an existing assertion.
 - Differential tests against `defrecord`. A `defrecord` literal shows its extra keys, so it is not a counterpart.
@@ -75,7 +75,17 @@ In scope:
 - Expected values come from `plain`, not fixed values. The design commitment is that `__extmap` has no effect
   (I-02). A comparison with the same value without extra keys states this directly.
 - Rows that repeat an existing assertion stay in the table. The new namespace is the one place for V-14.
-- `update` and `into` are not retention cases. They call `assoc` and `conj`, which are cases.
+- Each retention case in Scope 4 reaches a different path in the emitter (`src/closed_record/impl/jvm.clj`):
+  - `assoc`: method `assoc`.
+  - `with-meta`: method `withMeta`.
+  - `dissoc`: method `without`, which returns `this` for a key outside `D(T)`.
+  - `conj` of a vector pair: method `cons`, vector branch.
+  - `merge` of a map: `merge` calls `conj` with the map. Method `cons`, `:else` branch (a loop of `assoc`).
+- `update` and `into` are not retention cases:
+  - `update` calls `assoc`. This is the path of the `assoc` case.
+  - `into` calls `conj` once for each element. For vector pairs, this is the path of the `conj` case. For a map,
+    each element is a map entry and goes to the map-entry branch of `cons`. No case in Scope 4 reaches this branch.
+    This task does not add a case for it.
 
 ## Acceptance criteria
 
