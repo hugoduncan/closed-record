@@ -50,3 +50,72 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
   items. Next lifecycle step: plan (`create-task-plan`).
 - For planning: the V-06 types to reuse or mirror are `R`, `R2` (`[a b]`) and `DR` at the top of
   `test/closed_record/defclosedrecord_test.clj`. Generated `map->Name` is emitted near `src/closed_record/impl/jvm.clj:249`.
+
+## Plan review
+
+- 2026-10-19 ambiguity review added 1 new design step (mutation per row). Context: `jvm.clj` has no cast code and
+  no `create`; the compiler emits casts, `create` and the D-19 NPE from the `deftype*` field hints. A mutation for
+  these rows must change how the emitter reaches the compiler path (`new` vs `create`, hints kept or dropped).
+- 2026-10-19 inconsistency review added 1 new design step (print/read `*ns*` binding vs plan Risks).
+
+## Notes for the plan-review design-steps fix
+
+- Both open steps change `plan.md` and `steps.md` only. Do not change `design.md`: scope and Acceptance 3 are fixed.
+- Mutation map: test each candidate mutation in the scry CLI on 1.11.4 before you write it in `plan.md`, or mark it
+  "candidate". Rules: a mutation counts only if it breaks the asserted path. A change that fails at namespace load
+  gives no signal (`mementum/knowledge/testing-generated-types.md`, "Test design"). Dropping all hints is one change
+  for many rows. This is permitted if each row fails with it, but path-specific changes give a better signal.
+- Emitter places in `src/closed_record/impl/jvm.clj`: `valAt` with not-found at :129, `getLookupThunk` at :131,
+  `assoc` at :182 (`new` with the field replaced), `positional-factory` at :215 (`new`), `map-factory` at :233
+  (calls `create`), and the hinted field vector of `deftype*` at :272.
+- Print/read pattern: the `in-test-ns` and `read-literal` helpers in `test/closed_record/literal_test.clj`.
+
+## Plan-review design-steps fix
+
+- 2026-10-19 both plan-review design steps done: plan.md has a "Mutation map" (M1 to M15, each mapped to the tests
+  that it fails) and the print/read `*ns*` rule; steps.md Slice 5 lists each mutation. `design.md` not changed.
+- The map was observed on 1.11.4 in the scry CLI with a scratch file `test/closed_record/zz_scratch_test.clj` (one
+  `deftest` per row, deleted). Run one namespace: `clojure -M:test -m scry.cli -n <ns>`. Failed vars: one file per
+  var in `.scry-results/`. Baseline: all rows passed.
+- Surprises: `new` unboxes nil to `boolean` with NPE (not `false`), so `map->Name` through `new` (M5) keeps the D-19
+  NPE. `Reflector/invokeConstructor` accepts `9.9` for `^long` (gives `9`) and gives NPE for nil. `vals`, keyword
+  and V-06 boxed-value rows detect M1 only with a cast input (`3`/`4` Longs, `2.7`, `(int 2)`).
+- Unobservable: `getLookupThunk` that returns nil (site falls back to `valAt`); a nil-dropping `seq` for print/read
+  (read gives nil for the missing key).
+
+## Plan review pass 2
+
+- 2026-10-19 ambiguity review: no ambiguity review feedback. Mutation map line numbers match `jvm.clj` at
+  `b9f538d`. Inputs that the map does not fix (the `a` value in the keyword rows, the `get` not-found value) can
+  hide a mutation (M6 if `a` = 2, M9 if not-found is nil); the Slice 5 mutation check finds this.
+- 2026-10-19 inconsistency review: added 1 new design step (print/read row: "none" vs M14). The rest of the
+  mutation map matches the Slice 5 items. Slice 5 lists only the main tests for each mutation. The extra failures in
+  the plan notes (M10 and M11 on `.equals` in the map-first direction) are not missing items.
+
+## Notes for the plan-review pass 2 design-steps fix
+
+- Change `plan.md` (the print/read row in the "Mutation map") and `steps.md` (the Slice 5 M14 item and the
+  "no mutation breaks" item) only. Do not change `design.md`. Use ASD-STE100 style.
+- Option (a) is the better fit: the map already counts M14 for the V-08 `=` test, and M14 breaks only the nil path
+  (rule: `mementum/knowledge/testing-generated-types.md`, "Test design"). With (a), the "no mutation breaks" item
+  keeps three tests: `assoc` `^String` ← `5`, V-08 `.field`, V-08 equal `hash`.
+- The M14 → print/read failure was observed in the scratch run (plan note). No new check is needed unless the
+  print/read form changes from `(= x read-back)`.
+
+## Plan-review pass 2 design-steps fix
+
+- 2026-10-19 the print/read step is done with option (a): the plan.md "Mutation map" row gives M14, and the Slice 5
+  M14 item lists V-08 print/read. The "no mutation breaks" item now has three tests: `assoc` `^String` ← `5`, V-08
+  `.field`, V-08 equal `hash`. No new check was run. The M14 failure on print/read comes from the scratch run, and it
+  holds only while the test returns `(= x read-back)`. `design.md` was not changed.
+
+## Plan review pass 3
+
+- 2026-10-19 ambiguity review: no ambiguity review feedback. The print/read row (M14) and the Slice 5 M14 item now
+  give one rule. Each mutation form uses only locals in scope at its place (`kws`, `nf`, `k`, `m`, `fields`), and
+  the line numbers still match `jvm.clj` (`src` unchanged since `976f906`).
+- 2026-10-19 inconsistency review: no inconsistency review feedback. Each Slice 5 mutation item matches its
+  "Mutation map" rows, and the "no mutation breaks" item matches the three "none" rows.
+- 2026-10-19 pass 3 added no design steps; `design-steps.md` has no open items, so there is no design-steps fix.
+  Next lifecycle step: implementation (steps.md Slice 1). Do not change the plan inputs (decisions 2 to 4) without
+  a new mutation run (plan Risks, "Mutation map drift").

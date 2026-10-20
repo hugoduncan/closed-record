@@ -22,3 +22,30 @@
   holds all table rows can pass Acceptance 3 with one mutation, while most rows have no failure signal.
 - [x] Inconsistency (Context, "Observed facts"): the heading says "current `main`". The repository branch is
   `master`; there is no `main`. Name the branch `master`, or give the commit sha, so that the facts can be reproduced.
+- [x] Ambiguity (plan.md decision 5, steps.md Slice 5 mutation items): the plan does not say which change in `src` is
+  each mutation. It names "constructor casts", "`create` box-class cast" and "D-19 missing-primitive path" as paths in
+  `src/closed_record/impl/jvm.clj`, but these casts are not in `jvm.clj`. The Clojure compiler emits them from the
+  `deftype*` field hints: `create` is a compiler-generated static method (`jvm.clj` only calls it, line 249), and
+  `->Name` and `assoc` use `new`, which casts each argument to the field type. Also "break equality/hash or lookup
+  handling of nil" names no change: the emitter has no nil-specific code. In plan.md, give for each row of the type
+  hint table, each Scope 4 operation and each Scope 5 case the mutation (file, form and change) or the reason that
+  no change in `src` breaks it (Acceptance 3). Examples (not verified): `assoc` builds the value with
+  `(. Name create ...)` (`9.9` gives `ClassCastException`, not `9`); `->Name` calls `create` with a map (`2.7` gives
+  `ClassCastException`); `map->Name` calls `->Name` (`:n 2.5` gives `2`, `^int` ← `1` gives no
+  `ClassCastException`); `deftype*` gets `plain-fields` (no hints: all cast, NPE and box-class rows fail). State
+  which rows have no mutation (for example `^String` ← `5`, `count`, `.field`). Update the Slice 5 items to match.
+- [x] Inconsistency (plan.md Risks "CLI vs REPL divergence", steps.md Slice 3 print/read item, implementation.md
+  "Design-steps fix"): plan.md says the tests use no `eval` of quoted forms, "so the known pitfalls mostly do not
+  apply". implementation.md says that print-read in the CLI needs `*ns*` bound, and `literal_test.clj` reads with
+  `read-string` inside `(binding [*ns* (the-ns test-ns)] ...)` (`in-test-ns`, `read-literal`). The V-08 print/read
+  step gives no read function and no binding. In plan.md, state that the print/read case uses `pr-str` and then
+  `read-string` with `*ns*` bound to the test namespace (the `literal_test.clj` pattern). Correct the Risks text.
+  Add this detail to the Slice 3 print/read item.
+- [x] Inconsistency (plan.md "Mutation map" print/read row, steps.md Slice 5 "tests that no mutation breaks" item):
+  the row gives "Mutations: none", but its note says "Only M14 (the `=` path) fails it". Slice 5 lists V-08
+  print/read as a test that no mutation breaks, and the M14 item lists only V-08 `=`. M14 breaks only the nil path,
+  so by the rules in `mementum/knowledge/testing-generated-types.md` ("Test design") it is a counted mutation, and
+  Acceptance 3 then needs the change and the failed assertion, not a reason. Choose one rule and apply it in both files:
+  (a) list M14 for print/read in the map and in the Slice 5 M14 item, and remove print/read from the
+  "no mutation breaks" item (note: no change on the print or read path itself fails it); or (b) keep "none" and
+  state why M14 does not count for print/read (it breaks `=`, not the round trip), and remove "Only M14 ... fails it".

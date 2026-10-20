@@ -4,7 +4,7 @@
 
 - [ ] Create `test/closed_record/field_value_test.clj` with ns `closed-record.field-value-test`, requiring `clojure.test` and `closed-record.core`.
 - [ ] Define `(defclosedrecord C [a ^long n ^double d ^int i ^boolean b ^String s])` and `(defrecord DC [a ^long n ^double d ^int i ^boolean b ^String s])`.
-- [ ] Define `(defclosedrecord N [a b])` and `(defrecord DN [a b])`.
+- [ ] Define `(defclosedrecord N [a b])`, `(defrecord DN [a b])` and `(defclosedrecord N2 [a b])` (V-06 A → B → A).
 - [ ] Add a `thrown` capture helper: `(try (f) nil (catch Throwable t t))` returning the throwable.
 - [ ] Add the differential helper: takes `f` of a factory map, runs it with `C` factories and `DC` factories (and an `N`/`DN` variant), compares per design Scope 2 (record → `(into {} x)` plus per-value class; other → `=` plus class; both throw → exception class; mixed → fail).
 - [ ] Add one smoke differential test (e.g. `->Name` with all valid values; `vals` classes).
@@ -23,24 +23,24 @@
 - [ ] Test `map->Name` `^long` ← `2.5` and `^long` ← `"x"` each throw `ClassCastException` (`:i` given as `(int ...)` in inputs).
 - [ ] Test `map->Name` with `^boolean` missing throws `NullPointerException` (D-19).
 - [ ] Test `map->Name` `^int` ← `1` (a `Long`) throws `ClassCastException` (box-class cast in `create`).
-- [ ] Test `vals` on a full value gives classes `Long Long Double Integer Boolean String`.
-- [ ] Test keyword call `(:n x)` inside a function gives `2` and class `Long` (differential).
+- [ ] Test `vals` of `(->Name 1 2 3 4 true "s")`, returned as `(mapv class (vals x))`, gives classes `Long Long Double Integer Boolean String` (the Long inputs for `^double` and `^int` are necessary for M1).
+- [ ] Test keyword call `(:n x)` inside a function, `x` built with `->Name` and `^long` ← `2.7`, gives `2` and class `Long` (differential; the `2.7` input is necessary for M1).
 - [ ] Run `clojure -M:test -m scry.cli`; confirm exit 0.
 
 ## Slice 3: V-08 nil-value differential tests
 
-- [ ] Test lookup of nil fields via `get` with not-found, keyword call, and `.a`/`.b` direct field access, all returning nil (differential, class-independent results only).
+- [ ] Test lookup of nil fields via `get` with not-found, keyword call, and `.a`/`.b` direct field access, all returning nil (differential, class-independent results only). Keyword call: one function `(fn [x] (:a x))`, called two times.
 - [ ] Test `contains?` is true for nil-valued keys and `count` is 2.
 - [ ] Test two equal nil-valued values are `=` and have the same `hash` (closed vs closed; defrecord vs defrecord; never cross-type hash, D-07).
-- [ ] Test `.hashCode` and `.equals` agree with `{:a nil :b nil}` (booleans compared differentially).
-- [ ] Test print/read round-trip: the printed value reads back `=` to the original.
+- [ ] Test `.hashCode` and `.equals` agree with `{:a nil :b nil}` (booleans compared differentially). `.equals` in both directions: `(.equals x {:a nil :b nil})` and `(.equals {:a nil :b nil} x)`.
+- [ ] Test print/read round-trip: the printed value reads back `=` to the original. Use `pr-str`, then `read-string` inside `(binding [*ns* (the-ns test-ns)] ...)` (the `in-test-ns`/`read-literal` pattern in `test/closed_record/literal_test.clj`; `*ns*` is `user` in the CLI). The function returns `(= x read-back)`.
 - [ ] Test `(= (->N nil nil) (->N nil false))` is false (differential boolean).
 - [ ] Run `clojure -M:test -m scry.cli`; confirm exit 0.
 
 ## Slice 4: V-06 call-site tests (fixed expected values)
 
-- [ ] Test one keyword call site on a primitive-hinted field returns the boxed value: `2` and class `Long`.
-- [ ] Test a single call site that sees closed type A, then closed type B, then A again, returning the correct fixed value each time.
+- [ ] Test one keyword call site on a primitive-hinted field returns the boxed value: `(:n x)` in a function, `x` built with `->C` and `^long` ← `(int 2)`, gives `2` and class `Long`.
+- [ ] Test a single call site `(fn [x] (:a x))` that sees an `N`, then an `N2`, then the `N` again, returning the correct fixed value each time.
 - [ ] Run `clojure -M:test -m scry.cli`; confirm exit 0.
 
 ## Slice 5: verification, mutation checks, bookkeeping
@@ -48,12 +48,23 @@
 - [ ] Run `clojure -M:test -m scry.cli`, `clojure -M:test:clj-1.12 -m scry.cli` and `clojure -M:test:clj-1.13 -m scry.cli`; all exit 0 with zero failures and errors.
 - [ ] Run `clj-kondo --lint src test`; fix until no errors or warnings.
 - [ ] Run `cljfmt check src test`; fix until it passes.
-- [ ] Mutation check — constructor casts: break the constructor cast path in `src/closed_record/impl/jvm.clj`, confirm the `->Name` cast/exception assertions fail, revert, record in `implementation.md`.
-- [ ] Mutation check — `assoc` cast: break the `assoc` field cast, confirm the `assoc` rows fail, revert, record.
-- [ ] Mutation check — `create` box-class cast: break the box-class cast in `create`, confirm the `map->Name` rows fail, revert, record.
-- [ ] Mutation check — D-19 missing-primitive path: break the missing-field NPE path, confirm the missing `^boolean` assertion fails, revert, record.
-- [ ] Mutation check — lookup thunks (D-10): break the keyword-lookup thunk, confirm the V-06 and keyword-call assertions fail, revert, record.
-- [ ] Mutation check — nil-value paths: break equality/hash or lookup handling of nil, confirm the V-08 assertions fail, revert, record; for any row no `src` change can break, record the reason.
+- [ ] Mutation checks: apply each mutation M1 to M15 in plan.md "Mutation map", one at a time, to `src/closed_record/impl/jvm.clj`. Run `clojure -M:test -m scry.cli`, confirm that the tests listed for it fail, revert. Record the change and the failed assertion for each.
+  - [ ] M1 (no hints in `deftype*`): all V-09 rows except `assoc` `^String` ← `5`; V-06 boxed value.
+  - [ ] M2 (`->Name` through `create`): `->Name` `^long` ← `2.7` and `^double` ← `3`.
+  - [ ] M3 (`assoc` through `create`): `assoc` `^long` ← `9.9`, `^int` ← `5000000000`.
+  - [ ] M4 (`assoc` through `Reflector/invokeConstructor`): `assoc` `^long` ← `"x"`, `^int` ← `5000000000`.
+  - [ ] M5 (`map->Name` through `new`): `map->Name` `^long` ← `2.5`, `^int` ← `1`.
+  - [ ] M6 (thunk reads the first field): V-09 keyword call; V-06 boxed value.
+  - [ ] M7 (thunk without class check): V-06 A → B → A.
+  - [ ] M8 (thunk: nil is a miss): V-08 keyword call.
+  - [ ] M9 (`valAt`: nil gives not-found): V-08 `get` with not-found.
+  - [ ] M10 (`containsKey` through `valAt`): V-08 `contains?`.
+  - [ ] M11 (`count` of non-nil fields): V-08 `count`.
+  - [ ] M12 (`equals` without nil entries): V-08 `.equals`.
+  - [ ] M13 (`seq` without nil entries): V-08 `.hashCode`.
+  - [ ] M14 (`equiv`: nil ≠ nil): V-08 `=` of equal values; V-08 print/read (no change on the print or read path itself fails it).
+  - [ ] M15 (`equiv` skips nil fields): V-08 nil ≠ `false`.
+- [ ] Record in `implementation.md` the tests that no mutation breaks, with the reason from plan.md "Mutation map": `assoc` `^String` ← `5`, V-08 `.field`, V-08 equal `hash`.
 - [ ] If any mutation check or test exposes a real emitter defect, fix it in `src/closed_record/impl/jvm.clj` and record the cause in `implementation.md`.
 - [ ] Complete `implementation.md`: for each table row, Scope 4 operation and Scope 5 case, list the `src` change and the assertion that failed (or the reason none exists).
 - [ ] Update `mementum/state.md`: mark V-06, V-08 and V-09 as done.
