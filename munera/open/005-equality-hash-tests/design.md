@@ -68,11 +68,19 @@ In scope:
    A failure report shows both vectors.
 3. Field value pairs: each row of the first table in Context, as a differential test. The function returns the
    four results of the row.
-4. Plain maps: each case of the second table in Context, as a differential test. The `hash` case compares `hash`
-   of `r` with `hash` of `m`, not across the two record types.
-5. Metadata: `r` and `(with-meta r {:m 1})`, and two equal values with different metadata, as differential tests.
-   The function returns the four results of the first table.
-6. Cross type: `(->E 1 2)` and `(->DE 1 2)`. Fixed expected values: `=` false, `.equals` true, `.hashCode` equal.
+4. Plain maps: each case of the second table in Context, except the last row (`r` and `(with-meta r {:m 1})`), as
+   a differential test. Scope 5 tests the last row. The `hash` case compares `hash` of `r` with `hash` of `m`, not
+   across the two record types.
+5. Metadata: two cases, as differential tests. `f` is the factory that the helper gives to the function. The function
+   returns the four results of the first table.
+   - `r` = `(f 1 2)` and `(with-meta r {:m 1})`.
+   - `(with-meta (f 1 2) {:m 1})` and `(with-meta (f 1 2) {:m 2})`, from two separate factory calls.
+
+   The function makes both values before it calls `hash` or `.hashCode`. `withMeta` copies the hash caches. A hash
+   calculated before `with-meta` hides a change that puts the metadata into a hash.
+6. Cross type: `(->E 1 2)` and `(->DE 1 2)`, with the closed value first only. Fixed expected values:
+   `(= (->E 1 2) (->DE 1 2))` false, `(.equals (->E 1 2) (->DE 1 2))` true, `.hashCode` equal. The reverse calls
+   run only `defrecord` code, so no emitter change can make them fail.
 7. If a test fails because of the emitter, fix the emitter in `src/closed_record/impl/jvm.clj`. Record the cause in
    `implementation.md`.
 
