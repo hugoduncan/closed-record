@@ -98,3 +98,40 @@
 - Equality checks use `(= (->P ...) result)`: this checks the type and the entries (V-12).
 - `key-transformer` `ex-data` is `{:type :closed-record/empty :record P}` (no `:key`).
 - README section is `## malli`, placed before `## Development`.
+
+## Implementation review (2026-10-20)
+
+- No implementation review feedback.
+
+## Test review (2026-10-20)
+
+- Added 1 step to be addressed.
+
+## Test review follow-up (2026-10-20)
+
+- Addressed 1 review step: `plain-map-fix-test` in `malli_test.clj`. REPL values matched the step. `=` against a plain map also checks that the result is not a record.
+
+## Test review pass 2 (2026-10-20)
+
+- No test review feedback.
+
+## Test review pass 3 (2026-10-20)
+
+- No test review feedback.
+
+## Docs review (2026-10-20)
+
+- No docs review feedback.
+
+## Code-shaper review (2026-10-20)
+
+- Added 2 steps to be addressed.
+
+## Code-shaper review follow-up (2026-10-20)
+
+- Addressed 2 review steps in `malli_test.clj`: `sc` is `(into [:map {:closed true}] (rest s))`; `throwing-cases` table is shared by `throwing-transformer-test` and `plain-map-fix-test`.
+- 1.11, 1.12, 1.13: 83 tests, 311 assertions, 0 fail. clj-kondo and cljfmt clean.
+
+## Code-shaper review pass 2 (2026-10-20)
+
+- No code-shaper review feedback.

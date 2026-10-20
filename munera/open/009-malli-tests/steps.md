@@ -38,3 +38,20 @@
   - "Tests:" list: add `test/closed_record/malli_test.clj` (`closed-record.malli-test`, V-07), with the note that
     `metosin/malli` 0.20.3 is in the `:test` alias (same form as the `property_test.clj` entry).
 - [x] Commit slice 4.
+
+## Test review
+
+- [x] Add a test of the README fix: decode `(into {} p)` in place of `p` for each throwing case. Each decode gives a plain map, not an exception.
+  - Default for an undeclared key: `=` `{:a 1 :b nil :c 3 :d 5}`. `strip-extra-keys-transformer` with `[:map [:a :int]]`: `=` `{:a 1}`. `key-transformer` `{:decode name}`: `=` `{"a" 1 "b" nil "c" 3}`.
+  - Check the expected values in the REPL first (malli 0.20.3). The README section gives this fix, but no test shows that it works.
+
+## Code-shaper review
+
+- [x] Make `sc` derive from `s` in `malli_test.clj`, for example `(into [:map {:closed true}] (rest s))`.
+  - Now the three entries are written two times. A change to `s` can leave `sc` with a different key set, and the
+    "closed schema of the declared keys" test then does not test what its label says.
+- [x] Share one case table between `throwing-transformer-test` and `plain-map-fix-test`.
+  - Each of the three cases writes the same schema and transformer in both tests. Only the input (`p` or
+    `(into {} p)`) and the expected result change.
+  - A table of `[label schema transformer ex-data plain-result]` makes the pairing enforceable: each throwing case
+    has a fix check, and the two checks cannot use different schemas. Keep one `testing` label for each case.

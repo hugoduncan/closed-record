@@ -17,7 +17,7 @@
 
 (def ^:private s [:map [:a :int] [:b [:maybe :int]] [:c :int]])
 
-(def ^:private sc [:map {:closed true} [:a :int] [:b [:maybe :int]] [:c :int]])
+(def ^:private sc (into [:map {:closed true}] (rest s)))
 
 (defn- thrown
   "Call `f`; return the exception that it throws, or nil."
@@ -63,15 +63,32 @@
     (is (= p (m/encode s p mt/json-transformer)))
     (is (= p (m/coerce s p)))))
 
+(def ^:private throwing-cases
+  "Each case: `[label schema transformer ex-data plain-result]`.
+  The transformer throws on `p` with `ex-data`; on `(into {} p)` it
+  gives `plain-result`."
+  [["a default for an undeclared key"
+    [:map [:a :int] [:d {:default 5} :int]]
+    mt/default-value-transformer
+    {:type :closed-record/undeclared-key :record P :key :d}
+    {:a 1 :b nil :c 3 :d 5}]
+   ["strip-extra-keys-transformer removes a declared key"
+    [:map [:a :int]]
+    mt/strip-extra-keys-transformer
+    {:type :closed-record/declared-key-dissoc :record P :key :b}
+    {:a 1}]
+   ["key-transformer calls empty"
+    s
+    (mt/key-transformer {:decode name})
+    {:type :closed-record/empty :record P}
+    {"a" 1 "b" nil "c" 3}]])
+
 (deftest throwing-transformer-test
-  (testing "a default for an undeclared key"
-    (is (= {:type :closed-record/undeclared-key :record P :key :d}
-           (data-of #(m/decode [:map [:a :int] [:d {:default 5} :int]] p
-                               mt/default-value-transformer)))))
-  (testing "strip-extra-keys-transformer removes a declared key"
-    (is (= {:type :closed-record/declared-key-dissoc :record P :key :b}
-           (data-of #(m/decode [:map [:a :int]] p
-                               mt/strip-extra-keys-transformer)))))
-  (testing "key-transformer calls empty"
-    (is (= {:type :closed-record/empty :record P}
-           (data-of #(m/decode s p (mt/key-transformer {:decode name})))))))
+  (doseq [[label schema transformer data _] throwing-cases]
+    (testing label
+      (is (= data (data-of #(m/decode schema p transformer)))))))
+
+(deftest plain-map-fix-test
+  (doseq [[label schema transformer _ plain] throwing-cases]
+    (testing label
+      (is (= plain (m/decode schema (into {} p) transformer))))))
