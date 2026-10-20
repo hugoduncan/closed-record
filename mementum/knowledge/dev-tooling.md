@@ -3,7 +3,7 @@ title: Development tooling rules (deps aliases, scry, psi REPL)
 status: active
 category: tooling
 tags: [deps.edn, aliases, scry, nrepl, psi, clj-kondo, gitignore]
-related: [README.md, mementum/state.md, .psi/project.edn, .psi/skills/scry/SKILL.md]
+related: [README.md, mementum/state.md, .psi/project.edn, .psi/skills/scry/SKILL.md, mementum/knowledge/testing-generated-types.md]
 depends-on: [deps.edn]
 ---
 
@@ -23,6 +23,9 @@ This page gives the rules that the commands do not show.
 ## Scry
 
 - ❌ The scry CLI exits non-zero when it finds zero tests.
+- ❌ A test with no assertions counts as "unknown". The CLI then exits 1. Every test needs an assertion.
+- In a CLI test, `*ns*` is `user` and `Compiler/LOADER` is not bound. A REPL run can hide this. See
+  `mementum/knowledge/testing-generated-types.md`.
 - On a pass, `.scry-results/` is empty. On a failure, read `.scry-results/*.edn`, not the terminal output.
 
 ## psi project REPL
