@@ -56,3 +56,23 @@
       "Not done" to the "Verification plan done" list.
 - [x] Rerun the three test aliases: exit 0, zero failures, zero errors.
 - [x] Commit Slice 3.
+
+## Implementation review follow-up
+
+- [x] Catch a throw in the comparison, not only in the operation. In `differential_test.clj`, `compare-outcomes`
+      and `judge-one` call `=` (or `ok?`) outside `attempt`. `(seq x)` and `(.values x)` can give a lazy seq, and
+      `=` realizes it. A fault that throws during realization then escapes the check and gives only
+      `{:clojure.test.check.properties/error e}`, with no `:check` name. The task 007 `judge`
+      (`property_test.clj`) catches a throw from `ok?` (rule: `mementum/knowledge/testing-generated-types.md`,
+      "each check catches any `Throwable`"). Make a throw in the comparison fail the check by name, with `:ex`
+      (for example, run `=` in `attempt`). Rerun the three aliases.
+- [x] Clarity: `apply-step` destructures each step as `[op k v]`, and the `:with-meta` branch gives `k` as the
+      metadata. Destructure `[:with-meta m]` with its own name (for example `[op a b]` with a `case` that binds
+      names per step, or a separate destructure for `:with-meta`).
+
+## Code-shaper review follow-up
+
+- [x] Consistency: remove the `extra` argument from `judge` in `differential_test.clj`. Nine `judge` calls in
+      `checks` give `nil` for it, and only `judge-each` gives a value. Also, `judge` has the extra data last, but
+      `judge-each` has it second (`ext-key`). Make `judge` `[id op x y]`, and make `judge-each` call
+      `compare-outcomes` with `{ext-key k}`. Rerun the three aliases, clj-kondo and cljfmt.

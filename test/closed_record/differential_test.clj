@@ -70,56 +70,66 @@
     (:ex yo) {:side :record :ex (:ex yo)}))
 
 (defn- compare-outcomes
-  "Fail `id` if `xo` or `yo` has `:ex`, or if their values differ."
+  "Fail `id` if `xo` or `yo` has `:ex`, or if their values differ. A throw
+  from `=` (for example when it realizes a lazy seq) fails `id` with `:ex`."
   [id xo yo extra]
   (if-let [t (thrown xo yo)]
     (failure (merge {:check id} extra t))
-    (when-not (= (:value xo) (:value yo))
-      (failure (merge {:check id} extra
-                      {:closed (:value xo) :record (:value yo)})))))
+    (let [{:keys [value ex]} (attempt #(= (:value xo) (:value yo)))]
+      (cond
+        ex (failure (merge {:check id} extra {:ex ex}))
+        (not value) (failure (merge {:check id} extra
+                                    {:closed (:value xo)
+                                     :record (:value yo)}))))))
 
 (defn- judge
   "Fail `id` if `op` throws on either side, or if its results differ."
-  [id op x y extra]
-  (compare-outcomes id (attempt #(op x)) (attempt #(op y)) extra))
+  [id op x y]
+  (compare-outcomes id (attempt #(op x)) (attempt #(op y)) nil))
 
 (defn- judge-one
-  "Fail `id` if `op` on `x` throws, or if `ok?` of its result is false."
+  "Fail `id` if `op` on `x` throws, or if `ok?` of its result is false. A
+  throw from `ok?` fails `id` with `:ex`."
   [id op ok?]
   (let [xo (attempt op)]
     (if (:ex xo)
       (failure {:check id :side :closed :ex (:ex xo)})
-      (when-not (ok? (:value xo))
-        (failure {:check id :closed (:value xo)})))))
+      (let [{:keys [value ex]} (attempt #(ok? (:value xo)))]
+        (cond
+          ex (failure {:check id :ex ex})
+          (not value) (failure {:check id :closed (:value xo)}))))))
 
 (defn- judge-each
-  "Run `judge` for each element of `ks`, as `ext-key`. Stop at the first."
+  "Compare `(f x k)` with `(f y k)` for each `k` in `ks`; fail `id` with
+  `{ext-key k}`. Stop at the first failure."
   [id ext-key ks f x y]
-  (some (fn [k] (judge id #(f % k) x y {ext-key k})) ks))
+  (some (fn [k]
+          (compare-outcomes id (attempt #(f x k)) (attempt #(f y k)) {ext-key k}))
+        ks))
 
 (defn- checks
   "Compare `x` with `y`. `x0` and `y0` are the start values."
   [x y x0 y0]
   (or (judge-one :type #(class x) #(= P %))
-      (judge :entries #(into {} %) x y nil)
-      (judge :seq seq x y nil)
-      (judge :count count x y nil)
+      (judge :entries #(into {} %) x y)
+      (judge :seq seq x y)
+      (judge :count count x y)
       (judge-each :get :key candidate-keys #(get %1 %2 ::nf) x y)
       (judge-each :keyword :key keyword-keys #(%2 %1 ::nf) x y)
       (judge-each :contains :key candidate-keys contains? x y)
       (judge-each :find :key candidate-keys find x y)
-      (judge :size #(.size ^java.util.Map %) x y nil)
-      (judge :is-empty #(.isEmpty ^java.util.Map %) x y nil)
+      (judge :size #(.size ^java.util.Map %) x y)
+      (judge :is-empty #(.isEmpty ^java.util.Map %) x y)
       (judge-each :map-get :key candidate-keys #(.get ^java.util.Map %1 %2) x y)
       (judge-each :contains-key :key candidate-keys
                   #(.containsKey ^java.util.Map %1 %2) x y)
-      (judge :key-set #(.keySet ^java.util.Map %) x y nil)
-      (judge :values #(.values ^java.util.Map %) x y nil)
-      (judge :entry-set #(.entrySet ^java.util.Map %) x y nil)
+      (judge :key-set #(.keySet ^java.util.Map %) x y)
+      (judge :values #(.values ^java.util.Map %) x y)
+      (judge :entry-set #(.entrySet ^java.util.Map %) x y)
       (judge-each :contains-value :value (conj (vec (vals y)) ::nf)
                   #(.containsValue ^java.util.Map %1 %2) x y)
-      (judge :meta meta x y nil)
-      (judge :hash-code #(.hashCode ^Object %) x y nil)
+      (judge :meta meta x y)
+      (judge :hash-code #(.hashCode ^Object %) x y)
       (judge-one :equals #(.equals ^Object x y) true?)
       (compare-outcomes :start-equal
                         (attempt #(= x x0)) (attempt #(= y y0)) nil)
@@ -130,15 +140,21 @@
 
 ;;; Steps
 
-(defn- apply-step [x [op k v]]
-  (case op
-    :assoc (assoc x k v)
-    :conj (conj x [k v])
-    :merge (merge x {k v})
-    :into (into x {k v})
-    :update (update x k (constantly v))
-    :dissoc (dissoc x k)
-    :with-meta (with-meta x k)))
+(defn- apply-step
+  "Apply `step` to `x`. A step is `[op k v]`, `[:dissoc k]` or
+  `[:with-meta m]`."
+  [x step]
+  (if (= :with-meta (first step))
+    (let [[_ m] step]
+      (with-meta x m))
+    (let [[op k v] step]
+      (case op
+        :assoc (assoc x k v)
+        :conj (conj x [k v])
+        :merge (merge x {k v})
+        :into (into x {k v})
+        :update (update x k (constantly v))
+        :dissoc (dissoc x k)))))
 
 (defn- run-steps [[a b c] steps]
   (let [x0 (->P a b c)

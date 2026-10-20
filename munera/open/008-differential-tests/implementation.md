@@ -223,3 +223,48 @@
   - M2 `valAt k nf` default `nf` → `nil`: seed 1792531714074,
     `{:check :get, :key :x, :closed nil, :record :closed-record.differential-test/nf}`.
 - clj-kondo: 0 errors, 0 warnings. cljfmt: passes.
+
+## Implementation review (2026-10-20)
+
+- added 2 steps to be addressed
+- Non-compliance: `steps.md` ticks "Commit Slice 1", "Commit Slice 2" and "Commit Slice 3", but one commit
+  (`18b8bf6`) has all three slices.
+
+## Review follow-up (2026-10-20)
+
+- addressed 2 review steps
+- `compare-outcomes` and `judge-one` run `=` / `ok?` in `attempt`. A throw there fails the check by name with
+  `:ex` and no `:side` (not an operation throw). Probe: a lazy seq that throws on realization gives
+  `{:check :seq :ex ...}` and `{:check :equals :ex ...}`.
+- `apply-step` destructures `[:with-meta m]` apart from `[op k v]`.
+- clj-kondo 0/0, cljfmt passes. Three aliases: exit 0, 77 tests, 292 assertions, 0 failures.
+
+## Implementation review 2 (2026-10-20)
+
+- no implementation review feedback
+
+## Test review (2026-10-20)
+
+- no test review feedback
+
+## Test review 2 (2026-10-20)
+
+- no test review feedback
+
+## Docs review (2026-10-20)
+
+- no docs review feedback
+
+## Code-shaper review (2026-10-20)
+
+- added 1 step to be addressed
+
+## Code-shaper follow-up (2026-10-20)
+
+- addressed 1 review step
+- `judge` is `[id op x y]`. `judge-each` calls `compare-outcomes` with `{ext-key k}`.
+- clj-kondo 0/0, cljfmt passes. Three aliases: exit 0, 77 tests, 292 assertions, 0 failures.
+
+## Code-shaper review 2 (2026-10-20)
+
+- no code-shaper review feedback
