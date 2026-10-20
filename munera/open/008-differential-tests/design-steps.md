@@ -76,3 +76,18 @@
   (type hash XOR `mapHasheq`, D-07) has a test in V-01 (`hash-test`, `test/closed_record/defclosedrecord_test.clj`).
   Correct only the evidence in that bullet (for example: "V-12 (`cross-type-test`) tests `=`. V-01 (`hash-test`)
   tests the `hash` formula."). Do not change the excluded items: the scope is frozen.
+- [x] Ambiguity (plan review): plan.md Risks, bullet 3, says that if a view result differs under `:clj-1.12` or
+  `:clj-1.13`, the implementer can "compare as seqs/sets only if both sides change identically". It does not say
+  what "change identically" means, or how to tell it from a real difference. The rule also changes the Scope 3
+  comparison (`(.keySet x)` = `(.keySet y)`, `(.values x)` = `(.values y)`, `(.entrySet x)` = `(.entrySet y)`)
+  without a design change. `=` already compares a Clojure set with a `java.util.Set`, and a seq with a
+  `java.util.List`, by content (Clojure 1.11.4: all true). A set comparison of `.values` hides an order difference.
+  Replace the bullet: the view checks use `=` as in Scope 3 on each version. A failure on any version is a
+  difference and follows Scope 5 (emitter fault → fix; can be intended → stop and ask). Edit only plan.md.
+- [x] Inconsistency (plan review): plan.md Key decisions, last bullet, says that the design Observed facts show that
+  "the two types agree on every checked operation" at commit `820e889`. The design table has only `dissoc`, `seq`,
+  `conj`/`update`/`merge` entries, `get`, keyword call, `find`, `.hashCode`, `.equals` and `hash` (Clojure 1.11.4).
+  It does not have `:count`, `:contains`, the `java.util.Map` view checks, `:meta`, `:start-equal` or `:start-hash`.
+  The implementation.md probes add only the view classes and the `conj`/`merge`/`into` forms. Make the bullet agree
+  with the design: the types agree on the operations in the Observed facts table. The other checks were not
+  observed, so a failure on unchanged `src` is possible and follows Scope 5 (Risks, bullet 1). Edit only plan.md.

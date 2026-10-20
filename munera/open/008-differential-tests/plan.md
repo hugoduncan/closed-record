@@ -49,8 +49,11 @@ Key decisions (from design):
   property's.
 - No keyword call site in the property (call-site thunks keep state across trials); V-06, V-08, V-09 cover
   `getLookupThunk`.
-- Observed facts (design, 2026-10-20): the two types agree on every checked operation at commit `820e889`, so
-  the property is expected to pass on unchanged `src`.
+- Observed facts (design, 2026-10-20, commit `820e889`): the two types agree on the operations in the design
+  Observed facts table (`dissoc`, `seq`, `conj`/`update`/`merge` entries, `get`, keyword call, `find`,
+  `.hashCode`, `.equals`; `hash` differs across types only, D-07). The other checks (`:count`, `:contains`, the
+  `java.util.Map` view checks, `:meta`, `:start-equal`, `:start-hash`) were not observed, so a failure on
+  unchanged `src` is possible; it follows Risks, bullet 1.
 
 ## Risks
 
@@ -59,9 +62,10 @@ Key decisions (from design):
 - Check order sensitivity: the property stops at the first failure, so each acceptance-3 mutation must not be
   seen by an earlier check. The design argues this (`:entries` reads `iterator` → `valAt k`; `seq` reads the
   fields directly, verified in review 2). Verify empirically in Slice 2.
-- `.keySet`/`.values`/`.entrySet` view comparisons: probes (implementation.md) show both types return the same
-  view classes, so `=` works without conversion. If a version difference appears under `:clj-1.12`/`:clj-1.13`,
-  record it and compare as seqs/sets only if both sides change identically — otherwise it is a real difference.
+- `.keySet`/`.values`/`.entrySet` view comparisons: the view checks use `=` as in design Scope 3 on each
+  version, with no conversion. Probes (implementation.md, Clojure 1.11.4) show both types return the same view
+  classes, so no difference is expected. A failure on any version is a difference and follows Scope 5 (emitter
+  fault → fix; can be intended → stop and ask).
 - scry CLI vs REPL differences for generated types: follow `mementum/knowledge/testing-generated-types.md`;
   verify in the CLI on all three versions, not only the REPL.
 

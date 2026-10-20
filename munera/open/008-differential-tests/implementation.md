@@ -147,3 +147,63 @@
 - The next step is planning (`plan.md`, `steps.md`). The facts for the plan are in the earlier notes in this file:
   the outcome model (review 1 notes), the probes and call paths ("Design steps addressed"), and the private helpers
   (review 4, ambiguity).
+
+## Plan review, ambiguity (2026-10-20)
+
+- ambiguity review added 1 new design step (plan.md Risks: view comparison fallback)
+- Checked and clear: step forms, check order, throw model and `result-data` keys match Scope 2 and 3. Both
+  acceptance-3 mutations show first in the expected check: emitter `seq` reads the fields; `.hashCode`
+  (`mapHash`), `hash` and `.equals` do not depend on entry order; `:entries` reads `valAt k`, not `valAt k nf`.
+- Probe (Clojure 1.11.4): `=` of a Clojure set and a `java.util.HashSet`, and of a seq and an `ArrayList`, is true
+  in both orders. `=` of two seqs in a different order is false.
+
+## Plan review, inconsistency (2026-10-20)
+
+- inconsistency review added 1 new design step (plan.md Key decisions: Observed facts claim)
+- Not actionable: plan.md and steps.md (Slice 1, item 5) say that each check operation runs once per side. Design
+  Scope 3 uses the same words, and also says that `:type` and `:equals` have one operation, on `x`. steps.md item 6
+  gives that rule (`:closed` only). Do not raise it again.
+
+## Notes for the design-steps work, plan review (2026-10-20)
+
+- Two open steps. Both edit only `plan.md`. Do not edit `design.md` (frozen) or `steps.md`: no step item depends on
+  the two changed bullets.
+- Risks, bullet 3 (views): replace it, do not add a fallback. The checks must stay as in design Scope 3. Keep the
+  probe fact (both types give the same view classes) as the reason to expect no difference.
+- Key decisions, last bullet (Observed facts): use the operation list of the design Observed facts table
+  (`design.md#observed-facts-2026-10-20-clojure-1114-branch-master-commit-820e889`). Refer to Risks, bullet 1, for
+  a failure on unchanged `src`. Do not repeat Scope 5.
+- After the edits, all items in `design-steps.md` are checked. The next step is implementation, Slice 1.
+
+## Plan review steps addressed (2026-10-20)
+
+- Both plan-review steps done in `plan.md` only. `design.md` and `steps.md` not changed.
+- Risks, bullet 3: no fallback comparison. The view checks stay `=` (Scope 3) on all three aliases.
+- Key decisions, last bullet: the "agree" claim now covers only the design Observed facts operations. The
+  unobserved checks are listed there; a failure on unchanged `src` goes to Risks, bullet 1 (Scope 5).
+- All items in `design-steps.md` are checked. Next: implementation, Slice 1 in `steps.md`.
+
+## Plan review 2, ambiguity (2026-10-20)
+
+- no ambiguity review feedback
+- Checked and clear: the two `plan.md` bullets changed by plan review 1, the step forms, the 21 checks, the throw
+  model, the mutation run method (`mementum/knowledge/testing-generated-types.md`: new JVM, read
+  `[:shrunk :result-data]`), and the Scope 6 targets (`mementum/state.md` lines "Tests:" and "Verification plan
+  done"; `embodiment.md` Artifacts table).
+- Probe (Clojure 1.11.4): `(.containsValue x nil)` is false on `P` and on `R` (both use `(some #{v} (vals x))`).
+  `:contains-value` with a nil field value is not a difference. Do not raise it again.
+
+## Plan review 2, inconsistency (2026-10-20)
+
+- no inconsistency review feedback
+- Checked and consistent across `design.md`, `plan.md` and `steps.md`: 21 checks and 7 step kinds (same names and
+  order), the acceptance-3 mutations and expected checks, the three aliases, and the Scope 6 targets.
+
+## Notes for the design-steps work, plan review 2 (2026-10-20)
+
+- Plan review 2 added no design steps. `design-steps.md` has no open item, so no design-steps work is necessary.
+  Do not edit `design.md`, `plan.md` or `steps.md`.
+- Do not raise the closed points again: one attempt per side per check (plan review 1), and `.containsValue nil`
+  (plan review 2, ambiguity).
+- Next: Slice 1. Model source: `test/closed_record/property_test.clj`. Rules:
+  `mementum/knowledge/testing-generated-types.md` ("Property tests", "Equality and hash tests").
