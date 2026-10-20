@@ -2,8 +2,8 @@
 title: Tests of eval'ed forms and compiler-generated types
 status: active
 category: testing
-tags: [scry, eval, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site, equality, hash, withMeta]
-related: [mementum/knowledge/dev-tooling.md, test/closed_record/compiler_rules_test.clj, test/closed_record/defclosedrecord_test.clj, test/closed_record/literal_test.clj, test/closed_record/field_value_test.clj, test/closed_record/equality_test.clj, ramora/defclosedrecord/invariants.md]
+tags: [scry, eval, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site, equality, hash, withMeta, extmap, iterator]
+related: [mementum/knowledge/dev-tooling.md, test/closed_record/compiler_rules_test.clj, test/closed_record/defclosedrecord_test.clj, test/closed_record/literal_test.clj, test/closed_record/field_value_test.clj, test/closed_record/equality_test.clj, test/closed_record/hidden_key_test.clj, ramora/defclosedrecord/invariants.md]
 depends-on: [mementum/knowledge/dev-tooling.md]
 ---
 
@@ -112,6 +112,23 @@ Observed in task 005 (Clojure 1.11.4; facts also hold on 1.13). Pattern: `test/c
 - Do not compare `hash` of a closed value with `hash` of a `defrecord` value (type hash, D-07). Compare `hash`
   equality inside each type, then compare the two results.
 
+## Hidden keys and call paths
+
+Observed in task 006 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `test/closed_record/hidden_key_test.clj`.
+
+- 💡 Call paths from Clojure functions to the emitter methods of a closed record `x`. Mutation runs confirmed each
+  path. A closed record is `Iterable` and not `IReduceInit`:
+  - `iterator` (`RecordIterator`): `reduce`, `(into {} x)`, `reduce-kv`, `iterator-seq`, `hash` (`hasheq`).
+  - `seq`: `keys`, `vals`, `pr-str` (`print-map`), `.hashCode`, `.keySet`, `.values`, `.entrySet`, `.containsValue`.
+  - `count`: `.size`. `valAt`: `get`, keyword call, `.get`. `containsKey`: `contains?`. `entryAt`: `find`.
+  - `src` has no print code. A `seq` mutation is the print path.
+- ❌ `=` of two `.iterator` results is false. Compare them through `iterator-seq`.
+- 🔁 Put the guard (`check` throws `extra-keys`) in the shared assertion helper, so that the helper reads the
+  value, asserts the guard, then compares each row. A guard in each `deftest` holds only by convention. Take the
+  expected value from the same value without extra keys (`plain`), not from fixed values.
+- ❌ A variadic helper with `(partition 2 label-fs)` drops a last label with no fn, with no signal. Take a vector of
+  `[label f]` pairs. Use the label in `testing`, so a mutation failure names the operation.
+
 ## Expansion-time errors
 
 - `macroexpand-1` wraps a macro error in `Compiler$CompilerException`. Test the `ex-cause` class.
@@ -139,6 +156,9 @@ Observed in task 005 (Clojure 1.11.4; facts also hold on 1.13). Pattern: `test/c
 - ❌ A hash method body must have type `int`: wrap a `bit-xor` in `(int ...)`. A `long` body fails at `deftype*`
   compile (`ArrayIndexOutOfBoundsException`) and gives no signal.
 - To run a mutation without risk to the work tree, `cp -R` the repository to `/tmp` and change the copy.
+- ❌ Run each mutation in a new JVM. Do not reload the emitter and the test namespace in one JVM: `read-string` of a
+  record literal resolves the class by name and gets the old class, so the results stay the same after the first
+  mutation. Between runs, `git checkout src` in the copy (task 006).
 - 🎯 Test source must not refer to task design sections ("Scope 3", "the first Context table"). The reader cannot
   find them after the task closes. Describe each case in the source. Keep durable ids (V-nn, I-nn, D-nn).
 - ❌ `(is (.startsWith s p))` reports only `actual: false`: `clojure.test` shows the arguments only of a var call.
