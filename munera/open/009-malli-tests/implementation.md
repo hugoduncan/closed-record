@@ -90,3 +90,11 @@
   are stable; go to implementation (Slice 1).
 - If a later review adds design steps: edit `steps.md` (and `plan.md` only to keep it in agreement); do not change
   scope or `design.md`.
+
+## Implementation pass (2026-10-20)
+
+- All slices done in one commit. No `src` change; no emitter fault found.
+- All observed-facts rows held under Clojure 1.11.4, 1.12.6, 1.13.0-alpha9 (82 tests, 308 assertions, 0 fail).
+- Equality checks use `(= (->P ...) result)`: this checks the type and the entries (V-12).
+- `key-transformer` `ex-data` is `{:type :closed-record/empty :record P}` (no `:key`).
+- README section is `## malli`, placed before `## Development`.

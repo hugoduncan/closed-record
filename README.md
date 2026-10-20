@@ -12,6 +12,30 @@ It is intend as a complement to clojure's new required :keys!, :select,
 :all destructing directives. It is not intended as an antagonist to
 these.
 
+## malli
+
+A malli `[:map ...]` schema validates and explains a closed record as a
+map. Some transformers add an undeclared key or remove a declared key.
+On a closed record, these throw:
+
+- `default-value-transformer` with a default for an undeclared key
+  throws `:closed-record/undeclared-key`.
+- `strip-extra-keys-transformer` with a schema that does not have all
+  the declared keys throws `:closed-record/declared-key-dissoc`.
+- `key-transformer` throws `:closed-record/empty`.
+
+Fix: decode a plain map, `(m/decode schema (into {} r) transformer)`,
+and keep the result as a plain map.
+
+`map->Name` on the result:
+
+- An undeclared key throws `:closed-record/extra-keys`. The `:keys` of
+  the `ex-data` names the keys.
+- A missing declared key gives nil. Thus `map->Name` on the result of
+  `strip-extra-keys-transformer` adds the removed declared keys again,
+  with nil values. Call `map->Name` only when the result has all the
+  declared keys.
+
 ## Development
 
 Use the Clojure CLI. Run all commands from the repository root.

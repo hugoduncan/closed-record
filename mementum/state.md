@@ -24,8 +24,10 @@ Main form: `defclosedrecord`.
   `test/closed_record/property_test.clj` (`closed-record.property-test`, V-03: test.check property of random
   `assoc`/`dissoc` sequences; `org.clojure/test.check` 1.1.3 is in the `:test` alias),
   `test/closed_record/differential_test.clj` (`closed-record.differential-test`, V-02: test.check property that
-  compares a closed record with a `defrecord` after random permitted steps).
-- Verification plan done: V-01, V-02, V-03, V-04, V-05, V-06, V-08, V-09, V-10, V-12, V-13, V-14, V-15. Not done: V-07, V-11.
+  compares a closed record with a `defrecord` after random permitted steps),
+  `test/closed_record/malli_test.clj` (`closed-record.malli-test`, V-07: malli map schemas and transformers;
+  `metosin/malli` 0.20.3 is in the `:test` alias).
+- Verification plan done: V-01, V-02, V-03, V-04, V-05, V-06, V-07, V-08, V-09, V-10, V-12, V-13, V-14, V-15. Not done: V-11.
 - Tests: `clojure -M:test -m scry.cli`. Other versions: add `:clj-1.12` or `:clj-1.13`.
 - REPL: `clojure -M:test:nrepl`. In the REPL: `(require '[scry.core :as scry]) (scry/run)`.
 
