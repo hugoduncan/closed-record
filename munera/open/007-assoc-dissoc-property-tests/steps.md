@@ -71,3 +71,38 @@ Follow the mutation rules in `mementum/knowledge/testing-generated-types.md` (se
 - [x] Update `mementum/state.md`: V-03 done; name `closed-record.property-test` and the `test.check`
       dependency.
 - [x] Final run of all three test aliases: exit 0, zero failures and errors.
+
+## Code-shaper review follow-up
+
+- [x] Remove the hidden state between `:assoc-type` and `:assoc-entries` in `run-step`
+      (`test/closed_record/property_test.clj` 80–86). The `:assoc-type` operation writes the `assoc` result to a
+      `volatile!`, and `:assoc-entries` reads it. Thus one check operation has a side effect, and the second check
+      is correct only if the first check ran first and passed. Split the call from the judgement: for example an
+      `attempt` helper that runs `op` once and gives the value or the `Throwable`, and checks that take that
+      outcome. Keep the check names, the check order and the `:ex` in `result-data`.
+      Done: `attempt` gives `{:value v}` or `{:ex e}`; `judge` checks an outcome; both `assoc` checks judge one outcome.
+- [x] Make the result shape of `run-step` and `run-steps` explicit. Checks give nil or a failure `Result`, but
+      `run-step` and `run-steps` give `[x model]` or a failure, and three places tell them apart with `vector?`
+      (lines 106, 107 via `r`, 116). Use one predicate (for example `failure?` on `results/Result`) in all three
+      places, or make `run-step` give only failures through `reduced`, so that the shape rule is in one place.
+      Run the three aliases and one mutation (for example `:check`) again after the change.
+      Done: `failure?` (`instance?` of the `Result` interface) in all three places. Three aliases pass; mutations
+      `:check`, `:assoc-entries`, `:assoc-type` each name their own check.
+
+## Code-shaper review follow-up, pass 2
+
+- [x] Use one idiom to run an operation and classify the outcome. `run-check` uses `attempt` and `judge`, but
+      `throws-check` (`test/closed_record/property_test.clj` 67–75) has its own `try` with two `catch` clauses.
+      Make `throws-check` use `attempt`: no `:ex` → `(failure id nil)`; `(= data (ex-data ex))` → pass; else
+      `(failure id ex)`. `ex-data` of a throw that is not `ex-info` is nil, and `data` is not nil, so the
+      `ExceptionInfo` catch is not necessary. Keep the check names, the `:ex` in `result-data` and the behaviour.
+      Run the three aliases and the `:assoc-undeclared-throws` and `:dissoc-declared-throws` mutations again.
+      Done: `throws-check` uses `attempt` and a `cond`. Three aliases pass; both mutations name their own check.
+
+## Code-shaper review follow-up, pass 3
+
+- [x] Make the docstring of `judge` agree with its arguments (`test/closed_record/property_test.clj` 54–56). It
+      says "A throw from `op` or `ok?` fails `id`", but `judge` has no `op`: it takes `id`, an outcome and `ok?`.
+      State the rule in terms of the outcome, for example: "Pass if `outcome` has no `:ex` and `(ok? value)` is
+      true. An `:ex` in `outcome`, or a throw from `ok?`, fails `id`." Change only the docstring.
+      Done: docstring states the rule in terms of `outcome`. Only the docstring changed.

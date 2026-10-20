@@ -206,3 +206,62 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
   `quick-check` on the private var `closed-key-set-property` and prints `[:shrunk :result-data]`.
 - Worktree `git diff src` empty. kondo 0/0, cljfmt clean, three aliases 76 tests passed. Docs updated
   (`embodiment.md` Artifacts row and `deps.edn` row, `mementum/state.md` V-03 done). All steps done.
+
+## Implementation review (2026-10-20)
+
+- no implementation review feedback
+
+## Test review (2026-10-20)
+
+- no test review feedback
+
+## Test-shaper review (2026-10-20)
+
+- no test-shaper review feedback
+
+## Docs review (2026-10-20)
+
+- no docs review feedback
+  - Out of scope, earlier than this task: `embodiment.md` names `dev/bench/`, bench aliases and differential and
+    malli tests, which do not exist yet (V-02, V-07, V-11 not done).
+
+## Code-shaper review (2026-10-20)
+
+- code-shaper review added 2 steps to be addressed
+
+## Code-shaper follow-up addressed (2026-10-20)
+
+- addressed 2 review steps
+- `attempt` runs an operation once (`{:value v}` or `{:ex e}`); `judge` checks an outcome; `run-check` is
+  `(judge id (attempt op) ok?)`. `:assoc-type` and `:assoc-entries` judge the same outcome; no `volatile!`.
+- `failure?` is `instance?` of the `clojure.test.check.results.Result` interface (the `reify` implements it).
+  Do not use `satisfies?`: test.check extends `Result` to `Object` and `nil`.
+- Three aliases: 76 tests passed. `/tmp` mutations: `:check` → `{:check :check :ex extra keys #{:a}}`;
+  `:assoc-entries` and `:assoc-type` name their own checks. kondo 0/0, cljfmt clean, `git diff src` empty.
+
+## Code-shaper review, pass 2 (2026-10-20)
+
+- code-shaper review added 1 step to be addressed
+
+## Code-shaper follow-up, pass 2 addressed (2026-10-20)
+
+- addressed 1 review step
+- `throws-check` uses `attempt`: no `:ex` → `(failure id nil)`; `(= data (ex-data ex))` → pass; else
+  `(failure id ex)`. No `try` outside `attempt` and `judge`.
+- Three aliases: 76 tests passed. `/tmp` mutations (`:key nil` in `ex-data`): `:assoc-undeclared-throws` →
+  `[[nil nil nil] [[:assoc :x nil]]]`; `:dissoc-declared-throws` → `[[nil nil nil] [[:dissoc :a]]]`; each with
+  `:ex`. kondo 0/0, cljfmt clean, `git diff src` empty.
+
+## Code-shaper review, pass 3 (2026-10-20)
+
+- code-shaper review added 1 step to be addressed
+
+## Code-shaper follow-up, pass 3 addressed (2026-10-20)
+
+- addressed 1 review step
+- `judge` docstring now names `outcome`, not `op`. Docstring only. kondo 0/0, cljfmt clean, default alias 76 tests
+  passed.
+
+## Code-shaper review, pass 4 (2026-10-20)
+
+- no code-shaper review feedback

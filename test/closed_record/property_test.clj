@@ -41,22 +41,38 @@
       (pass? [_] false)
       (result-data [_] data))))
 
-(defn- run-check
-  "Pass if `(ok? (op))` is true. Any throw from `op` or `ok?` fails `id`."
-  [id op ok?]
-  (try
-    (when-not (ok? (op)) (failure id nil))
-    (catch Throwable e (failure id e))))
+(defn- failure?
+  "True if `r` is a failure Result. Other values are `[x model]` states."
+  [r]
+  (instance? clojure.test.check.results.Result r))
+
+(defn- attempt
+  "Run `op` once. Return `{:value v}` or `{:ex e}`."
+  [op]
+  (try {:value (op)} (catch Throwable e {:ex e})))
+
+(defn- judge
+  "Pass if `outcome` has no `:ex` and `(ok? value)` is true. An `:ex` in
+  `outcome`, or a throw from `ok?`, fails `id`."
+  [id {:keys [value ex]} ok?]
+  (if ex
+    (failure id ex)
+    (try
+      (when-not (ok? value) (failure id nil))
+      (catch Throwable e (failure id e)))))
+
+(defn- run-check [id op ok?]
+  (judge id (attempt op) ok?))
 
 (defn- throws-check
-  "Pass if `op` throws an `ex-info` with `ex-data` `=` to `data`."
+  "Pass if `op` throws an `ex-info` with `ex-data` `=` to `data`. `data`
+  is not nil, so a throw that is not `ex-info` fails `id`."
   [id op data]
-  (try
-    (op)
-    (failure id nil)
-    (catch clojure.lang.ExceptionInfo e
-      (when-not (= data (ex-data e)) (failure id e)))
-    (catch Throwable e (failure id e))))
+  (let [{:keys [ex]} (attempt op)]
+    (cond
+      (nil? ex) (failure id nil)
+      (= data (ex-data ex)) nil
+      :else (failure id ex))))
 
 (defn- i01-checks [x]
   (or (run-check :keys #(set (keys x)) #(= D %))
@@ -77,13 +93,11 @@
     (case op
       :assoc
       (if declared?
-        (let [result (volatile! nil)
+        (let [outcome (attempt #(assoc x k v))
               model' (assoc model k v)]
-          (or (run-check :assoc-type
-                         #(vreset! result (assoc x k v))
-                         #(instance? P %))
-              (run-check :assoc-entries #(into {} @result) #(= model' %))
-              [@result model']))
+          (or (judge :assoc-type outcome #(instance? P %))
+              (judge :assoc-entries outcome #(= model' (into {} %)))
+              [(:value outcome) model']))
         (or (throws-check :assoc-undeclared-throws
                           #(assoc x k v)
                           {:type :closed-record/undeclared-key :record P :key k})
@@ -103,9 +117,9 @@
         (reduce
          (fn [state step]
            (let [r (run-step state step)]
-             (if (vector? r)
-               (if-let [f (i01-checks (first r))] (reduced f) r)
-               (reduced r))))
+             (if (failure? r)
+               (reduced r)
+               (if-let [f (i01-checks (first r))] (reduced f) r))))
          [x {:a a :b b :c c}]
          steps))))
 
@@ -113,7 +127,7 @@
   (prop/for-all [start gen-start
                  steps gen-steps]
                 (let [r (run-steps start steps)]
-                  (if (vector? r) true r))))
+                  (if (failure? r) r true))))
 
 (deftest assoc-dissoc-sequence-property-test
   (let [result (tc/quick-check 200 closed-key-set-property)]
