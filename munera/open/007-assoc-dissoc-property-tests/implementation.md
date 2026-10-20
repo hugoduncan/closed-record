@@ -168,3 +168,41 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
 - If a later review adds a step, keep the 13 checks, their order and the one-change-per-check mutations, unless the
   step names them. Mutation rules: `mementum/knowledge/testing-generated-types.md` ("Test design", "Hidden keys and
   call paths").
+
+## Slices 1–2 implemented (2026-10-20)
+
+- `deps.edn` `:test` has `org.clojure/test.check` 1.1.3. The new test resolves offline.
+- `test/closed_record/property_test.clj`: `run-check` (pass if `(ok? (op))`, any `Throwable` fails the id) and
+  `throws-check` (pass only for `ex-info` with `=` `ex-data`). Checks return nil on pass, else a failure `Result`;
+  `run-step` returns the next `[x model]` vector or a failure, and `run-steps` stops with `reduced`.
+- `:assoc-type` keeps the `assoc` result in a `volatile!` for `:assoc-entries`. The model update `(assoc model k v)`
+  is outside every check, as Scope 4 says.
+- All three aliases: 76 tests, 0 failed, 0 errored; scry counts the property test as passed. No emitter fault.
+- kondo clean; cljfmt needed one `fix` (indent of the `prop/for-all` body). Slice 3 (mutations) is next: edit a
+  `/tmp` copy, not the worktree.
+
+## Slices 3–4 implemented (2026-10-20)
+
+- Mutations: one change each in a `/tmp` copy of `src/closed_record/impl/jvm.clj`, a new JVM for each run,
+  `quick-check 200`. Each shrunk `result-data` named its own check (`:ex` shows the throw message):
+
+| Check | Change in `jvm.clj` | Shrunk report |
+|---|---|---|
+| `:assoc-type` | `assoc` declared branch → `(assoc (into {} this) k v)` | `[[nil nil nil] [[:assoc :a nil]]]` |
+| `:assoc-entries` | `assoc` declared branch drops `v` (`new` with old `fields`) | `[[nil nil nil] [[:assoc :a 0]]]` |
+| `:assoc-undeclared-throws` | undeclared-key `ex-data` `:key nil` | `[[nil nil nil] [[:assoc :x nil]]]`, `:ex` |
+| `:dissoc-declared-throws` | declared-key-dissoc `ex-data` `:key nil` | `[[nil nil nil] [[:dissoc :a]]]`, `:ex` |
+| `:dissoc-undeclared-identical` | `without` default → `(new tname ~@fields __meta __extmap)` | `[[nil nil nil] [[:dissoc :x]]]` |
+| `:keys` | `seq` maps over `(butlast kws)` | `[[nil nil nil] []]` |
+| `:key-set` | `keySet` → `(disj (set (keys this)) :a)` | `[[nil nil nil] []]` |
+| `:entry-set` | `entrySet` → `(set (rest this))` | `[[nil nil nil] []]` |
+| `:contains` | `containsKey` default `false` → `true` | `[[nil nil nil] []]` |
+| `:count` | `count` → `(inc n)` | `[[nil nil nil] []]` |
+| `:size` | `size` → `(inc (.count this))` | `[[nil nil nil] []]` |
+| `:values` | `values` → `(rest (vals this))` | `[[nil nil nil] []]` |
+| `:check` | `assoc` declared branch passes `(assoc __extmap k v)` | `[[nil nil nil] [[:assoc :a nil]]]`, `:ex` extra keys `#{:a}` |
+
+- Harness (not committed): python exact-string replace in the copy, then `clojure -M:test -e` that calls
+  `quick-check` on the private var `closed-key-set-property` and prints `[:shrunk :result-data]`.
+- Worktree `git diff src` empty. kondo 0/0, cljfmt clean, three aliases 76 tests passed. Docs updated
+  (`embodiment.md` Artifacts row and `deps.edn` row, `mementum/state.md` V-03 done). All steps done.
