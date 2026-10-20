@@ -79,7 +79,7 @@
 - [x] `clj-kondo --lint src test` reports no errors and no warnings.
 - [x] `cljfmt check src test` passes.
 - [x] Confirm the only source namespaces are `closed-record.core` and `closed-record.impl.jvm`, and `impl/jvm.clj` does not require `core` (acceptance 6).
-- [ ] Architecture findings: collect the open "Architecture finding(s)" bullets of `implementation.md` (design passes 1–7 and any from implementation), including the memory file text "With only 3 of these fields, the type does not compile" (it is `VerifyError` at class load). Show them to the user together and ask. Edit `ramora/` or `mementum/memories/deftype-star-hidden-fields.md` only with approval.
+- [x] Architecture findings: collect the open "Architecture finding(s)" bullets of `implementation.md` (design passes 1–7 and any from implementation), including the memory file text "With only 3 of these fields, the type does not compile" (it is `VerifyError` at class load). Show them to the user together and ask. Edit `ramora/` or `mementum/memories/deftype-star-hidden-fields.md` only with approval.
 
 ## Implementation review (2026-10-19)
 

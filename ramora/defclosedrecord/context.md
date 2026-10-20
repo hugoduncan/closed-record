@@ -24,7 +24,10 @@
     It calls `create` with `PersistentArrayMap.create((java.util.Map) r)`. Thus the `java.util.Map` view sets the
     entries of a constant.
   - `emitValue` checks `IType` before `IRecord`. A type with `IType` does not use `create` (K-08).
-- Generated alternative constructor with one argument for each declared field. The reader uses it for positional literals.
+- Generated alternative constructors (K-06):
+  - One argument for each declared field. The reader uses it for positional literals.
+  - The declared fields, then `__meta` and `__extmap`. The hash caches start at 0.
+- `getBasis()`: every `deftype*` type has it, with or without the hidden fields (E-02).
 - `print-method` and `print-dup` for `IRecord` (`core_print.clj`). They print `#ns.Name{...}`.
   With `*verbose-defrecords*` false, `print-dup` prints `#ns.Name[...]`.
 - Record literal reader (`LispReader.CtorReader`). It requires `*read-eval*` true.
@@ -66,7 +69,10 @@
 - K-06 Compiler layout rule (observed, E-01, E-02, E-07):
   - The compiler generates `create` and the alternative constructors only when the field list ends with exactly
     `__meta __extmap __hash __hasheq`.
-  - With three of these fields, the type does not compile.
+  - `__hash` and `__hasheq` must have the hint `^int`. The alternative constructors pass `int` 0 for them.
+    Without the hint, the JVM verifier rejects the class (`VerifyError`).
+  - With three of these fields, the compiler emits an alternative constructor with bad bytecode. The form compiles,
+    and the JVM verifier rejects the class when it is initialised (`VerifyError`). A test must load the class.
   - The `deftype` macro does not accept these names. Only `deftype*` accepts them.
 - K-07 `create` puts all extra keys into `__extmap`. It does not call user code. Thus a read-time check is not possible
   (observed, E-02, E-04).

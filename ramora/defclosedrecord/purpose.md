@@ -58,7 +58,8 @@ Later:
 
 | Operation | Declared key | Undeclared key |
 |---|---|---|
-| `get`, keyword call, `.field` | value | not-found value (nil) |
+| `get`, keyword call | value | not-found value (nil) |
+| `.field` | value | no such field: host error, as with `defrecord` |
 | `contains?` | true | false |
 | `assoc`, `conj`, `merge`, `into`, `update` | new record of same type | throw |
 | `dissoc` | throw | return the record |

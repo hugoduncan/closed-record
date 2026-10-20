@@ -22,12 +22,16 @@ Permitted dependencies:
 
 - User code → public names only.
 - `core` → `impl.*`. The macro calls the emitter at expansion time.
-- Generated code → `closed-record.core/ClosedRecord` and `clojure.lang`.
+- Generated code → `closed-record.core/ClosedRecord`, `clojure.lang`, public `clojure.core` vars and JDK classes
+  (`java.lang`, `java.util`, `java.io`).
 
 Forbidden dependencies:
 
 - User code → `impl.*`. User code must not extend `ClosedRecord`.
 - `impl.*` → `core`. An emitter does not require `core`. It emits the protocol name only as a symbol.
+- Generated code → `impl.*`. The emitter runs only at expansion time.
+- Generated code, `core` or `impl.*` → private `clojure.core` vars. A private var can change in each Clojure version,
+  and V-13 does not find the change.
 
 ## Public interface
 
@@ -53,24 +57,31 @@ deftype* ns/Name ns.Name
   ; not IType (K-08)
 ```
 
-The compiler generates the following (K-06):
+The compiler generates the following:
 
-- a constructor with the declared fields only (positional literals and `->Name`),
-- a constructor with all fields,
-- `create(IPersistentMap)` (map literals and code constants),
-- `getBasis()`.
+- a constructor with all fields (`withMeta`),
+- a constructor with the declared fields only (positional literals and `->Name`) (K-06),
+- a constructor with the declared fields, `__meta` and `__extmap` (`assoc`) (K-06),
+- `create(IPersistentMap)` (map literals, code constants and `map->Name`) (K-06),
+- `getBasis()` (every `deftype*` type, E-02).
+
+The expansion has the shape of the `defrecord` expansion: `declare` of `->Name` and `map->Name`, the `deftype*` form,
+`import` of the class, the `defn` of `->Name` and `map->Name`, then the class as the value.
 
 ## Method behaviour
 
 | Method | Behaviour |
 |---|---|
 | `valAt k nf` | `case` on the declared keywords. Default → `nf`. |
+| `valAt k` | `valAt k nil`. |
 | `getLookupThunk k` | A thunk for each declared field. The thunk checks the class identity. Undeclared key → nil. |
 | `assoc k v` | Declared key → new instance. Other key → throw `undeclared-key`. |
 | `without k` | Declared key → throw `declared-key-dissoc`. Other key → `this`. |
 | `cons e` | Map entry, vector pair or map → `assoc` for each entry. |
 | `empty` | Throw `empty`. |
 | `count` | Number of declared fields. A constant. |
+| `isEmpty` | `count` is 0. |
+| `containsValue` | A declared field has the value. |
 | `seq`, `iterator` | Declared fields only, in declaration order. |
 | `containsKey`, `entryAt` | Declared keys only. |
 | `java.util.Map` views | `size`, `get`, `containsKey`, `keySet`, `values`, `entrySet`: declared entries only (I-09). |
@@ -93,6 +104,8 @@ The compiler generates the following (K-06):
 
 ## Allocation
 
-- Macro expansion time: argument checks (reserved names, duplicate fields) and emitter selection by host.
+- Macro expansion time: argument checks and emitter selection by host. The checks reject reserved names, duplicate
+  fields, fields with `:volatile-mutable` or `:unsynchronized-mutable` metadata, and options other than `:no-print`
+  and `:load-ns`. The last two checks are the same as `defrecord`.
 - Class load time: the compiler generates the class, the constructors and `create`.
 - Run time: key checks in `assoc`, `without`, `cons` and `map->Name`.

@@ -880,3 +880,17 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
 ## Code-shaper review, pass 8 (2026-10-19)
 
 - No new steps.
+
+## Architecture findings resolved (2026-10-19)
+
+- The user approved all 9 findings. Edited `ramora/defclosedrecord/` and `mementum/memories/deftype-star-hidden-fields.md`:
+  - `context.md`: alternative constructors (2) and `getBasis` under "Interacting systems". K-06: `^int` hash fields
+    required, and three hidden fields give `VerifyError` at class load, not a compile error.
+  - `purpose.md` "Behaviour": `.field` is its own row. An undeclared name is a host error.
+  - `embodiment.md`: Boundaries (public `clojure.core`, JDK classes; no private `clojure.core` vars; no run-time
+    `impl.*` calls), Generated type (3 constructors, `getBasis` not K-06, expansion shape), Method behaviour
+    (`valAt k`, `isEmpty`, `containsValue`), Allocation (mutable-metadata and option checks).
+  - Memory file: `VerifyError` and `^int` rules, versions 1.11.4, 1.12.6, 1.13.0-alpha9.
+- Observed on 1.11.4 before the edit: `deftype*` with the four hidden fields but no `^int` gives `VerifyError`
+  ("Type integer ... is not assignable to 'java/lang/Object'" in the alternative constructor).
+- Not done: the new purpose row `.field` / undeclared has no V-01 test. The design excluded this cell.
