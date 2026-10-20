@@ -60,19 +60,21 @@ Each case returns the four results of the first-table function. Build both value
 
 ## Slice 7: mutation checks (Acceptance 3)
 
-For each mutation: change `src/closed_record/impl/jvm.clj`, run the tests, confirm the expected assertion fails,
-revert, record the change and failing assertion in `implementation.md`. Follow the mutation rules in
-`mementum/knowledge/testing-generated-types.md` (Test design); a change that fails at namespace load does not
-count.
+Mutations M1–M12, rules and the expected coverage are in plan.md, "Mutation checks". For each mutation: change
+`src/closed_record/impl/jvm.clj` from an unchanged `src`, run `clojure -M:test -m scry.cli`, confirm that the
+`equality-test` assertions of the listed items fail, revert, and record in `implementation.md` the change and the
+items that failed. A change that fails at namespace load does not count.
 
-- [ ] Mutate `equiv` (for example, compare fields with `.equals`); confirm Scope 3 rows fail; record.
-- [ ] Mutate `equals`/`mapEquals`; confirm `.equals` cases (Scope 3, 4, 6) fail; record.
-- [ ] Mutate `hasheq`/`mapHasheq`; confirm `hash` cases (Scope 3, 4) fail; record.
-- [ ] Mutate `hashCode`/`mapHash`; confirm `.hashCode` cases fail; record.
-- [ ] Mutate `withMeta` so metadata enters a hash or the caches are not copied; confirm a Scope 5 case fails;
-      record.
-- [ ] For each Scope 3/4/5/6 item not covered by the above, find a covering mutation or record the reason no
-      `src` change breaks it.
+- [ ] `equiv`: M1 (Scope 3 rows `1N`, `(int 1)`, `-0.0`), M2 (Scope 3 row `1.0`), M8 (Scope 5 both cases).
+- [ ] `equals`: M3 (Scope 3 rows `1N`, `(int 1)`, `-0.0`; Scope 4 `.equals`, `HashMap`, `HashSet`; Scope 6),
+      M9 (Scope 5 both cases).
+- [ ] `hasheq`: M4 (Scope 3 row `-0.0`), M5 (Scope 4 `hash`), M10 (Scope 5 both cases).
+- [ ] `hashCode`: M6 (Scope 3 row `-0.0`; Scope 4 `.hashCode`, `HashSet`; Scope 6), M11 (Scope 5 both cases).
+- [ ] `base-interfaces`: M7 (Scope 4 `=`).
+- [ ] `hasheq` and `equiv`: M12 (Scope 4 `contains?`). Also run the `equiv` part alone and confirm that Scope 4
+      `contains?` does not fail (the `hasheq` part alone is M5). Record both parts and both results.
+- [ ] Compare the results with the plan.md coverage list. For each item that no mutation made fail, find a
+      covering mutation or record the reason that no `src` change breaks it.
 - [ ] Commit `implementation.md` entries.
 
 ## Slice 8: state

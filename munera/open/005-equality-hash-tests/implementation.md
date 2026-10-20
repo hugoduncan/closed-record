@@ -52,3 +52,95 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
 - Mutation targets in `src/closed_record/impl/jvm.clj`: `hasheq`/`hashCode` (`cached-hash`, `mapHasheq`, `mapHash`),
   `equals` (`mapEquals`), `equiv`, `withMeta` (copies `__hash`, `__hasheq`).
 - Acceptance 5: move V-12 from "Not done" to "done" in the verification-plan line of `mementum/state.md`.
+
+## Plan review: ambiguity (2026-10-19)
+
+- Ambiguity review added 2 new design steps (Slice 7 mutations).
+  - Call paths checked in Clojure sources: `#{m}` lookup calls `Util.equiv(r, m)` → `(.equiv r m)` (emitter);
+    `HashSet.contains` calls `(.equals r m)` (emitter). One `equals` change (for example, `mapEquals` → `equiv`)
+    fails Scope 3 rows 1–3 `.equals`, Scope 4 `.equals`/`HashSet` and Scope 6 `.equals`. One `hashCode` change
+    (`mapHash` → `mapHasheq`) fails Scope 3 row `0.0`/`-0.0`, Scope 4 `.hashCode`/`HashSet` and Scope 6
+    `.hashCode`. These steps are not ambiguous.
+
+## Plan review: inconsistency (2026-10-19)
+
+- Inconsistency review added 1 new design step (`(= m r)` path and the mutation target list).
+  - `MapEquivalence` is a marker interface. Adding it to `base-interfaces` loads without error. In `src`, only
+    `map->Name` also checks it (it then does not call `into {}`), and a record input gives the same result. Thus
+    the change is specific to `(= m r)` and is a valid mutation under the "Test design" rules.
+
+## Notes for the plan design-steps slice (after plan review)
+
+- The 3 open steps in `design-steps.md` (plan review sections) are plan-level. Resolve them in `plan.md`
+  (Acceptance 3 targets), then make steps.md Slice 7 agree. Do not change design.md Scope or Acceptance.
+- Principle: each Slice 7 step names the mutation(s) and the exact items that each one fails. The catch-all step
+  stays for items that no listed mutation covers.
+- Candidate mutations, not yet run (except `MapEquivalence`):
+  - Scope 3 row 4 `=`: `equiv` compares fields with `==` (`(== 1 1.0)` is true).
+  - Scope 5 `hash`/`.hashCode`: `hasheq`/`hashCode` mix in `(hash __meta)`. Scope 5 `=`: `equiv` also compares
+    `__meta`.
+  - `(contains? #{m} r)`: needs `hasheq` without the type hash and also `equiv` that accepts a map. This is the
+    open decision about a change in two methods.
+- `src/closed_record/impl/jvm.clj` locations: `base-interfaces` (top of file), `cached-hash`, `generated-methods`
+  (`hasheq`, `hashCode`, `equals`, `withMeta`, `equiv`).
+- To run a mutation without risk to the work tree: `cp -R` the repo to `/tmp`, edit there, run
+  `clojure -M:test -i <file>` or `-m scry.cli`.
+
+## Plan design-steps resolved (2026-10-19)
+
+- The 3 plan-review steps are resolved in plan.md ("Mutation checks") and steps.md Slice 7. design.md is unchanged.
+  `withMeta` and `cached-hash` are not targets. `base-interfaces` is a target (M7).
+- Correction to "Notes for the next slice (after design review pass 2)": `(= m r)` calls no emitter method. M7
+  covers it.
+- M1–M12 were run in a scratch copy (`cp -R` of the repo to `/tmp`) with a probe file that printed the
+  `E` and `DE` result vectors for each item. The probe file is not in git. The results are in the plan.md table.
+- Discoveries from the scratch runs:
+  - The M3 failure in Scope 4 `.equals` and `HashMap` is only in the `r`-first call. `(.equals m r)` calls
+    `size`, `containsKey` and `get` of `r`, not `equals`.
+  - The M12 `equiv` part does not change Scope 6: `(= (into {} E) DE)` is false, because `DE` is not a
+    `MapEquivalence`.
+  - A hash body of type `long` (for example a `bit-xor` that is not wrapped in `int`) fails at `deftype*` compile
+    with `ArrayIndexOutOfBoundsException`. It gives no signal.
+- No test code exists yet. Slice 1 is the next step.
+
+## Plan review pass 2: ambiguity (2026-10-19)
+
+- No ambiguity review feedback.
+  - Checked M1–M12 against `generated-methods` and `base-interfaces` in `src/closed_record/impl/jvm.clj`: each
+    change names one method and one edit.
+  - Slice 2 and Slice 4 share the four-result function. Write it over two values `x` and `y`. The Scope 3 test
+    builds `x` and `y` from the pair, then calls it.
+
+## Plan review pass 2: inconsistency (2026-10-19)
+
+- Inconsistency review added 1 new design step (M12 coverage). Coverage does not change: M7 covers Scope 4 `=`.
+
+## Notes for the plan design-steps slice (after plan review pass 2)
+
+- Edit only plan.md "Mutation checks": the M12 table row and the Coverage list. design.md, the rules and steps.md
+  Slice 7 already agree with the counting rule. Do not change them.
+- No scratch run is needed. The M12 part results (plan.md, "M12 parts alone") stay valid. Only the counting changes.
+- Keep the counting rule. Do not add the M12 `equiv` part as a separate counted mutation for Scope 4 `=`. M7 covers it.
+- Mutation rules source: `mementum/knowledge/testing-generated-types.md` ("Test design").
+
+## Plan design-steps resolved, pass 2 (2026-10-19)
+
+- M12 coverage step resolved in plan.md only: the M12 row now counts only Scope 4 `contains?`, and names Scope 4
+  `=` and `hash` as failures that do not count. Coverage list: Scope 4 `=` is M7 only. steps.md and design.md are
+  unchanged.
+- Slice 7 M12 run: Scope 4 `=` and `hash` also fail. Record them in the M12 entry as not counted. They are not a
+  mismatch with the plan.
+- All steps in `design-steps.md` are ticked. Slice 1 is the next step.
+
+## Plan review pass 3: ambiguity (2026-10-19)
+
+- No ambiguity review feedback.
+
+## Plan review pass 3: inconsistency (2026-10-19)
+
+- No inconsistency review feedback.
+
+## Notes for the next slice (after plan review pass 3)
+
+- Pass 3 added no design steps. `design-steps.md` has no open items, so there is nothing for a design-steps slice
+  to do. Start at Slice 1.
