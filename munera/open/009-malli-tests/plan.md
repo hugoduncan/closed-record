@@ -32,4 +32,5 @@ Key decisions (from design.md):
 2. Tests: `test/closed_record/malli_test.clj` with the five deftests; verify with scry under all
    three Clojure aliases; lint and format.
 3. Docs: README `malli` section.
-4. Architecture bookkeeping: `embodiment.md` artifacts/deps rows; `mementum/state.md` V-07 done.
+4. Architecture bookkeeping: `embodiment.md` artifacts/deps rows; `mementum/state.md` V-07 done and
+   `malli_test.clj` in the "Tests" list.

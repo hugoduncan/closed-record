@@ -47,3 +47,46 @@
 - No open design steps. `design.md` is stable; the next step is planning (`create-task-plan`).
 - Scope 4 `deps.edn` row: `ramora/defclosedrecord/embodiment.md` says "Test and bench aliases", but `deps.edn` has
   no bench alias (`:test`, `:nrepl`, `:clj-1.12`, `:clj-1.13`). Add malli only. Do not fix the bench claim in this task.
+
+## Plan review (2026-10-20)
+
+- Ambiguity review added 2 new design steps (test `ns` requires; `mementum/state.md` edit scope).
+  - Not filed: the check form for "a `P` with entries". Closed-record `=` follows `defrecord` (V-12): a record is not
+    `=` to a plain map. Thus `(= (->P 1 nil 3) result)` checks the type and the entries; a map-only `=` fails, so
+    a wrong form cannot pass.
+  - Not filed: README section position. `README.md` has only "Rational" and "Development"; any `##` position fits.
+- Inconsistency review: no inconsistency review feedback.
+
+## For the plan-review design-steps pass
+
+- Edit `steps.md` only (Slice 2 ns step, Slice 4 `state.md` step). Both items change wording, not scope or
+  `design.md`. Keep `plan.md` as it is.
+- ns pattern to copy: `test/closed_record/hidden_key_test.clj` (docstring with V-ids, then `clojure.test` and
+  `closed-record.core` requires). The docstring can name V-07, S-04, D-11 (the design Intent).
+- `mementum/state.md` "Status" section: the "Tests:" list and the "Verification plan done" line. The
+  `property_test.clj` entry is the pattern for a test that names its library in the `:test` alias.
+
+## Plan-review design-steps pass (2026-10-20)
+
+- Both plan-review steps done in `steps.md` (Slice 2 ns step, Slice 4 `state.md` step). `plan.md` Slice 4 line
+  now also names the "Tests" list entry, so plan and steps agree.
+- No implementation step is done yet. `deps.edn` has no malli; Slice 1 is the next step.
+- `mementum/state.md` "Tests:" list does not name `equality_test.clj` (V-12). Not part of this task; do not fix it
+  in Slice 4 unless asked.
+
+## Plan review pass 2 (2026-10-20)
+
+- Ambiguity review (pass 2): no ambiguity review feedback.
+  - Not filed: where the `ex-data` helper comes from. No shared test helper ns exists; each test ns has its own
+    private `thrown` and `data-of` (`defclosedrecord_test.clj`, `hidden_key_test.clj`). Copy them into
+    `malli_test.clj`.
+  - Not filed: the schema of the nil-field test. Any `[:map ... [:b :int]]` vs `[:map ... [:b [:maybe :int]]]`
+    pair on `p` gives the required false/true.
+- Inconsistency review (pass 2): no inconsistency review feedback.
+
+## For the next step (after plan review pass 2)
+
+- `design-steps.md` has no open items. No design-steps pass is needed. `design.md`, `plan.md` and `steps.md`
+  are stable; go to implementation (Slice 1).
+- If a later review adds design steps: edit `steps.md` (and `plan.md` only to keep it in agreement); do not change
+  scope or `design.md`.

@@ -8,7 +8,11 @@
 ## Slice 2: tests
 
 - [ ] Read the V-01 tests to copy the full-`ex-data` comparison style (`:type`, `:record`, `:key`).
-- [ ] Create `test/closed_record/malli_test.clj` with ns requires (`malli.core`, `malli.error`, `malli.transform`, scry/test ns per project conventions) and `(defclosedrecord P [a b c])`.
+- [ ] Create `test/closed_record/malli_test.clj` (ns `closed-record.malli-test`) and `(defclosedrecord P [a b c])`.
+  - ns docstring: names V-07 (also S-04, D-11).
+  - ns requires: `[clojure.test :refer [deftest is testing]]`, `[closed-record.core :refer [defclosedrecord]]`,
+    `[malli.core :as m]`, `[malli.error :as me]`, `[malli.transform :as mt]`.
+  - No scry require: scry is only the runner (`-m scry.cli`).
 - [ ] Add `deftest` validation: open and closed `[:map ...]` schemas of declared keys validate true; a schema with an undeclared key (`[:map [:a :int] [:d :int]]`) and a closed schema with fewer keys (`[:map {:closed true} [:a :int]]`) validate false.
 - [ ] Add `deftest` explanation: `m/explain` nil for a valid record; `me/humanize` of `(m/explain s (->P "x" nil 3))` `=` `{:a ["should be an integer"]}`; `me/humanize` of `(m/explain [:map [:a :int] [:d :int]] p)` `=` `{:d ["missing required key"]}`.
 - [ ] Add `deftest` nil fields: nil field valid for `[:maybe :int]`, invalid for `:int`.
@@ -29,5 +33,8 @@
 ## Slice 4: architecture bookkeeping
 
 - [ ] Update `ramora/defclosedrecord/embodiment.md`: add an Artifacts row for `malli_test.clj` (V-07); the `deps.edn` row names malli in the `:test` alias.
-- [ ] Update `mementum/state.md`: V-07 done.
+- [ ] Update `mementum/state.md` "Status" section:
+  - "Verification plan done" line: add V-07 to the done list; the not-done list is V-11 only.
+  - "Tests:" list: add `test/closed_record/malli_test.clj` (`closed-record.malli-test`, V-07), with the note that
+    `metosin/malli` 0.20.3 is in the `:test` alias (same form as the `property_test.clj` entry).
 - [ ] Commit slice 4.
