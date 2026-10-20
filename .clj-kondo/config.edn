@@ -1,0 +1,1 @@
+{:lint-as {closed-record.core/defclosedrecord clojure.core/defrecord}}

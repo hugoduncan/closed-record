@@ -485,3 +485,73 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
   step is implementation, Slice 1 of `steps.md`.
 - If a later review adds design steps, use the principles of the earlier "Notes for the plan-review ... design-steps
   work" sections. Do not raise again the items under "Not raised" in the pass-3 review notes.
+
+## Slice 1 implementation (2026-10-19)
+
+- `test/closed_record/compiler_rules_test.clj` done: 9 tests, pass on 1.11.4, 1.12.6, 1.13.0-alpha9; clj-kondo
+  and cljfmt clean. No closed-record require.
+- Forms are built as data by helper `deftype*-form` (`list*` of symbols), not literal quoted forms; same effect for
+  clj-kondo (no lint of runtime data).
+- Field values are read with `clojure.lang.Reflector/getInstanceField`, not `(eval '(.-a o))`. Reason: `eval` of a
+  form that holds an object embeds it as a constant, which runs `Compiler.emitValue` (K-08) and mixes rules.
+- The K-08 constant is `(eval (list (list 'fn [] v)))` inside the `*ns*` binding.
+- No rule failed. Next: Slice 2.
+
+## Slices 2–4 implementation (2026-10-19)
+
+- Emitter: `closed-record.impl.jvm/emit [tname fields opts impls]`. `impls` is a vector of
+  `[symbol method-forms]` pairs in source order (macro `split-opts+specs`). Returns the full expansion form.
+- Generated method params: `this` is the literal symbol `this`; other params are auto-gensyms, or plain
+  `k` in `containsKey`/`without` (nested syntax-quote cannot share `k#`). `assoc` uses `gensym` params so
+  the constructor `replace` map can name the new value.
+- `:record` in method ex-data is `(class this)`; in `map->Name` it is the imported `classname` symbol.
+- `cons` branch 3 uses public `clojure.core/assoc` in the loop (no reflection, calls `.assoc`).
+- Zero-field types work (`containsKey` emits `false`; `without` has no throw clause).
+- `check` uses `satisfies? ClosedRecord`; extra keys `ks` = `(set (map key (-extra-keys x)))`.
+- Ad-hoc smoke script (not committed, `/tmp/smoke.clj`) gave identical output on 1.11.4, 1.12.6,
+  1.13.0-alpha9 for: table operations, all 7 ex-data paths, cons host exceptions, D-19 NPE, literal +
+  `check`, equality/hash formula, 22-field factory + `ArityException`, code constants via `eval`,
+  keyword thunks. No reflection warnings from generated code. Slice 5 must turn this into real tests.
+- `core_test.clj` smoke test still present (removed in Slice 6). clj-kondo and cljfmt clean.
+
+## Slice 5 implementation (2026-10-19)
+
+- One test namespace: `test/closed_record/defclosedrecord_test.clj` (refers `defclosedrecord`, `check`).
+  33 tests total with compiler rules; pass on 1.11.4, 1.12.6, 1.13.0-alpha9; clj-kondo, cljfmt clean.
+- Reader literals: `read-string` inside the `*ns*` binding works in the scry CLI (no K-06 loader binding needed).
+- V-01 test-unit mapping (acceptance 3), purpose table row → test:
+  - `get` → `get-test`; keyword call → `keyword-call-test`; `.field` (declared only) → `field-access-test`.
+  - `contains?` → `contains-test`.
+  - `assoc`/`conj`/`merge`/`into`/`update` → `assoc-test`/`conj-test`/`merge-test`/`into-test`/`update-test`
+    (each: `testing` declared, `testing` undeclared).
+  - `dissoc` → `dissoc-test`; `empty` → `empty-test`.
+  - `map->Name` → `map-factory-test` (declared: nil + `^long` NPE; undeclared: extra-keys).
+  - Reader literal → `reader-literal-declared-key-test`, `reader-literal-undeclared-key-test`.
+  - Equality rows → `equal-same-type-test`, `equal-other-type-test`, `equals-java-map-test`, `hash-test`,
+    `hash-code-test`; metadata/hidden-key note → `equality-ignores-metadata-and-hidden-keys-test`.
+- 7 `ex-data` paths (acceptance 4): assoc undeclared → `assoc-test`; cons undeclared → `conj-test`;
+  dissoc declared → `dissoc-test`; empty → `empty-test`; `map->Name` extra → `map-factory-test`;
+  `check` extra → `check-test` (also `reader-literal-undeclared-key-test`); `check` other → `check-test`.
+- Acceptance 4 basics → `record-basics-test`; V-10 → `big-factories-test`; acceptance 5 → `argument-errors-test`.
+- Next: Slice 6 (remove smoke test, docs).
+
+## Slice 6 implementation (2026-10-19)
+
+- Removed `test/closed_record/core_test.clj` (smoke test). Test count now 32 (was 33); CLI exit 0.
+- `mementum/state.md` names `defclosedrecord`, `check`, emitter and both test files.
+- `dev-tooling.md`: kept only the zero-tests exit rule; removed "Smoke-test lint" section.
+- Next: Slice 7 (final verification, then ask user about architecture findings).
+
+## Slice 7 implementation (2026-10-19)
+
+- CLI on 1.11.4, 1.12.6, 1.13.0-alpha9: exit 0, 32 tests, 95 assertions, 0 failures/errors.
+- REPL: `(:pass? (scry/run))` true. The REPL had a stale `closed-record.core` (no `check`); run
+  `(require 'closed-record.core :reload-all)` first.
+- clj-kondo 0/0; cljfmt clean; source namespaces are only `core` and `impl.jvm`; `impl.jvm` does not require `core`.
+- Remaining: the architecture findings (lines 58, 109, 151, 199, 243, 329) need user approval before any edit of
+  `ramora/` or `mementum/memories/deftype-star-hidden-fields.md`.
+
+<!-- IMPLEMENTATION_BLOCKER: START -->
+- blocker: The architecture findings need a user decision before `ramora/` or `mementum/memories/deftype-star-hidden-fields.md` can change (rule from the design).
+- required-human-action: Read the architecture findings in implementation.md (lines 58, 109, 151, 199, 243, 329). Approve or reject each edit to `ramora/` and to the memory file.
+<!-- IMPLEMENTATION_BLOCKER: END -->

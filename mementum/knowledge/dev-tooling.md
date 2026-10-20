@@ -22,14 +22,8 @@ This page gives the rules that the commands do not show.
 
 ## Scry
 
-- ❌ The scry CLI exits non-zero when it finds zero tests. `test/closed_record/core_test.clj` has a smoke test for
-  this reason. Remove it only when other tests exist.
+- ❌ The scry CLI exits non-zero when it finds zero tests.
 - On a pass, `.scry-results/` is empty. On a failure, read `.scry-results/*.edn`, not the terminal output.
-
-## Smoke-test lint
-
-- clj-kondo warns "required but never used" for `[closed-record.core :as core]` when the alias is not used.
-  Use a bare `[closed-record.core]` and `(is (find-ns 'closed-record.core))`.
 
 ## psi project REPL
 
