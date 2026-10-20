@@ -54,3 +54,18 @@
   to agree, for example: "Each view has its own method body. A fault in that body shows only in its view. A fault in
   `seq` or `count` shows first in `:keys` or `:count`." This also tells acceptance 4 to change the body of the view
   method, not `seq` or `count`.
+- [x] Ambiguity (plan review): specify the valid change for the `:check` mutation (steps.md Slice 3, plan.md
+  approach 3). The step says "make `check` in `core.cljc` throw for a valid value". The mutation rules
+  (`mementum/knowledge/testing-generated-types.md`, "Test design") say that a change that breaks `check` for all
+  values does not count. The step does not say which valid values throw, so an unconditional throw in `check` agrees
+  with the step text but does not count. The candidate in `implementation.md` (design pass 1) is a change in
+  `jvm.clj`, not in `core.cljc`: the `assoc` clause passes `(assoc __extmap k v)` in place of `__extmap`. Change the
+  plan and the step to name this change (or another change that makes `check` throw only for some values), and
+  remove "or `core.cljc` for `:check`" if the change is in `jvm.clj`.
+- [x] Inconsistency (plan review): put the emitter fix of design Scope 6 in the slice where a real fault shows.
+  Scope 6 says: "If a test fails because of the emitter, fix the emitter ... Record the cause in
+  `implementation.md`." steps.md has this fix only in Slice 3, with the condition "If a mutation run exposed a real
+  emitter fault" (plan.md, slice order 3, is the same). A mutation run tests changed code, so it does not show a real
+  fault. A real fault shows in the Slice 2 runs on unchanged `src`, and Slice 2 has no fix step and no step to
+  record the cause. Move the fix step (fix `jvm.clj`, record the cause in `implementation.md`, run the three aliases
+  again) to Slice 2, after the scry runs, and change plan.md to agree.

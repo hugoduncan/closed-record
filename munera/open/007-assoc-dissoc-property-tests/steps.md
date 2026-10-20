@@ -33,6 +33,8 @@
 - [ ] Run `clojure -M:test -m scry.cli`: exit 0, zero failures/errors, property test counted as passed.
 - [ ] Run `clojure -M:test:clj-1.12 -m scry.cli` and `clojure -M:test:clj-1.13 -m scry.cli`: exit 0, zero
       failures/errors.
+- [ ] If a run on unchanged `src` fails because of the emitter, fix `src/closed_record/impl/jvm.clj`, record
+      the cause in `implementation.md`, and run the three aliases again.
 
 ## Slice 3: mutation verification (acceptance 4)
 
@@ -52,11 +54,11 @@ Follow the mutation rules in `mementum/knowledge/testing-generated-types.md` (se
 - [ ] Mutate for `:count` (change in `count`).
 - [ ] Mutate for `:size` (change in the `size` method body only).
 - [ ] Mutate for `:values` (change in the `values` method body only).
-- [ ] Mutate for `:check` (make `check` in `core.cljc` throw for a valid value).
+- [ ] Mutate for `:check`: in the `assoc` clause of `jvm.clj`, the declared-key branch passes
+      `(assoc __extmap k v)` in place of `__extmap` to `new`. `check` then throws
+      (`:closed-record/extra-keys`) only for a result of `assoc` of a declared key, not for all values.
 - [ ] For any check with no valid breaking change in `src`, record the reason in `implementation.md`.
 - [ ] Verify all mutations are reverted: `git diff src` is empty; rerun `clojure -M:test -m scry.cli`, exit 0.
-- [ ] If a mutation run exposed a real emitter fault, fix `src/closed_record/impl/jvm.clj` and record the
-      cause in `implementation.md`.
 
 ## Slice 4: lint, format, documents
 

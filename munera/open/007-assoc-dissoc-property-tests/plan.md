@@ -18,12 +18,17 @@ Implement in four slices, each independently verifiable.
      (`:type`, `:record`, `:key`).
    - One `deftest` (Scope 5): `(quick-check 200 property)`, single `(is (:pass? result) msg)` where `msg`
      shows `:seed`, `[:shrunk :smallest]` and `[:shrunk :result-data]`. No `is` in the property body.
+   - Run the three test aliases on unchanged `src`. If a test fails because of the emitter (Scope 6), fix
+     `src/closed_record/impl/jvm.clj`, record the cause in `implementation.md`, and run the three aliases again.
 3. **Mutation verification** (acceptance 4): for each of the 13 named checks, apply a single change in
-   `src/closed_record/impl/jvm.clj` (or `core.cljc` for `:check`), confirm the property fails naming exactly
-   that check, revert the change, and record the change and failure report in `implementation.md`. Follow the
-   mutation rules in `mementum/knowledge/testing-generated-types.md`. View checks (`:key-set`, `:entry-set`,
-   `:size`, `:values`) mutate the body of their view method, not `seq` or `count`. If no `src` change can
-   break a check, record the reason.
+   `src/closed_record/impl/jvm.clj`, confirm the property fails naming exactly that check, revert the change,
+   and record the change and failure report in `implementation.md`. Follow the mutation rules in
+   `mementum/knowledge/testing-generated-types.md`. View checks (`:key-set`, `:entry-set`, `:size`, `:values`)
+   mutate the body of their view method, not `seq` or `count`. The `:check` change is in the `assoc` clause:
+   the declared-key branch passes `(assoc __extmap k v)` in place of `__extmap` to `new`. Thus `check` throws
+   (`:closed-record/extra-keys`) only for a result of `assoc` of a declared key, not for a `->P` value, so the
+   change does not break `check` for all values. No mutation is in `core.cljc`. If no `src` change can break a
+   check, record the reason.
 4. **Documents**: update `ramora/defclosedrecord/embodiment.md` (Artifacts row for the new test namespace,
    `deps.edn` row names `test.check`) and `mementum/state.md` (V-03 done, new namespace and dependency).
 
@@ -33,8 +38,9 @@ survives shrinking.
 
 ## Risks
 
-- A latent emitter fault may surface under long sequences (Scope 6). Mitigation: fix in
-  `src/closed_record/impl/jvm.clj` and record the cause in `implementation.md`.
+- A latent emitter fault may surface under long sequences (Scope 6). It shows in the Slice 2 runs on unchanged
+  `src`, not in a mutation run. Mitigation: in Slice 2, fix in `src/closed_record/impl/jvm.clj`, record the
+  cause in `implementation.md`, and run the three aliases again.
 - scry may count the property test as "unknown" rather than passed. Mitigation: keep the test a plain
   `deftest` with one `is`; verify acceptance 3 wording explicitly.
 - Mutation checks are sensitive to check order: the property stops at the first failure, so a mutation that
@@ -46,7 +52,7 @@ survives shrinking.
 ## Slice order
 
 1. Add `test.check` dependency to `deps.edn`.
-2. Create `test/closed_record/property_test.clj` (generators, property, deftest); run all three test aliases.
-3. Mutation verification of all 13 checks; record results in `implementation.md`; fix emitter if a real
-   fault appears.
+2. Create `test/closed_record/property_test.clj` (generators, property, deftest); run all three test aliases;
+   fix the emitter if a test fails because of the emitter.
+3. Mutation verification of all 13 checks; record results in `implementation.md`.
 4. Lint/format checks; update `embodiment.md` and `mementum/state.md`.

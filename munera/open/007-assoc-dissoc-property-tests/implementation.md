@@ -113,3 +113,58 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
 - If a later review adds a design step, edit `design.md` in place. Keep the check list, the check order and
   acceptance 4 unchanged unless the step names them. These three parts depend on each other (the first failed check
   stops the property, and the shrunk `result-data` names that check).
+
+## Plan review, pass 1 (ambiguity, 2026-10-20)
+
+- ambiguity review added 1 new design step
+  - Why actionable: the `:check` mutation text ("make `check` in `core.cljc` throw for a valid value") permits an
+    unconditional throw, which the mutation rules reject.
+  - Verified at `e8ce834`, `jvm.clj`: `iterator` is `RecordIterator` with `(RT/iter nil)`, `seq` lists only the
+    fields, and `count` is the constant field count. None of them reads `__extmap`. Thus the `assoc` → `(assoc
+    __extmap k v)` change shows first in `:check`, after the first `assoc` of a declared key.
+- inconsistency review added 1 new design step
+
+## Notes for addressing design-steps (plan review pass 1, 2026-10-20)
+
+- The two open steps change `plan.md` and `steps.md`, not `design.md`. `design.md` stays stable at `560288f`.
+  Edit in place (no amendment markers). Keep the 13 checks, their order and the slice count. Use simplified
+  technical English.
+- `:check` step: the `assoc` clause is at `src/closed_record/impl/jvm.clj` 182–187 (`e8ce834`). The change
+  replaces `~'__extmap` in the `new` form with `(assoc ~'__extmap ~k ~v)` (`__extmap` is nil for `->P` values;
+  `(assoc nil k v)` gives a map). It breaks `check` only for `assoc` results, not for all values, so it agrees with
+  the rule "breaks `check` for all values does not count". If you keep `core.cljc` as an option, the step must say
+  which values throw.
+- Emitter-fix step: in Slice 2, the trigger is a failure on unchanged `src`. Keep the Slice 3 revert check
+  (`git diff src` empty), but take out its emitter-fix item, so that the fix is in one place only.
+- Rules: `mementum/knowledge/testing-generated-types.md` ("Test design": one change per check, new JVM per run,
+  `cp -R` to `/tmp`; "Hidden keys and call paths").
+
+## Plan-review steps addressed, pass 1 (2026-10-20)
+
+- Both open steps done in `plan.md` and `steps.md`. `design.md` did not change (stable at `560288f`).
+- `:check` mutation is now named: `jvm.clj` `assoc` clause, declared-key branch, `~'__extmap` → `(assoc ~'__extmap
+  ~k ~v)` in the `new` form. No mutation is in `core.cljc`.
+  - Verified in a `/tmp` copy (new JVM, Clojure 1.11.4): `(check (->P 0 nil 0))` is `identical?`; for
+    `r = (assoc p :a 1)`, `:assoc-type`, `:assoc-entries` and the 7 I-01 checks before `:check` pass, and
+    `(check r)` throws `{:type :closed-record/extra-keys :record P :keys #{:a}}`. Thus the shrunk failure names
+    `:check`, with `:ex`.
+- The emitter-fix step is now in Slice 2 only (after the scry runs on unchanged `src`). Slice 3 keeps only the
+  revert check (`git diff src` empty).
+
+## Plan review, pass 2 (ambiguity, at `b36f100`)
+
+- no ambiguity review feedback
+  - Checked for Slice 3: `count` (`jvm.clj` 143) is the constant `n`. `keys` and `set` read through `seq`, and
+    `into` reads through `iterator`, so neither calls `count`. Thus a `count` change shows first in `:count`, and the
+    13 named mutations each show first in their own check.
+- no inconsistency review feedback
+  - Note for Slice 3: the revert check (`git diff src` empty) assumes that a Slice 2 emitter fix, if any, is
+    committed before the mutation runs.
+
+## Notes after plan review pass 2
+
+- No design steps were added, and none are open. `plan.md` and `steps.md` are stable at `b36f100`. The next
+  lifecycle step is implementation (Slice 1), not a design-step pass.
+- If a later review adds a step, keep the 13 checks, their order and the one-change-per-check mutations, unless the
+  step names them. Mutation rules: `mementum/knowledge/testing-generated-types.md` ("Test design", "Hidden keys and
+  call paths").
