@@ -20,7 +20,7 @@ Main form: `defclosedrecord`.
   `test/closed_record/defclosedrecord_test.clj` (behaviour, errors, factories),
   `test/closed_record/literal_test.clj` (V-04, V-05: print, read and code constants),
   `test/closed_record/field_value_test.clj` (V-06, V-08, V-09: field values).
-- Verification plan done: V-01, V-04, V-05, V-06, V-08, V-09, V-10, V-13, V-15. Not done: V-02, V-03, V-07, V-11, V-12, V-14.
+- Verification plan done: V-01, V-04, V-05, V-06, V-08, V-09, V-10, V-12, V-13, V-15. Not done: V-02, V-03, V-07, V-11, V-14.
 - Tests: `clojure -M:test -m scry.cli`. Other versions: add `:clj-1.12` or `:clj-1.13`.
 - REPL: `clojure -M:test:nrepl`. In the REPL: `(require '[scry.core :as scry]) (scry/run)`.
 

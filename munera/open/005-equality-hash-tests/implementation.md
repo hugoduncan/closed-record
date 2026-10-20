@@ -144,3 +144,27 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
 
 - Pass 3 added no design steps. `design-steps.md` has no open items, so there is nothing for a design-steps slice
   to do. Start at Slice 1.
+
+## Implementation (2026-10-19)
+
+- Slices 1–6: `test/closed_record/equality_test.clj`. Helper `is-diff` (macro) calls `f` with `->E` and `->DE`
+  and asserts `(= (f ->E) (f ->DE))`. `four` gives the first-table vector; `pair` and `with-r` build the
+  Scope 3 and Scope 4 functions. Scope 4 pairs each case with its reverse call in one vector. Matrix 1.11.4,
+  1.12, 1.13: 254 assertions pass. clj-kondo and cljfmt clean. No emitter change (Scope 7 not needed).
+- Slice 7: each mutation ran alone in a scratch copy (`/tmp/mut-<id>`, Clojure 1.11.4), with
+  `run-tests 'closed-record.equality-test`. Failed items (test `testing` labels):
+  - M1 (`equiv`, `=` → `.equals`): Scope 3 `1N`, `(int 1)`, `-0.0`.
+  - M2 (`equiv`, `=` or numeric `==`): Scope 3 `1.0`.
+  - M3 (`equals` → `.equiv`): Scope 3 `1N`, `(int 1)`, `-0.0`; Scope 4 `.equals`, `HashMap`, `HashSet`;
+    Scope 6 `.equals`.
+  - M4 (`hasheq`, `mapHasheq` → `mapHash`): Scope 3 `-0.0`.
+  - M5 (`hasheq`, no type-hash `bit-xor`): Scope 4 `hash`.
+  - M6 (`hashCode`, `mapHash` → `mapHasheq`): Scope 3 `-0.0`; Scope 4 `.hashCode`, `HashSet`; Scope 6 `.hashCode`.
+  - M7 (`base-interfaces` + `MapEquivalence`): Scope 4 `=`.
+  - M8 (`equiv` also `(= __meta (meta o))`), M9 (`equals` also compares meta), M10 (`hasheq` xor `(hash __meta)`),
+    M11 (`hashCode` xor `(hash __meta)`): Scope 5 both cases, each.
+  - M12 (M5 + `equiv` for another class returns `(and (map? o) (= (into {} this) o))`): Scope 4 `contains?`
+    (counted); `=`, `hash` also fail (not counted). `equiv` part alone: only Scope 4 `=`; `contains?` passes.
+    `hasheq` part alone is M5: only `hash`.
+- Coverage equals the plan.md list. No item without a mutation; no reason entry needed.
+- Slice 8: V-12 moved to done in `mementum/state.md`. All steps ticked.
