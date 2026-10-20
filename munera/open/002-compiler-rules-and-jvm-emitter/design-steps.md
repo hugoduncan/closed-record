@@ -246,3 +246,97 @@ Follow-up items from design reviews. Tick an item when design.md is updated.
   bullet agree with E-02 and with its own reason. For example: name `getBasis` as generated for every `deftype*`,
   and check only `create` and the two alternative constructors. Or keep the `getBasis` check and state that it is
   not part of the rule.
+
+## Plan ambiguity review (2026-10-19)
+
+Scope: `plan.md` and `steps.md`. A resolution can change `design.md` (Scope 1, the Decisions), `plan.md` or
+`steps.md`.
+
+- [x] Class loader of the K-06 three-field test (Scope 1, Slice 1). Scope 1 and `steps.md` say
+  `(Class/forName class-name true (clojure.lang.RT/baseLoader))`. The result of `RT/baseLoader` depends on the run
+  context. In the scry CLI, `Compiler/LOADER` is not bound in a test, so `RT/baseLoader` is the application class
+  loader. Observed with `clojure -M:test -m scry.cli` on 1.11.4, 1.12.6 and 1.13.0-alpha9: after `eval` of a
+  three-field form, this call throws `ClassNotFoundException`, not `VerifyError`. Thus the test fails in the CLI
+  (acceptance 2), and the "Order" decision then stops the task for a false rule failure. Observed in the same CLI
+  context: `(Class/forName class-name true (clojure.lang.DynamicClassLoader.))` throws `VerifyError` with no cause
+  for a three-field form, and returns the class for the four-field form (the `DynamicClassLoader` class cache is
+  static). `eval` of a `deftype*` form returns nil, so it does not give the class. State the class loader (or the
+  lookup) that each K-06 test uses to get the class, for the CLI and the REPL.
+- [x] Assertions of the K-08 `emitValue` test (Scope 1, Slice 1). `steps.md` says "a record constant without
+  `IType` is built through `create` from the `java.util.Map` view (`Compiler.emitValue` IType-before-IRecord path)".
+  It does not say how the test makes a constant or what it checks. The design reviews left this to the plan
+  (`implementation.md`, ambiguity review pass 4: "test method, not design"). `__extmap` does not show the path: the
+  `IType` path also gives `__extmap` nil. Observed on 1.11.4, 1.12.6 and 1.13.0-alpha9: two `deftype*` forms with
+  the K-06 layout, `IRecord`, `IPersistentMap` and `java.util.Map`, where `entrySet` gives `:a 99` and the field `a`
+  is 1. Constant made with `((eval (list 'fn [] v)))`. Without `IType`, the constant has `a` 99 (`create` from the
+  `java.util.Map` view). With `IType` added, it has `a` 1 (the `IType` path). State the constant construction and
+  the assertions of each K-08 test. Also point the K-07 "no calls" step to the observed method (the atom that
+  records calls, `implementation.md` ambiguity review pass 4).
+- [x] ClojureScript branch of `core.cljc` and clj-kondo (Slices 2 and 4, acceptance 7). clj-kondo lints a `.cljc`
+  file for `:clj` and `:cljs`. `steps.md` puts `defclosedrecord` and `check` in `core.cljc` and requires
+  `closed-record.impl.jvm` only under `:clj`. It does not say what these forms are in the `:cljs` branch. Observed
+  with the local clj-kondo on a `.cljc` file of this shape: `(class x)` in a function gives "error: Unresolved symbol:
+  class" (cljs), and a macro body that calls a namespace required only under `:clj` gives "warning: Unresolved
+  namespace". ClojureScript behaviour is out of scope, but D-18 scope is "all hosts". State the `:cljs` content of
+  `core.cljc`. For example: `ClosedRecord` and `check` portable, with `:value-class` from a reader conditional, and
+  the macro body (or the whole macro) under `:clj` only.
+
+## Plan inconsistency review (2026-10-19)
+
+Scope: `plan.md` and `steps.md` against `design.md` and `implementation.md`.
+
+- [x] Open architecture findings have no plan step. `implementation.md` ("Notes after design review, pass 8") says:
+  show the open architecture findings (passes 1–7) to the user together, before or at task close, and do not edit
+  `ramora/` or `mementum/memories/deftype-star-hidden-fields.md` without approval. Out of scope ("Changes to the
+  architecture documents") also says "ask the user". `plan.md` and `steps.md` have no item for this, and Slice 6
+  edits `mementum/` files. Add a step (for example at the end of Slice 7) that collects the findings and asks the
+  user, and state in Slice 6 that the memory file is not changed without approval.
+- [x] Time of the clj-kondo check. The `plan.md` risk says "verify early, not at the end" for the clj-kondo
+  zero-warning criterion (`:lint-as` and quoted `deftype*` forms). `steps.md` runs `clj-kondo --lint src test` only
+  in Slice 7. Make them agree. For example: run clj-kondo at the end of Slice 1 (quoted forms), Slice 4
+  (`core.cljc`, both `:clj` and `:cljs`) and Slice 5 (`:lint-as` for `->Name` and `map->Name`), or remove the risk
+  text.
+- [x] Mutable-metadata forms of acceptance 5. Acceptance 5 names two forms: a `^:volatile-mutable` field and an
+  `^:unsynchronized-mutable` field. The Slice 5 step says only "mutable field metadata", so one test can satisfy the
+  step but not acceptance 5. Name both forms in the Slice 5 step (the cause class is `IllegalArgumentException` for
+  each).
+
+## Plan ambiguity review, pass 2 (2026-10-19)
+
+Scope: `plan.md` and `steps.md`. A resolution can change `plan.md`, `steps.md` or `design.md` (acceptance 5).
+
+- [x] Namespace of the quoted forms that tests give to `macroexpand-1` and `eval` (Slices 1 and 5, acceptance 5).
+  In the scry CLI, `*ns*` is `user` when a test runs, not the test namespace. Observed with
+  `clojure -M:test -m scry.cli` on 1.11.4, 1.12.6 and 1.13.0-alpha9: `(macroexpand-1 '(m [__meta]))` of a macro `m`
+  of the test namespace returns the form unchanged (no throw). With `'(k.n-test/m [__meta])` or a syntax-quoted
+  form, the `AssertionError` cause occurs. A quoted `deftype*` method body that refers to a var of the test namespace
+  by an unqualified symbol fails at `eval` with `CompilerException` "Unable to resolve symbol". In the REPL, `*ns*`
+  can be the test namespace, so the same test can pass there. Thus:
+  - The Slice 5 expansion-time error tests, written as acceptance 5 writes them
+    (`(macroexpand-1 '(defclosedrecord T [__meta]))`), get no exception in the CLI and fail.
+  - The Slice 1 K-07 step says "an atom (held by a var of the test namespace)", but not how the quoted method body
+    names the var.
+
+  State how these test forms name the macro and the var. For example: a fully qualified symbol
+  (`closed-record.core/defclosedrecord`, `<test-ns>/calls`), or `(binding [*ns* (the-ns '<test-ns>)] ...)`. With the
+  `binding`, the emitter also takes `classname` and the protocol symbols from the test namespace. A syntax-quoted form
+  also qualifies the type name and the field names, so it is not the simple choice. If the fix changes the form of
+  acceptance 5, change acceptance 5 in `design.md` too.
+- [x] Wrong-arity `->Name` calls of the V-10 test and clj-kondo (Slice 5, acceptance 7). The V-10 step calls `->Name`
+  with 21 and 23 arguments. With `:lint-as` `defrecord` (Scope 9), clj-kondo knows the arity of `->Name`. Observed
+  with clj-kondo v2026.04.15: a direct call of `->P` (3 fields) with 2 or 4 arguments gives "error: x.t/->P is called
+  with 2 args but expects 3", also for a `defrecord`. `(apply ->P [1 2])` gives no finding. Thus a direct call fails
+  the Slice 5 and Slice 7 clj-kondo checks. State how the V-10 test makes the wrong-arity calls. For example: `apply`
+  with an argument vector of 21 and 23 values. Scope 1 rejects `#_:clj-kondo/ignore` only for the `deftype*` forms.
+
+## Plan inconsistency review, pass 2 (2026-10-19)
+
+Scope: `plan.md` and `steps.md` against `design.md` and `implementation.md`.
+
+- [x] List of the `ex-data` path tests. `implementation.md` ("Pass-6 design-steps resolution") says that each of
+  the 7 "Error data" paths needs at least one test with `=` on the full `ex-data`, and "List the test of each path
+  with the V-01 mapping (acceptance 3)". `steps.md` Slice 5 ("Record the V-01 test-unit-to-test mapping") and
+  `plan.md` Slice order 5 name only the V-01 mapping. Scope 6 lets a V-01 or V-15 test be the test of a path, so
+  without the list a review of acceptance 4 cannot find the test of each path. Make them agree. For example: the
+  Slice 5 mapping step also lists the test of each of the 7 paths (`assoc` and `cons` separate). Or state in
+  `implementation.md` that the list is not necessary.

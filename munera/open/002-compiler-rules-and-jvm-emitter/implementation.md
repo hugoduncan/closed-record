@@ -352,3 +352,136 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
   (passes 1–7, `implementation.md` lines 58, 109, 151, 199, 243, 329). Show them to the user together before or
   at task close. Do not edit `ramora/` or `mementum/memories/deftype-star-hidden-fields.md` without approval.
 - If a later step edits `design.md`, also wrap Scope 4 line 122 to 120 columns.
+
+## Plan ambiguity review (2026-10-19)
+
+- Ambiguity review of `plan.md` and `steps.md` added 3 new design steps (K-06 class loader, K-08 assertions,
+  `core.cljc` `:cljs` branch and clj-kondo).
+- The K-06 class-loader step is a blocker, not only wording: with `RT/baseLoader` the Slice 1 gate fails in the scry
+  CLI with `ClassNotFoundException`. In the psi REPL, `Compiler/LOADER` can be bound, so the same test can pass
+  there. Do not read a CLI failure of this test as a K-06 rule failure.
+- Reproductions: `/tmp`-only scripts, not in the repository. K-08 type: the methods that `create` and
+  `PersistentArrayMap.create(java.util.Map)` call are enough (`valAt`, `without` on the argument map; `entrySet` on
+  the type). `deftype*` does not require all interface methods.
+- Not raised (implementation choice, no acceptance risk): names of the new test namespaces, and whether
+  `core_test.clj` is kept for the new tests or deleted (acceptance 10 holds in both cases); how the Slice 3
+  "generated code refers only to" step is checked (REPL `macroexpand-1` inspection is enough); the return shape of
+  `-extra-keys` (embodiment: `__extmap`).
+- Plan inconsistency review added 3 new design steps (architecture-findings step, clj-kondo timing,
+  acceptance 5 mutable-metadata forms). Checked and consistent: the 7 `ex-data` paths, the argument-error classes,
+  the expansion form, the `cons` and `map->Name` branches, the type hash and the slice order against `design.md`.
+
+## Notes for the plan-review design-steps work (2026-10-19)
+
+- Principles:
+  - Put each fix where the text is. Class-loader and K-08 items: Scope 1 of `design.md` and Slice 1 of `steps.md`.
+    `:cljs` item: Decisions of `design.md` and Slices 2 and 4. Other items: `plan.md` and `steps.md` only. Do not add
+    scope items. Do not edit `ramora/`.
+  - Check every new observation in the scry CLI (`clojure -M:test -m scry.cli`) on the three versions, not only
+    with `-e` or the REPL. `Compiler/LOADER` is bound in `eval`, `load` and the REPL, and not bound in a CLI test.
+  - `design.md` changes: also wrap Scope 4 line 122 (see "Notes after design review, pass 8").
+- Links between the steps:
+  - The `:cljs` item and the clj-kondo timing item meet in Slice 4: run clj-kondo on `core.cljc` after the fix.
+  - The architecture-findings step must include the memory file wording "With only 3 of these fields, the type does
+    not compile" (it is `VerifyError` at class load, see the pass-2 finding).
+- Reproduction shape (temp project with scry dep, outside the repository; the CLI hides test output, so `spit` the
+  results to a file):
+  - Class loader: `(eval '(deftype* x/T3 x.T3 [a __meta __extmap ^int ^:unsynchronized-mutable __hash]
+    :implements [clojure.lang.IRecord]))`, then `Class/forName` with `RT/baseLoader` vs a new `DynamicClassLoader`.
+    `RT/classForName` finds the class in memory without initialization, so it gives no `VerifyError`.
+  - K-08: run the two-type script with
+    `clojure -Sdeps '{:deps {org.clojure/clojure {:mvn/version "<v>"}}}'` or the `:clj-1.12`/`:clj-1.13` aliases.
+- Paths: `RT.java` `baseLoader`, `DynamicClassLoader.java` (static `classCache`), `Compiler.java` `emitValue`
+  (E-03) in the Clojure jars under `~/.m2/repository/org/clojure/clojure/`. clj-kondo: `~/.local/bin/clj-kondo`.
+
+## Plan-review design-steps resolution (2026-10-19)
+
+- All 6 plan-review items are done in `plan.md` and `steps.md`. `design.md` is not changed (read-only in this pass).
+  Scope 4 line 122 is still longer than 120 columns.
+- K-06 lookup keeps the Scope 1 call: `Class/forName ... (RT/baseLoader)` inside `with-bindings` of
+  `Compiler/LOADER` to a new `DynamicClassLoader`. Observed in the scry CLI on 1.11.4, 1.12.6 and 1.13.0-alpha9:
+  four-field form loads (3 constructors, `create`); each three-field form throws `VerifyError`, no cause.
+- K-08, observed in the scry CLI on the three versions (differs from the plan-ambiguity item text):
+  - K-06 layout (D-01 `^int`) plus `IType`: the constant throws `VerifyError`. The `IType` path of `emitValue` uses
+    `getConstructors()[0]` with the `getBasis` values (`[a]`). Constructor order: 1.11.4 and 1.12.6 `[5 3 1]`
+    params, 1.13.0-alpha9 `[3 1 5]`. Thus the `IType` order test uses a `[a]`-only `deftype*`.
+  - `[a]`-only with `IType` + `IRecord`: constant `a` 1. Without `IType`: `NoSuchMethodError` (no `create`).
+  - K-06 layout without `IType`: constant `a` 99 from `entrySet`.
+- K-07 atom method checked in the CLI: `read-string` finds the `eval`ed class (in-memory lookup), no method calls.
+- clj-kondo v2026.04.15 on a `core.cljc` of the `plan.md` `:cljs` shape plus a test that uses `defclosedrecord`,
+  `->P`, `map->P`, `check` with `:lint-as`: 0 errors, 0 warnings.
+- A scry test with no assertions counts as "unknown" and makes the CLI exit 1. Every test needs an assertion.
+- Reproduction project: `/tmp/cr-planrev` (not in the repository).
+
+## Plan ambiguity review, pass 2 (2026-10-19)
+
+- Ambiguity review of `plan.md` and `steps.md` added 2 new design steps (`*ns*` of quoted test forms in the CLI,
+  V-10 wrong-arity calls and clj-kondo).
+- Both are CLI or lint failures, not rule failures. A K-07 `eval` error "Unable to resolve symbol" in the CLI is a
+  test-form error. Do not read it as a K-07 failure (the "Order" stop rule).
+- The pass-1 reproduction (`/tmp/cr-planrev/test/k/k_test.clj`) already used `k.k-test/calls` with `intern`. The
+  steps text does not say it. Reproductions: `/tmp/cr-nscheck` (scry CLI, `*ns*`), `/tmp/cr-kondo` (clj-kondo
+  arity). Both are outside the repository.
+- Not raised (implementation choice or settled earlier): how `check` detects a closed record (`satisfies?` or the
+  protocol interface), the exact print string of acceptance 4 (munged namespace), and which form throws in the K-08
+  `NoSuchMethodError` case (the reproduction catches the `eval` and the call together; the error has no wrapper).
+- Plan inconsistency review, pass 2, added 1 new design step (list of the `ex-data` path tests). Not raised: the
+  Slice 1 three-field step does not repeat the declared field `a` and `:implements [clojure.lang.IRecord]` of Scope 1
+  ("layouts" refers to them; the observations used `IRecord`). The K-06 control test (`deftype Q`, `getBasis`, no
+  `create`) is extra to Scope 1 but agrees with E-02. The plan-level `with-bindings` of the K-06 lookup wraps the
+  Scope 1 call and does not contradict it.
+
+## Notes for the plan-review pass-2 design-steps work (2026-10-19)
+
+- Principles:
+  - Fix in `plan.md` and `steps.md` first. Change `design.md` only for acceptance 5. If you change it, also wrap
+    Scope 4 line 122 to 120 columns. Do not add scope items. Do not edit `ramora/`.
+  - Check each new test-form choice in the scry CLI on the three versions, and lint it with clj-kondo. A REPL pass
+    does not show the CLI result (`*ns*` is `user` in the CLI).
+- Links between the steps:
+  - `*ns*` step: the same choice applies to the K-06 reserved-name `macroexpand-1` forms. They pass now only
+    because `user` refers `clojure.core/deftype`. The emitter reads `*ns*` for `classname` (type hash) and for
+    protocol resolution, so `binding [*ns*]` changes both. A fully qualified macro symbol does not.
+  - Arity and `*ns*` steps: an `eval` of a quoted wrong-arity call also avoids clj-kondo. Under `*ns*` `user`, it
+    needs the qualified `->Name`. `apply` is simpler.
+  - `ex-data` list step: put the list in the same `implementation.md` section as the V-01 mapping. Then a review of
+    acceptance 3 and 4 reads one place.
+- Paths: clj-kondo `~/.local/bin/clj-kondo` (v2026.04.15). Reproductions `/tmp/cr-nscheck/test/k/n_test.clj` and
+  `/tmp/cr-kondo/src/x/t.clj`.
+
+## Plan-review pass-2 design-steps resolution (2026-10-19)
+
+- All 3 plan-review pass-2 items are done in `plan.md` and `steps.md`. `design.md` is not changed; acceptance 5
+  keeps its form because the tests bind `*ns*`. Scope 4 line 122 is still longer than 120 columns.
+- `*ns*` choice: `(binding [*ns* (the-ns '<test-ns>)] ...)`, not qualified symbols. Observed in the scry CLI on
+  1.11.4, 1.12.6 and 1.13.0-alpha9 (`/tmp/cr-nscheck`): inside the binding, a referred macro with `__meta` and
+  `(deftype T [a __meta])` give `ex-cause` `AssertionError`; an `eval`ed `deftype*` method body with an unqualified
+  test-namespace var (`(swap! calls conj ..)`) works. The binding is local: `*ns*` is `user` again after it.
+- clj-kondo v2026.04.15 (`/tmp/cr-kondo/test/x/`): `(apply ->P (range 2))` gives no finding. A namespace that uses a
+  `:refer`red `defclosedrecord` only in quoted forms gives two warnings (namespace required but never used, var
+  referred but never used). Keep the Slice 5 error tests in a namespace that also uses the macro unquoted.
+
+## Plan ambiguity review, pass 3 (2026-10-19)
+
+- No ambiguity review feedback. The pass-2 resolutions (`*ns*` binding, `apply` for V-10 wrong-arity calls) are
+  clear in `plan.md` and `steps.md`.
+- Not raised (implementation choice, or the design or a gate settles it): how the `ClosedRecord` interface reaches
+  `:implements` (literal `closed_record.core.ClosedRecord` or var resolution, D-17 names both); the empty-extras
+  test of `check` (`-extra-keys` gives `__extmap`, nil after `create` with no extras); the reset of the K-07 `calls`
+  atom between REPL runs; the purpose sentence "Metadata and hidden literal keys do not have an effect on equality
+  or hash" (not a table row, so not a V-01 unit; hidden keys are V-14); the content of `core_test.clj` after the
+  smoke test is removed (the Slice 7 clj-kondo gate catches unused refers). `.clj-kondo/.cache/` is already in
+  `.gitignore`.
+- Plan inconsistency review, pass 3: no inconsistency review feedback. Checked and consistent: the clj-kondo
+  steps (Slices 1, 4, 5, 7) against the plan risk, the Slice 6 and 7 architecture-findings steps against
+  "Notes after design review, pass 8" (its line references are still valid), the Slice 5 `ex-data` list step
+  against `plan.md` Slice order 5, and acceptance 5 against the Slice 5 error step. Not raised (wording only, the
+  emitter shape is internal): Slice 3 "name/type/fields/options/specs" and Slice 5 "declared key / undeclared key /
+  etc." (the tables have two key columns).
+
+## Notes after plan review, pass 3 (2026-10-19)
+
+- Pass 3 added no design steps. `design-steps.md` has no unchecked items, so there is no design-steps work. The next
+  step is implementation, Slice 1 of `steps.md`.
+- If a later review adds design steps, use the principles of the earlier "Notes for the plan-review ... design-steps
+  work" sections. Do not raise again the items under "Not raised" in the pass-3 review notes.
