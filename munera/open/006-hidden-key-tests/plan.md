@@ -31,12 +31,19 @@ Key decisions:
   `mementum/knowledge/testing-generated-types.md` ("Test design"): a change that breaks
   all values or fails at load gives no signal. If no `src` change breaks an operation,
   record the reason.
-- Emitter fixes only if a test finds a defect; record the cause in `implementation.md`.
+- Emitter fixes (Scope 5): only if a test fails because of the emitter in a run on code
+  that is not mutated (the work-tree runs in slices 1, 2 and 4). Fix
+  `src/closed_record/impl/jvm.clj` in the work tree, record the cause in
+  `implementation.md`, and run that slice again. A failure in a mutation run (slice 3) is
+  the expected signal, not a defect. If a fix after slice 3 changes the path of an
+  operation, do its mutation check again.
 
 ## Risks
 
-- Mutation of some operations may be impossible without breaking namespace load (for
-  example `count` used by `check` itself). Acceptance 3 permits a recorded reason.
+- Some mutations give no signal: a change that fails at namespace load (for example, a
+  `hasheq` body that is not `int` fails at `deftype*` compile) or that breaks all values.
+  For such an operation, find a valid change. If no valid change exists, record the
+  reason; acceptance 3 permits this.
 - The scry CLI differs from the REPL (`*ns*` is `user`). The `in-test-ns` helper and a
   CLI run on all three Clojure versions cover this.
 - clj-kondo may warn on the record literal string or the generated factory names; the
@@ -46,5 +53,7 @@ Key decisions:
 
 1. Test namespace with fixtures, helpers, guard and hidden-key tests (Scope 2 and 3).
 2. Retention tests (Scope 4).
-3. Mutation checks and `implementation.md` records (acceptance 3), emitter fixes if any.
+3. Mutation checks and `implementation.md` records (acceptance 3).
 4. Lint, format, full runs on 1.11/1.12/1.13, update `mementum/state.md` (V-14 done).
+
+An emitter fix is part of the slice whose run found the failure (slice 1, 2 or 4).
