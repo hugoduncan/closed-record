@@ -22,7 +22,8 @@ For retention, tests cover only `assoc` and `with-meta` (`extra-key-retention-te
 - Architecture: `ramora/defclosedrecord/`:
   - [qualities](../../../ramora/defclosedrecord/qualities.md#verification-plan): V-14.
   - [invariants](../../../ramora/defclosedrecord/invariants.md): I-01, I-02, I-07, I-09.
-  - [D-09](../../../ramora/defclosedrecord/decisions/closed-key-set.md#d-09-reader-literals-and-printing): reader literals and printing (hidden `__extmap`).
+  - [D-09](../../../ramora/defclosedrecord/decisions/closed-key-set.md#d-09-reader-literals-and-printing): reader
+    literals and printing (hidden `__extmap`).
 - Emitter: `src/closed_record/impl/jvm.clj`.
 - Existing tests: `test/closed_record/defclosedrecord_test.clj` (`reader-literal-undeclared-key-test`,
   `equality-ignores-metadata-and-hidden-keys-test`, `extra-key-retention-test`),
