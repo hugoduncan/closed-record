@@ -2,8 +2,8 @@
 title: Tests of eval'ed forms and compiler-generated types
 status: active
 category: testing
-tags: [scry, eval, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation]
-related: [mementum/knowledge/dev-tooling.md, test/closed_record/compiler_rules_test.clj, test/closed_record/defclosedrecord_test.clj, test/closed_record/literal_test.clj, ramora/defclosedrecord/invariants.md]
+tags: [scry, eval, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site]
+related: [mementum/knowledge/dev-tooling.md, test/closed_record/compiler_rules_test.clj, test/closed_record/defclosedrecord_test.clj, test/closed_record/literal_test.clj, test/closed_record/field_value_test.clj, ramora/defclosedrecord/invariants.md]
 depends-on: [mementum/knowledge/dev-tooling.md]
 ---
 
@@ -59,6 +59,36 @@ Observed in task 003 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `
   mutations.
 - With `*print-dup*` true, a record with metadata prints `^#=(...)` before `#ns.T[`. A prefix assertion needs a
   value without metadata.
+
+## Field hints and differential tests
+
+Observed in task 004 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `test/closed_record/field_value_test.clj`.
+
+- 💡 The emitter has no cast code. The compiler emits the casts from the `deftype*` field hints. `new` (`->Name`,
+  `assoc`) casts each argument to the field type (`^long` ← `2.7` gives `2`). `create` (`map->Name`, map literals)
+  casts each value to the box class, then unboxes: a `Long` for `^int` throws `ClassCastException`. A nil or missing
+  primitive throws `NullPointerException` on both paths (D-19). An object hint (`^String`) gives an `Object` field:
+  no cast.
+- ❌ A second bad field hides the case under test. In a `map->Name` input, a `Long` `:i` throws first. Give only the
+  field under test a bad or missing value.
+- 🔁 A mutation for a cast path changes how the emitter reaches the compiler: drop the hints in the `deftype*` field
+  vector, or use `create` in place of `new` (or the reverse). Drop-hints fails a test only when the input needs a
+  cast (`Long` for `^double`, `2.7` for `^long`, `(int 2)` read as `Long`). An input of the field type hides it.
+- ❌ A direct `(. ~tname create ...)` in a method body fails at load ("No matching method create ...
+  compile__stub"). In a mutation, use `clojure.lang.Reflector/invokeStaticMethod`. `Reflector/invokeConstructor`
+  casts as `new` does (`9.9` gives `9`, nil gives NPE).
+- No emitter code, so no mutation: `.-field` (a compiled field read), and a `getLookupThunk` that gives nil (the call
+  site falls back to `valAt`, with the same result).
+- Differential helper (closed type vs `defrecord`): give `[:ok v]` or `[:ex class]`. Pair each value with its class:
+  `(= (int 5) 5)` is true, so `=` alone misses a wrong box class. Compare a record as `(into {} x)`: `=` of two types
+  is false. Do not compare `hash` across types: `hasheq` includes the type hash (D-07). Compare exception classes,
+  not messages.
+- Assert with a macro that expands to `(is (= closed-outcome record-outcome))`. A boolean helper reports only
+  `actual: false`.
+- A keyword call site caches the types that it sees. Give each call-site test its own site (a local `fn` in the
+  `deftest`). A shared top-level site makes the site state depend on the test order.
+- Run one namespace: `clojure -M:test -m scry.cli -n <ns>`. A scripted mutation run: replace a string in
+  `src/closed_record/impl/jvm.clj`, run the namespace, read `.scry-results/`, revert with `git checkout`.
 
 ## Expansion-time errors
 
