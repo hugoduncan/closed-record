@@ -81,3 +81,47 @@ items that failed. A change that fails at namespace load does not count.
 
 - [x] In `mementum/state.md`, move V-12 from "Not done" to "done" in the verification-plan line.
 - [x] Commit.
+
+## Test review: test-shaper (2026-10-19)
+
+- [x] Meaningful failures: label the differential results (`test/closed_record/equality_test.clj`). A failure now
+      shows only `(not (= [true true false true] [true true true true]))`, and the `expected:` form shows a gensym
+      (`f__391__auto__`). The reader must look in `four` or the `with-r` lambda to find the operation for each
+      position. Make `four` and the Scope 4 functions return maps keyed by operation (for example
+      `{:= .. :hash= .. :equals .. :hashCode= ..}`, and `{:r-first .. :m-first ..}` for the Scope 4 pairs), so a
+      failure names the operation that differs. Keep the differential check `(= (f ->E) (f ->DE))`. Re-run the
+      matrix, lint and format.
+      Done: `four` and Scope 4 functions return maps keyed by operation; `is-diff` binds `closed` and `record`,
+      so `expected:` shows `(= closed record)`. Matrix 254 pass; lint, format clean.
+
+## Code review: code-shaper (2026-10-19)
+
+- [x] Local comprehension: remove the references to task design sections from
+      `test/closed_record/equality_test.clj`. The ns docstring ("Scope 3, 4 and 5"), the `four` docstring ("the
+      first Context table") and the `deftest` comments (`;; Scope 3` … `;; Scope 6`) point to
+      `munera/open/005-equality-hash-tests/design.md`, but the source does not name the task. After the task closes,
+      a reader cannot resolve them. Describe each item in the source: `four` returns `=`, `hash` equality,
+      `.equals` and `.hashCode` equality of `x` and `y`; the comments name the case (field value pairs, plain map,
+      metadata, cross type). Keep the durable references (V-12, I-05, D-07). Re-run the matrix, lint and format.
+      Done: docstrings and comments describe each case; no "Scope" or "Context" references remain. Matrix 254
+      pass; lint, format clean.
+
+## Code review: code-shaper, pass 2 (2026-10-19)
+
+- [x] Naming and local comprehension of `four` (`test/closed_record/equality_test.clj`). The name gives the count
+      of results, not what they are. Rename it to a name that tells the content (for example `equality-results`),
+      and update `pair`, `metadata-test` and the docstrings that use it. In its docstring, remove "Both values must
+      exist before this call, so that no hash is cached before `with-meta`": arguments always exist before a call,
+      and the real rule (no `hash` call on a value before `with-meta`) is a rule for the caller. The
+      `metadata-test` comment already states it. Re-run the matrix, lint and format.
+      Done: renamed to `equality-results`; docstring keeps only the operations. Matrix 254 pass; lint, format
+      clean.
+
+## Code review: code-shaper, pass 3 (2026-10-19)
+
+- [x] Naming of the var `m` (`test/closed_record/equality_test.clj`, `(def ^:private m {:a 1 :b 2})`). A
+      one-letter top-level var is a free name in each `plain-map-test` lambda; the reader must find its `def`. In
+      `metadata-test`, `{:m 1}` uses the same letter for a different thing. Rename it to a name that tells the
+      content (for example `plain-map`), as with `equality-results`. Keep the `:m-first` keys or rename them to
+      agree. Re-run the matrix, lint and format.
+      Done: renamed to `plain-map`; keys `:m-first` → `:map-first`. Matrix 254 pass; lint, format clean.

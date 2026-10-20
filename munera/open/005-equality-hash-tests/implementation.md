@@ -168,3 +168,62 @@ Add decisions, discoveries and trade-offs here during implementation. Do not cha
     `hasheq` part alone is M5: only `hash`.
 - Coverage equals the plan.md list. No item without a mutation; no reason entry needed.
 - Slice 8: V-12 moved to done in `mementum/state.md`. All steps ticked.
+
+## Implementation review (2026-10-19)
+
+- No implementation review feedback.
+
+## Test review (2026-10-19)
+
+- No test review feedback.
+
+## Test review: test-shaper (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Review follow-up (2026-10-19)
+
+- addressed 1 review step: differential results are maps keyed by operation; `is-diff` names the locals
+  `closed` and `record` (no gensym in `expected:`). Scratch M6 check: failure shows
+  `(not (= {:hashCode= false} {:hashCode= true}))`. Matrix (1.11, 1.12, 1.13) 254 pass; clj-kondo, cljfmt clean.
+
+## Test review: test-shaper, pass 2 (2026-10-19)
+
+- No test review feedback.
+
+## Docs review (2026-10-19)
+
+- No docs review feedback.
+
+## Code review: code-shaper (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Review follow-up (2026-10-19, pass 2)
+
+- addressed 1 review step: removed task design references ("Scope 3–6", "first Context table") from
+  `equality_test.clj`; `four` docstring names its four operations; comments name the case. Matrix (1.11, 1.12,
+  1.13) 254 pass; clj-kondo, cljfmt clean.
+
+## Code review: code-shaper, pass 2 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Review follow-up (2026-10-19, pass 3)
+
+- addressed 1 review step: renamed `four` to `equality-results` in `equality_test.clj`; removed the caller rule
+  from its docstring (the `metadata-test` comment states it). Matrix (1.11, 1.12, 1.13) 254 pass; clj-kondo,
+  cljfmt clean.
+
+## Code review: code-shaper, pass 3 (2026-10-19)
+
+- Added 1 step to be addressed.
+
+## Review follow-up (2026-10-19, pass 4)
+
+- addressed 1 review step: renamed var `m` to `plain-map` and keys `:m-first` to `:map-first` in
+  `equality_test.clj`. Matrix (1.11, 1.12, 1.13) 254 pass; clj-kondo, cljfmt clean.
+
+## Code review: code-shaper, pass 4 (2026-10-19)
+
+- No code review feedback.
