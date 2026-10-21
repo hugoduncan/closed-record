@@ -2,8 +2,8 @@
 title: Development tooling rules (deps aliases, scry, psi REPL)
 status: active
 category: tooling
-tags: [deps.edn, aliases, scry, nrepl, psi, clj-kondo, gitignore]
-related: [README.md, mementum/state.md, .psi/project.edn, .psi/skills/scry/SKILL.md, mementum/knowledge/testing-generated-types.md]
+tags: [deps.edn, aliases, bench, scry, nrepl, psi, clj-kondo, gitignore]
+related: [README.md, mementum/state.md, mementum/knowledge/benchmarks.md, .psi/project.edn, .psi/skills/scry/SKILL.md, mementum/knowledge/testing-generated-types.md]
 depends-on: [deps.edn]
 ---
 
@@ -12,8 +12,12 @@ This page gives the rules that the commands do not show.
 
 ## Alias composition
 
-- 🎯 The `:test` alias has no `:main-opts`. Only `:nrepl` has `:main-opts`. Then `-M:test:nrepl` works.
-  Do not add `:main-opts` to an alias that must compose with `:nrepl` (for example a bench alias).
+- 🎯 The `:test` alias has no `:main-opts`. Then `-M:test:nrepl` works.
+  Do not add `:main-opts` to an alias that must compose with `:nrepl`.
+- `:bench` has `:main-opts` (`clojure -M:bench` runs the bench). It is a standalone alias, not for composition.
+  To use its classpath with `-e` or a REPL, clear `:main-opts` with an extra alias. See
+  `mementum/knowledge/benchmarks.md`.
+- `:test` has the extra path `dev/bench`, so the suite tests the bench pure layer. criterium is not in `:test`.
 - 🎯 Version aliases (`:clj-1.12`, `:clj-1.13`) use `:override-deps`. They compose with `:test` and `:nrepl`.
   The CI matrix (D-16) must use these aliases. Do not add a version parameter.
 - Pin all versions. Do not use `RELEASE`.
