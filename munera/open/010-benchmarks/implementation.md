@@ -222,3 +222,120 @@ macOS, base `122ce29`. Exit code 0.
 - Acceptance 1–5 checked: alias only adds criterium; table and exit code per Scope 3–5; kondo 0/0, cljfmt ok;
   tests 83 pass; docs per Scope 6–7. D-16 SCOPE_QUESTION in `design-steps.md` stays open for the user (not in
   Scope 7).
+
+## Implementation review (2026-10-20)
+
+- Added 2 steps to be addressed.
+
+## Review follow-up (2026-10-20)
+
+- Acceptance run: the plan rule applies (no cherry-picked re-runs). The acceptance run is the first full 10 s run
+  of the fixed harness: `=` `P / R` 1.086, fail. `state.md` keeps V-11 not done with that ratio. The table above
+  is a later run, kept for the record only.
+- Field access: `(.a x)` is not measured (the JIT hoists the read). `state.md` V-11 status says so. A change of
+  the measurement is for a future task.
+- addressed 2 review steps
+
+## Implementation review, pass 2 (2026-10-20)
+
+- Added 1 step to be addressed.
+
+## Review follow-up, pass 2 (2026-10-20)
+
+### Acceptance run (first full 10 s run of the fixed harness)
+
+This run is the acceptance run (plan.md Risks: no cherry-picked re-runs). It replaces the "### Acceptance run"
+table above as the Acceptance 3 record. That table is a later run, for the record only.
+
+`clojure -M:bench`, Clojure 1.11.4, criterium 0.5.243-ALPHA, OpenJDK 25.0.2+10-69, Apple M5 Max (arm64),
+macOS, base `122ce29`, 2026-10-20.
+
+Captured rows (means and intervals not captured):
+
+| Operation | P / R | Result |
+|-----------|-------|--------|
+| (hash x)  | 0.991 | pass   |
+| (= x y)   | 1.086 | fail   |
+
+- Rows `(:a x)`, `(.a x)`, `(assoc x :a 2)`: not captured.
+- Exit code: not captured. The pass rule gives 1 (`=` fails).
+- Acceptance 3 not fully met: the full table and the observed exit code of this run are not available.
+- `state.md` V-11 (not done, `=` `P / R` 1.086) agrees with this run.
+- addressed 1 review step
+
+## Implementation review, pass 3 (2026-10-20)
+
+- No new review feedback.
+
+## Test review (2026-10-20)
+
+- Added 2 steps to be addressed.
+
+## Test review follow-up (2026-10-20)
+
+- Moved the pure layer to `closed-record.bench.report` (`dev/bench/closed_record/bench/report.clj`), with no
+  criterium dependency. Added `exit-code`; `-main` uses it.
+- `:test` alias: extra path `dev/bench`, no new dependency. The suite loads only `test/` namespaces, so
+  `closed-record.bench` (criterium) is not loaded.
+- `test/closed_record/bench_report_test.clj`: `per-call-stats`, `pass?`, `row`, `table`, `exit-code`.
+  No benchmark run. Suite: 88 tests, 331 assertions pass. clj-kondo and cljfmt clean. Bench smoke run
+  (`run 0.2`) gives 5 rows.
+- addressed 2 review steps
+
+## Test review, pass 2 (2026-10-20)
+
+- Added 1 step to be addressed.
+
+## Test review, pass 2 follow-up (2026-10-20)
+
+- `table-test`: keeps the Scope 5 checks only. Each data line's cells (split on `|`, trimmed) equal the `row`
+  vector of its operation, in input order. Removed the separator, width, line-count and header-text assertions.
+  Suite: 88 tests, 325 assertions pass. clj-kondo and cljfmt clean.
+- addressed 1 review step
+
+## Test review, pass 3 (2026-10-20)
+
+- Added 1 step to be addressed.
+
+## Test review, pass 3 follow-up (2026-10-20)
+
+- `report`: private `fmt` formats with `java.util.Locale/ROOT` (`String/format`); `row` uses it for the ns
+  cells and `P / R`. `pass?-test` premise check uses the `P / R` cell of `report/row`.
+- Suite passes with the default locale and with `-Duser.language=de -Duser.country=DE` (88 tests, 325
+  assertions). clj-kondo and cljfmt clean.
+- addressed 1 review step
+
+## Test review, pass 4 (2026-10-20)
+
+- No new test review feedback.
+
+## Test review, pass 5 (2026-10-20)
+
+- No new test review feedback.
+
+## Docs review (2026-10-20)
+
+- Added 1 step to be addressed.
+
+## Docs review follow-up (2026-10-20)
+
+- `embodiment.md` Artifacts: added the row for `test/closed_record/bench_report_test.clj` (V-11).
+- addressed 1 review step
+
+## Docs review, pass 2 (2026-10-20)
+
+- No new docs review feedback.
+
+## Code shape review (2026-10-20)
+
+- Added 1 step to be addressed.
+
+## Code shape review follow-up (2026-10-20)
+
+- `report/table`: cell padding uses `fmt` (`Locale/ROOT`). All formatting in `report` has one idiom.
+- Suite passes (88 tests, 325 assertions). clj-kondo and cljfmt clean.
+- addressed 1 review step
+
+## Code shape review, pass 2 (2026-10-20)
+
+- No new code shape review feedback.
