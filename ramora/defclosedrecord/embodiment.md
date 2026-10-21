@@ -12,8 +12,8 @@
 | `test/closed_record/property_test.clj` | Property test of random `assoc` and `dissoc` sequences (V-03). |
 | `test/closed_record/differential_test.clj` | Differential property test against `defrecord` after random permitted steps (V-02). |
 | `test/closed_record/malli_test.clj` | Tests of malli map schemas and transformers on a closed record (V-07). |
-| `dev/bench/` | criterium benchmarks against `defrecord`. |
-| `deps.edn` | Clojure 1.11 dependency. Test and bench aliases. The `:test` alias has scry, `test.check` and malli (`metosin/malli`). |
+| `dev/bench/` | `closed_record/bench.clj` (`closed-record.bench`): criterium benchmarks of the five S-03 operations against `defrecord` (V-11). |
+| `deps.edn` | Clojure 1.11 dependency. Aliases `:test`, `:bench`, `:nrepl`, `:clj-1.12` and `:clj-1.13`. The `:test` alias has scry, `test.check` and malli (`metosin/malli`). The `:bench` alias has criterium (`criterium/criterium`). |
 
 ## Boundaries
 

@@ -57,3 +57,7 @@ Run the tests in the REPL:
 
     (require '[scry.core :as scry])
     (scry/run)
+
+Run the benchmarks against `defrecord`:
+
+    clojure -M:bench

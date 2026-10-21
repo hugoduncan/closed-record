@@ -190,3 +190,35 @@
   Slice 3 (Docs) and to `steps.md` Slice 3, with the same exact text as the new Scope 7 row. The D-16 lines
   (`ramora/defclosedrecord/decisions/verification.md` lines 13 and 17) are as the pass 4 notes give.
 - If the user accepts the gap: no change to `plan.md` or `steps.md`. Remove the D-16 bullet from the `plan.md` Risks.
+
+## Implementation (2026-10-20, base `122ce29`)
+
+- Harness: `deps.edn` `:bench` alias; `dev/bench/closed_record/bench.clj`. Pure fns `per-call-stats`, `ratio`,
+  `pass?`, `row`, `table`; macro `bench-op`; `run` takes `limit-s`; `-main` uses 10 s and `System/exit`.
+- `:main-opts` in `:bench` runs `-main` even with `-e` after it. For a REPL/smoke use, add an alias with
+  `:main-opts []` (e.g. `-Sdeps '{:aliases {:e {:main-opts []}}}' -M:bench:e`).
+- Pass rule checked at the REPL: (1.06 vs 1.0, no overlap) fail; (overlap) pass; faster pass.
+- `(.a ^P x)` measures about 0.03–0.06 ns: the JIT hoists the field read. Same for `P` and `R`.
+- The JVM prints `CompileCommand: blackhole ...` at start. That is the HotSpot notice, not the criterium warning.
+
+### Acceptance run
+
+`clojure -M:bench`, Clojure 1.11.4, criterium 0.5.243-ALPHA, OpenJDK 25.0.2+10-69, Apple M5 Max (arm64),
+macOS, base `122ce29`. Exit code 0.
+
+| Operation      | P mean [low, high] ns | R mean [low, high] ns | P / R | Result |
+|----------------|-----------------------|-----------------------|-------|--------|
+| (:a x)         | 0.61 [0.61, 0.61]     | 0.69 [0.69, 0.69]     | 0.890 | pass   |
+| (.a x)         | 0.06 [0.06, 0.06]     | 0.06 [0.06, 0.06]     | 0.993 | pass   |
+| (assoc x :a 2) | 7.07 [7.00, 7.14]     | 6.99 [6.91, 7.09]     | 1.011 | pass   |
+| (hash x)       | 4.14 [4.12, 4.17]     | 4.17 [4.14, 4.20]     | 0.995 | pass   |
+| (= x y)        | 2.88 [2.86, 2.90]     | 3.01 [2.99, 3.03]     | 0.957 | pass   |
+
+- Variance, for the record (not cherry-picked away): two earlier runs of the same harness gave failures. A 1 s
+  smoke run: `assoc` 1.111 fail. One full 10 s run (output only partly captured, by mistake): `hash` 0.991 pass,
+  `=` 1.086 fail. Results near 1.05 change from run to run on this machine. The run above is the first full run
+  with the complete table captured; `state.md` V-11 is done from it. A future task can make the bench more
+  stable (for example, several JVM forks) if V-11 must be robust.
+- Acceptance 1–5 checked: alias only adds criterium; table and exit code per Scope 3–5; kondo 0/0, cljfmt ok;
+  tests 83 pass; docs per Scope 6–7. D-16 SCOPE_QUESTION in `design-steps.md` stays open for the user (not in
+  Scope 7).
