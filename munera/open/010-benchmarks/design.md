@@ -64,21 +64,46 @@ In scope:
    The expressions use local bindings, not vars, so that a var deref is not part of the measurement.
 3. For each run, the mean and its 95% interval for one call: the `:point-estimate` and the two
    `:estimate-quantiles` values of the mean (Context, criterium API), each divided by the `:batch-size` of that run.
-4. The pass rule for each operation: the closed record mean is not more than 5% above the `defrecord` mean, or the
-   two 95% intervals overlap. A closed record that is faster passes.
-5. Output: one table row for each operation, with both means, both intervals, the ratio and pass or fail.
+   The interval low is the `:alpha 0.025` value, and the interval high is the `:alpha 0.975` value.
+4. The pass rule for each operation: the closed record mean is not more than 5% above the `defrecord` mean
+   (`P mean / R mean ≤ 1.05`), or the two 95% intervals overlap (`P low ≤ R high` and `R low ≤ P high`). A closed
+   record that is faster passes. The rule uses the values before rounding.
+5. Output: one table with one row for each operation, in the order of Scope 2. The columns, in this order:
+   - Operation.
+   - `P` mean, and `P` 95% interval as `[low, high]`, in ns for one call, with 2 decimals.
+   - `R` mean, and `R` 95% interval as `[low, high]`, in ns for one call, with 2 decimals.
+   - `P / R`: the ratio `P mean / R mean`, a factor (not a percent) with 3 decimals. A value above 1 means that the
+     closed record is slower.
+   - Result: `pass` or `fail`.
    `clojure -M:bench` exits 0 if all operations pass, and 1 if not.
 6. Change the S-03 text in `purpose.md` to the one-sided rule of Scope 4.
-7. Update `README.md` (Development: the bench command), `embodiment.md` (`dev/bench/` row, `deps.edn` row names
-   the `:bench` alias) and `mementum/state.md` (V-11 done, the bench command).
+7. Update `README.md`, `embodiment.md` and `mementum/state.md` with this text:
+   - `README.md`, section "Development": at the end of the section, add the line "Run the benchmarks against
+     `defrecord`:" and, after it, the command `clojure -M:bench` as an indented code block. The
+     README gives the bench command only, and no results.
+   - `embodiment.md`, Artifacts table, row `dev/bench/`: "`closed_record/bench.clj` (`closed-record.bench`):
+     criterium benchmarks of the five S-03 operations against `defrecord` (V-11)."
+   - `embodiment.md`, Artifacts table, row `deps.edn`: "Clojure 1.11 dependency. Aliases `:test`, `:bench`,
+     `:nrepl`, `:clj-1.12` and `:clj-1.13`. The `:test` alias has scry, `test.check` and malli (`metosin/malli`).
+     The `:bench` alias has criterium (`criterium/criterium`)."
+   - `mementum/state.md`, Status, line "Project skeleton": the alias list is `:test`, `:bench`, `:nrepl`,
+     `:clj-1.12`, `:clj-1.13`.
+   - `mementum/state.md`, Status: after the line "Tests: `clojure -M:test -m scry.cli`. ...", add the line
+     "Bench: `clojure -M:bench` (V-11). It exits 1 if an operation fails."
+   - `mementum/state.md`, Status, line "Verification plan done: ... Not done: ...", the V-11 status:
+     - All operations pass: move V-11 to the done list.
+     - One or more operations fail: keep V-11 in the not-done list, and add the failed operations and their
+       `P / R` ratios from the run that `implementation.md` records (Acceptance 3), for example "Not done: V-11
+       (the bench exists; `assoc` fails, `P / R` 1.140)."
 
 ## Out of scope
 
 - The bench in the test suite or in CI. It is slow and its result depends on the machine.
 - Other operations (`get`, `seq`, `conj`, `merge`, constructors) and other field counts.
 - Runs on Clojure 1.12 and 1.13. `clojure -M:bench:clj-1.12` can work, but it is not an acceptance criterion.
-- Changes to the emitter. If an operation fails (the probe suggests `assoc` can), record the result in
-  `implementation.md` and stop. A fix is a new task.
+- Changes to the emitter. If an operation fails (the probe suggests `assoc` can), do not change the emitter.
+  Record the result in `implementation.md`, and complete the other scope items (Scope 6 and 7, with the V-11 status
+  of Scope 7 for a failed operation). A fix is a new task.
 - criterium 0.4.x, the criterium domain API (`criterium.domain`), other viewers, and allocation traces.
 
 ## Decisions
@@ -93,6 +118,8 @@ In scope:
 - A one-sided rule. S-03 says "within 5%", but the probe shows that a closed record can be faster. A faster
   closed record meets K-05, so it must pass.
 - A `:bench` alias apart from `:test`. criterium is not a test dependency, and `dev/bench` is not a test path.
+- A failed operation keeps V-11 not done. The bench exists, but S-03 is not met.
+- `P / R` as a factor, so that the 5% rule reads directly from the table (`≤ 1.05`).
 - `hash` measures the cached path, because both types cache the hash. The first-call cost is out of scope.
 
 ## Acceptance criteria
