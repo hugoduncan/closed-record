@@ -30,3 +30,11 @@
     all five aliases.
   - Change the Scope 7 row text so that it does not state a partial list as the full list (for example, list all
     five aliases).
+- [x] Plan ambiguity review: say if the Slice 1 bench helper is a macro or a function.
+  - steps.md Slice 1 says "Write a bench macro/fn". `criterium.bench/bench` is a macro and measures the expression
+    at its call site.
+  - A function must take a thunk. Then `bench` measures `(f)`: one shared call site for ten closures. This adds an
+    invoke cost to `P` and `R` (about 1 ns or more), near the 0.64 ns keyword lookup. It moves `P / R` to 1.
+    Design Scope 2 keeps a var deref out of the measurement for the same reason.
+  - Say in plan.md (Slice 1) and steps.md: a macro that expands to `criterium.bench/bench` around the literal
+    operation expression, then reads `last-bench` (or ten direct `bench` calls). Not a function that takes a thunk.

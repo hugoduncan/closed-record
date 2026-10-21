@@ -127,3 +127,66 @@
 - If the user wants a D-16 update: add it to Scope 7 as exact target text (as for the other Scope 7 rows), and
   add `ramora/defclosedrecord/decisions/verification.md` to Acceptance 5. Target: D-16 line 17
   "Scope: CI matrix Clojure 1.11, 1.12, 1.13." (applies to the line 13 criterium item). Change only the V-11 part.
+
+## Plan ambiguity review (2026-10-20)
+
+- Plan ambiguity review added 1 new design step (bench helper: macro, not a thunk function).
+- Not filed (low effect, one reasonable reading): REPL alias for the Slice 1 smoke test (`-M:bench:nrepl`; the
+  last `:main-opts` wins); field values of `P` and `R`; table text format; S-03 wording (filed as not-filed in
+  design pass 3).
+
+## Plan inconsistency review (2026-10-20)
+
+- No inconsistency review feedback.
+- Checked plan.md and steps.md against design.md Scope 1–7, Acceptance 1–5, Out of scope 4 and the
+  implementation.md fix notes: alias content, five operations and order, pass rule, Scope 5 columns, Scope 7
+  target text, V-11 status rule. They agree.
+- For the Slice 2 check: HotSpot can print a `CompileCommand: blackhole ...` line at start. That is a JVM
+  notice, not the criterium blackhole warning of Acceptance 2.
+
+## Notes for the design-steps fix, plan pass (2026-10-20)
+
+- Open steps: the D-16 SCOPE_QUESTION (still the user's decision; see pass 4 notes) and the plan step on the bench
+  helper (macro, not a thunk function).
+- Fix the helper step in the task `plan.md` Slice 1 and `steps.md` Slice 1 (the "Write a bench macro/fn" item)
+  only. `design.md` needs no change: Scope 2 already requires local bindings and no extra cost in the measurement.
+- Principle: the measured expression is the literal operation, at its own `bench` call site, with `x` (and `y`)
+  as locals in a `let` around it. No `IFn` invoke, var deref or shared call site in the measured body.
+- Accepted shape: a macro that expands to `(criterium.bench/bench ~expr :viewer :none :limit-time-s ~t)`, then
+  reads `(criterium.bench/last-bench)` into the per-call stats. Ten direct `bench` calls are also fine. Keep
+  `:limit-time-s` a parameter, so the Slice 1 REPL smoke test can use 1 s.
+- Lint: `.clj-kondo/config.edn` has `:lint-as` for `defclosedrecord` only. A local macro in `dev/bench` needs no
+  kondo config if its arguments are plain forms. Acceptance 4 lints `dev`.
+
+## Design-steps fix, plan pass (2026-10-20)
+
+- SCOPE_QUESTION (D-16 CI scope) still deferred to the user. Left unchecked.
+- Bench helper step fixed in `plan.md` Slice 1 (and Key decisions) and `steps.md` Slice 1: macro
+  `(bench-op expr limit-s)`, not a thunk function. `design.md` unchanged.
+- criterium 0.5.243-ALPHA source (`~/.m2/repository/criterium/criterium/0.5.243-ALPHA/`, `criterium/bench.clj`,
+  `criterium/measured/impl.clj`):
+  - `bench` puts its options in a runtime map (`options->bench-plan`), so `:limit-time-s ~limit-s` can be a symbol.
+  - `measured/expr` uses `&env`. It keeps the head of the call literal and hoists every argument (locals and
+    constants, e.g. `:a` and `2` in `(assoc x :a 2)`) into a state vector. This is the same for `P` and `R`.
+  - The arg type hint comes from the symbol meta (`^P x`) or the local's class. Put the hint on the symbol in
+    the `(.a ^P x)` expression to be safe, so that no reflection occurs.
+
+## Plan ambiguity review, pass 2 (2026-10-20)
+
+- No ambiguity review feedback.
+- Checked the plan pass fix (`bench-op` macro) with no finding. `:viewer :none` is a defined view method in
+  criterium 0.5.243-ALPHA (the `bench` docstring does not list it). `last-bench` is a function.
+- Not filed (low effect, one reasonable reading): the text in the Operation column; which run is "the acceptance
+  run" if a harness bug forces a re-run (the first run of the fixed harness).
+
+## Plan inconsistency review, pass 2 (2026-10-20)
+
+- No inconsistency review feedback.
+
+## Notes for the design-steps fix, plan pass 2 (2026-10-20)
+
+- Plan pass 2 added no design steps. The only open step is the D-16 SCOPE_QUESTION (user decision; see pass 4 notes).
+- If the user wants a D-16 update, the plan also changes, not only `design.md`: add a D-16 item to `plan.md`
+  Slice 3 (Docs) and to `steps.md` Slice 3, with the same exact text as the new Scope 7 row. The D-16 lines
+  (`ramora/defclosedrecord/decisions/verification.md` lines 13 and 17) are as the pass 4 notes give.
+- If the user accepts the gap: no change to `plan.md` or `steps.md`. Remove the D-16 bullet from the `plan.md` Risks.

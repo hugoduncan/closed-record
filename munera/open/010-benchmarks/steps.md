@@ -17,11 +17,15 @@
 - [ ] Write table formatting: one row per operation, columns Operation; P mean and `[low, high]` (ns,
       2 decimals); R mean and `[low, high]` (ns, 2 decimals); `P / R` ratio (3 decimals); Result
       `pass`/`fail`.
-- [ ] Write a bench macro/fn that runs `criterium.bench/bench` with `:viewer :none` and `:limit-time-s 10`
-      and returns the per-call stats, using local bindings (no var deref in the measured expression).
+- [ ] Write a bench macro (not a function that takes a thunk) `(bench-op expr limit-s)`: it expands to
+      `(criterium.bench/bench ~expr :viewer :none :limit-time-s ~limit-s)` around the literal operation
+      expression, then reads `(criterium.bench/last-bench)` and returns the per-call stats. The measured
+      body has no `IFn` invoke, var deref or shared call site; `x` (and `y`) are locals in a `let` around
+      each use.
 - [ ] Write `-main`: for each operation in order — `(:a x)`, `(.a x)` with a type hint,
       `(assoc x :a 2)`, `(hash x)` on one instance, `(= x y)` on two distinct equal instances — bench `P`
-      then `R`; print the table; `(System/exit (if all-pass 0 1))`.
+      then `R` with `bench-op` and `:limit-time-s` 10 (ten `bench-op` uses, each with its own literal
+      expression); print the table; `(System/exit (if all-pass 0 1))`.
 - [ ] REPL smoke test with a short `:limit-time-s` (e.g. 1 s): verify the `last-bench` data paths, the
       table shape, and the pass rule on sample values.
 - [ ] Commit the harness.

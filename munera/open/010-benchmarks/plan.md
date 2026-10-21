@@ -14,8 +14,14 @@ Build the bench harness first, then run it, then write the docs from the run res
    0/1 via `System/exit`.
    - Expressions use local bindings. Field access is `(.a x)` with a type hint. `hash` on one instance
      (cached path). `=` on two distinct equal instances of the same type.
+   - Bench helper: a macro, not a function. `(bench-op expr limit-s)` expands to
+     `(criterium.bench/bench ~expr :viewer :none :limit-time-s ~limit-s)`, then reads
+     `(criterium.bench/last-bench)` into the per-call stats. Each of the ten uses has its own `bench` call
+     site with the literal operation expression, and `x` (and `y`) are locals in a `let` around it. A
+     function that takes a thunk is not used: `bench` then measures `(f)` at one shared call site, and the
+     `IFn` invoke cost (about 1 ns or more) moves `P / R` toward 1 (see Key decisions).
    - Structure: a small pure layer (extract mean/interval from bench data, pass rule, row formatting) so
-     the logic can be REPL-checked without a 100 s run; `-main` wires the ten bench calls.
+     the logic can be REPL-checked without a 100 s run; `-main` wires the ten `bench-op` uses.
 2. **Run slice.** Run `clojure -M:bench` once on Clojure 1.11.4, record the table, JVM and machine in
    `implementation.md` (Acceptance 3). Verify exit code and no blackhole warning.
 3. **Docs slice.** Scope 6 and 7: `purpose.md` S-03 one-sided rule; `README.md` Development bench
@@ -28,6 +34,10 @@ Build the bench harness first, then run it, then write the docs from the run res
 ## Key decisions
 
 - Pass rule and table logic are pure functions over the `last-bench` data; only `-main` has side effects.
+- The measured body is the literal operation only: no `IFn` invoke, var deref or shared call site. This is
+  why the bench helper is a macro (Slice 1). The keyword lookup is about 0.64 ns, so an extra 1 ns would
+  hide a difference between `P` and `R`. `:limit-time-s` is a macro argument, evaluated at run time
+  (`bench` puts its options in a runtime map), so the REPL smoke test can use 1 s.
 - No emitter changes even if an operation fails (the probe suggests `assoc` may fail at ~1.14). A failure
   does not block task completion: Scope 6/7 still complete, V-11 stays not-done with the ratios.
 - `System/exit` only in `-main`, after printing, so the table always appears.
