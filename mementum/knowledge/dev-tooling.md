@@ -3,7 +3,7 @@ title: Development tooling rules (deps aliases, scry, psi REPL)
 status: active
 category: tooling
 tags: [deps.edn, aliases, bench, scry, nrepl, psi, clj-kondo, gitignore]
-related: [README.md, mementum/state.md, mementum/knowledge/benchmarks.md, .psi/project.edn, .psi/skills/scry/SKILL.md, mementum/knowledge/testing-generated-types.md]
+related: [README.md, mementum/state.md, mementum/knowledge/benchmarks.md, .psi/project.edn, .psi/skills/scry/SKILL.md, mementum/knowledge/testing-generated-types.md, mementum/knowledge/artifact-verification.md]
 depends-on: [deps.edn]
 ---
 
@@ -28,6 +28,18 @@ This page gives the rules that the commands do not show.
   `clojure -Sdeps "{:paths [...]}"` then uses the Clojure version of the root deps (`~/.clojure/deps.edn` or the
   CLI default, 1.12.6 here), not 1.11.4. Add `:deps {org.clojure/clojure {:mvn/version "1.11.4"}}` to the
   `-Sdeps` map and print `(clojure-version)` with the evidence (task 012, found in plan review).
+
+## Build tooling runtime
+
+- ❌ tools.build 0.10.10 `b/process` requires `clojure.java.process`, which is
+  absent from Clojure 1.11. Use `clojure.java.shell/sh` for test subprocesses
+  that must run on the project's base runtime. A successful `-T:build` command
+  does not prove that the same process API works inside `-M:test:build-test`:
+  `-T:build` has a separate tooling runtime (task 013, slice 2a).
+- Keep artifact verification separate from the default runtime suite. The
+  pinned scry supports `--dir test-build`; its default discovery is under
+  `test`. See `mementum/knowledge/artifact-verification.md` for fixture and
+  consumer isolation rules.
 
 ## Scry
 
