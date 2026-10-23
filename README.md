@@ -9,7 +9,7 @@ A Clojure record is an open map:
 - `assoc` of any key succeeds. A key with a typo becomes a new entry.
 - `dissoc` of a declared key changes the record into a plain map.
 
-These operations do not fail. The error stays hidden until a later
+These operations do not fail. Key typos stay hidden until a later
 failure, often a nil value far from the cause.
 
 ## Approach
