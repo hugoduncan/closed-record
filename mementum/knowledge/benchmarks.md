@@ -36,6 +36,9 @@ criterium 0.5.243-ALPHA, OpenJDK 25, arm64), updated for 0.5.251-ALPHA (2026-10-
 - 🎯 The bench helper is a macro (`bench-op`), not a function that takes a thunk. `criterium.bench/bench`
   measures the expression at its call site. A thunk adds an `IFn` invoke (about 1 ns or more) at one shared
   site. Keyword lookup is about 0.6 ns, so the invoke hides a `P` / `R` difference and moves `P / R` to 1.
+- 🔁 To set the run order at run time, wrap a whole `bench-op` form (with its `let`) in a thunk, one thunk for each
+  call site, and call the thunks in the order. The measured expression stays literal at its own call site, so this
+  does not break the macro rule (task 011 `run`).
 - Bind the record to a local in a `let` around each `bench-op`. A var deref must not be in the measured body.
   criterium (`measured/expr`, uses `&env`) keeps the call head literal and hoists the arguments into state.
 - Put the type hint on the symbol in the expression (`(.a ^P x)`), so no reflection occurs.
