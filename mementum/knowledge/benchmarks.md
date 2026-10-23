@@ -2,7 +2,7 @@
 title: Benchmarks against defrecord (criterium 0.5, V-11)
 status: active
 category: tooling
-tags: [bench, criterium, jit, blackhole, variance, locale, format, macro, call-site, V-11, S-03]
+tags: [bench, criterium, jit, inlining, javap, blackhole, variance, locale, format, macro, call-site, V-11, S-03]
 related: [dev/bench/closed_record/bench.clj, dev/bench/closed_record/bench/report.clj, dev/bench/closed_record/bench/fork.clj, test/closed_record/bench_report_test.clj, test/closed_record/bench_fork_test.clj, mementum/knowledge/dev-tooling.md, ramora/defclosedrecord/purpose.md]
 depends-on: [deps.edn]
 ---
@@ -78,6 +78,10 @@ criterium 0.5.243-ALPHA, OpenJDK 25, arm64), updated for 0.5.251-ALPHA (2026-10-
   ns, `javap -c` (code length = last offset + 1), and `-XX:CompileCommand=PrintInlining,<loop-class>::invokeStatic`
   on a loop of `(.assoc ^clojure.lang.IPersistentMap r :a (num i))` ("hot method too big" vs "inline (hot)"). A loop
   of `(assoc x ...)` shows only "virtual call". Commands: `munera/*/012-inlinable-methods/plan.md`.
+  ❌ Pitfalls: `(.assoc ^P r ...)` reflects (the `Associative assoc` bridge has the same arity), and `.assoc` with a
+  primitive `long` value reflects: hint `^clojure.lang.IPersistentMap` and box the value. Global
+  `-XX:+PrintInlining` output of the compiler threads interleaves: use the per-method `CompileCommand`. In the
+  `javap` output, ignore the 9-byte bridge row. Pin the Clojure version in a scratch dir (`dev-tooling.md`).
 
 - ✅ (0.5.251) `(.a ^P x)` is now measured: the opaque barrier stops the lift. With 0.5.243 it gave about
   0.06 ns, because the JIT lifted the read out of the loop.
@@ -87,6 +91,10 @@ criterium 0.5.243-ALPHA, OpenJDK 25, arm64), updated for 0.5.251-ALPHA (2026-10-
   ❌ Capture the full output of each run to a file (`clojure -M:bench 2>&1 | tee <file>; echo "exit
   ${PIPESTATUS[0]}"`: `2>&1` captures the child stderr and the fork error; `tee` hides the exit code). In task 010
   the acceptance run output was only partly captured, so its table is lost.
+  🎯 Classify a run by the table in the capture, not by the exit code. Exit 1 is a row fail, but `clojure.main`
+  also exits 1 on an uncaught exception, with no table; a kill gives 137 or 130. Table check:
+  `grep -E '^\| (Operation|\()' <file>` prints 7 lines. A run with no table has no timed result, so it is not the
+  acceptance run: record it, change no code, run again (task 012 plan).
 
 ## Code structure
 
