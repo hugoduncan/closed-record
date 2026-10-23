@@ -4,6 +4,7 @@
    [clojure.edn :as edn]
    [clojure.java.io :as io]
    [clojure.java.shell :as shell]
+   [clojure.set :as set]
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
    [clojure.tools.build.api :as b]
@@ -34,13 +35,33 @@
           (is (str/includes? (ex-message error) "invalid commit count"))
           (is (= output (:out (ex-data error)))))))))
 
+(defn- prepare-config
+  [config]
+  (.mkdirs config)
+  (spit (io/file config "deps.edn") "{}")
+  (let [hooks (io/file config "empty-hooks")]
+    (.mkdirs hooks)
+    (spit (io/file config "gitconfig")
+          (str "[core]\n\thooksPath = " (pr-str (str hooks)) "\n"
+               "[user]\n\tname = Build Test\n"
+               "\temail = build-test@example.invalid\n"
+               "[commit]\n\tgpgsign = false\n"))))
+
+(defn- fixture-env
+  [directory config]
+  ;; Git overrides can redirect writes outside the fixture, including from builds.
+  (assoc (into {} (remove (fn [[key _]] (str/starts-with? key "GIT_")))
+               (System/getenv))
+         "CLJ_CONFIG" (str config)
+         "GIT_CONFIG_NOSYSTEM" "1"
+         "GIT_CONFIG_GLOBAL" (str (io/file config "gitconfig"))
+         "GIT_CEILING_DIRECTORIES" (str directory)))
+
 (defn- run-cli
   [directory config task]
   (shell/sh "clojure" "-T:build" task
             :dir (str directory)
-            :env (assoc (into {} (System/getenv))
-                        "CLJ_CONFIG" (str config)
-                        "GIT_CEILING_DIRECTORIES" (str directory))))
+            :env (fixture-env directory config)))
 
 (deftest no-git-build-and-clean-test
   ;; Real CLI processes test failure before writes and clean without Git.
@@ -49,8 +70,7 @@
         config (io/file directory "cli-config")
         source (io/file directory "src/probe.clj")]
     (try
-      (.mkdirs config)
-      (spit (io/file config "deps.edn") "{}")
+      (prepare-config config)
       (doseq [path ["deps.edn" "build.clj" "LICENSE"]]
         (io/copy (io/file path) (io/file directory path)))
       (io/make-parents source)
@@ -82,7 +102,7 @@
   (apply str (:content (reduce #(first (child-elements %1 %2)) element path))))
 
 (defn- check-pom
-  [pom version]
+  [directory pom version]
   (doseq [[tag expected] {:groupId "org.hugoduncan"
                         :artifactId "closed-record"
                         :version version
@@ -102,7 +122,7 @@
     (is (= "Eclipse Public License 2.0" (element-text license :name)))
     (is (= "https://www.eclipse.org/legal/epl-2.0/" (element-text license :url)))
     (is (= "repo" (element-text license :distribution)))
-    (is (= (:deps (edn/read-string (slurp "deps.edn")))
+    (is (= (:deps (edn/read-string (slurp (io/file directory "deps.edn"))))
            (into {} (map (fn [dependency]
                           [(symbol (element-text dependency :groupId)
                                    (element-text dependency :artifactId))
@@ -115,8 +135,8 @@
     (.readAllBytes stream)))
 
 (defn- check-isolated-consumer
-  [artifact directory]
-  (let [basis (b/create-basis {:project "deps.edn" :user nil :aliases []})
+  [project artifact directory]
+  (let [basis (b/create-basis {:project (str (io/file project "deps.edn")) :user nil :aliases []})
         runtime-jars (into [] (mapcat :paths) (vals (:libs basis)))
         artifact-path (.getCanonicalPath artifact)
         classpath (str/join java.io.File/pathSeparator
@@ -159,52 +179,105 @@
                 :dissoc-error :closed-record/declared-key-dissoc}
                (edn/read-string (:out result))))))))
 
-(deftest artifact-and-stale-output-test
-  ;; Inspect real build output; an exact file inventory rejects bundled tooling.
-  (let [config (.toFile (Files/createTempDirectory
-                         "closed-record-cli-" (make-array FileAttribute 0)))
-        version (str "0.1." (str/trim (:out (shell/sh "git" "rev-list" "--count" "HEAD"))))
-        artifact (io/file (str "target/closed-record-" version ".jar"))
-        maven "META-INF/maven/org.hugoduncan/closed-record/"
+(defn- prepare-artifact-project
+  [directory config]
+  (prepare-config config)
+  (b/copy-dir {:src-dirs ["src"] :target-dir (str (io/file directory "src"))})
+  (doseq [path ["deps.edn" "build.clj" "LICENSE"]]
+    (io/copy (io/file path) (io/file directory path)))
+  (spit (io/file directory "src/packaging_probe.clj") "(ns packaging-probe)\n")
+  (doseq [path ["test/excluded_test.clj"
+                "dev/bench/excluded_bench.clj"
+                "munera/excluded-task.md"
+                "mementum/excluded-memory.md"]]
+    (let [probe (io/file directory path)]
+      (io/make-parents probe)
+      (spit probe "Excluded from the library JAR.\n")))
+  (doseq [command [["git" "init"]
+                   ["git" "add" "src" "deps.edn" "build.clj" "LICENSE"]
+                   ["git" "commit" "-m" "Fixture"]]]
+    (let [result (apply shell/sh (concat command [:dir (str directory)
+                                                  :env (fixture-env directory config)]))]
+      (when-not (zero? (:exit result))
+        (throw (ex-info "Cannot create Git fixture" result))))))
+
+(defn- source-inventory
+  [directory]
+  (let [source-root (.toPath (io/file directory "src"))]
+    (into {}
+          (comp (filter #(.isFile %))
+                (map (fn [file]
+                       [(str (.relativize source-root (.toPath file))) file])))
+          (file-seq (io/file directory "src")))))
+
+(defn- archive-entries
+  [archive]
+  (into #{} (comp (remove #(.isDirectory %)) (map #(.getName %)))
+        (enumeration-seq (.entries archive))))
+
+(defn- check-archive-content
+  [directory archive sources entries pom-path properties-path]
+  (let [required (into #{"LICENSE" pom-path properties-path} (keys sources))
+        extra (set/difference entries required)]
+    (is (set/subset? #{"closed_record/core.cljc" "closed_record/impl/jvm.clj"}
+                     entries))
+    (is (empty? (set/difference required entries)) "Required files are packaged")
+    (is (every? #(re-matches #"META-INF/(MANIFEST\.MF|INDEX\.LIST|[^/]+\.(SF|RSA|DSA|EC))" %)
+                extra)
+        (str "Unexpected archive entries: " extra))
+    (is (not-any? #(or (str/ends-with? % ".class")
+                      (str/ends-with? % ".jar")) entries)
+        "No compiled classes or bundled JARs")
+    (is (not (contains? entries "stale.txt")))
+    (doseq [[entry source] (assoc sources
+                                 "LICENSE" (io/file directory "LICENSE")
+                                 pom-path (io/file directory "target/classes" pom-path))]
+      (is (Arrays/equals (Files/readAllBytes (.toPath source))
+                         (entry-bytes archive entry)) entry))))
+
+(defn- check-artifact
+  [directory artifact version]
+  (let [maven "META-INF/maven/org.hugoduncan/closed-record/"
         pom-path (str maven "pom.xml")
         properties-path (str maven "pom.properties")
-        sentinel (io/file "target/classes/stale.txt")
-        obsolete (io/file "target/obsolete.jar")]
+        sources (source-inventory directory)]
+    (with-open [archive (JarFile. artifact)]
+      (testing "only runtime source, license, and standard metadata are packaged"
+        (check-archive-content directory archive sources (archive-entries archive)
+                               pom-path properties-path))
+      (testing "generated and embedded Maven metadata agree"
+        (check-pom directory (xml/parse (io/file directory "target/classes" pom-path)) version)
+        (with-open [stream (.getInputStream archive (.getJarEntry archive pom-path))]
+          (check-pom directory (xml/parse stream) version))
+        (let [properties (Properties.)]
+          (with-open [stream (.getInputStream archive (.getJarEntry archive properties-path))]
+            (.load properties stream))
+          (is (= {"groupId" "org.hugoduncan" "artifactId" "closed-record" "version" version}
+                 (into {} properties))))))))
+
+(deftest artifact-and-stale-output-test
+  ;; Inspect required content and reject files outside the source-only contract.
+  (let [directory (.toFile (Files/createTempDirectory
+                            "closed-record-artifact-" (make-array FileAttribute 0)))
+        config (io/file directory "cli-config")
+        version "0.1.1"
+        artifact (io/file directory (str "target/closed-record-" version ".jar"))
+        sentinel (io/file directory "target/classes/stale.txt")
+        obsolete (io/file directory "target/obsolete.jar")]
     (try
-      (spit (io/file config "deps.edn") "{}")
+      (prepare-artifact-project directory config)
       (testing "two builds use the Git version and remove stale output"
-        (is (= 0 (:exit (run-cli "." config "jar"))))
+        (is (= 0 (:exit (run-cli directory config "jar"))))
         (io/make-parents sentinel)
         (spit sentinel "stale staging")
         (spit obsolete "stale artifact")
-        (let [result (run-cli "." config "jar")]
+        (let [result (run-cli directory config "jar")]
           (is (= 0 (:exit result)) (pr-str result)))
         (is (.isFile artifact))
         (is (not (.exists sentinel)))
         (is (not (.exists obsolete))))
-      (with-open [archive (JarFile. artifact)]
-        (testing "only runtime source, license, and standard metadata are packaged"
-          (is (= #{"META-INF/MANIFEST.MF" "LICENSE"
-                   "closed_record/core.cljc" "closed_record/impl/jvm.clj"
-                   pom-path properties-path}
-                 (into #{} (comp (remove #(.isDirectory %)) (map #(.getName %)))
-                       (enumeration-seq (.entries archive)))))
-          (doseq [[entry source] {"LICENSE" "LICENSE"
-                                  "closed_record/core.cljc" "src/closed_record/core.cljc"
-                                  "closed_record/impl/jvm.clj" "src/closed_record/impl/jvm.clj"
-                                  pom-path (str "target/classes/" pom-path)}]
-            (is (Arrays/equals (Files/readAllBytes (.toPath (io/file source)))
-                               (entry-bytes archive entry)) entry)))
-        (testing "generated and embedded Maven metadata agree"
-          (check-pom (xml/parse (io/file "target/classes" pom-path)) version)
-          (with-open [stream (.getInputStream archive (.getJarEntry archive pom-path))]
-            (check-pom (xml/parse stream) version))
-          (let [properties (Properties.)]
-            (with-open [stream (.getInputStream archive (.getJarEntry archive properties-path))]
-              (.load properties stream))
-            (is (= {"groupId" "org.hugoduncan" "artifactId" "closed-record" "version" version}
-                   (into {} properties))))))
+      (check-artifact directory artifact version)
       (testing "a consumer uses only the artifact and runtime dependency JARs"
-        (check-isolated-consumer artifact config))
+        (check-isolated-consumer directory artifact config))
       (finally
-        (b/delete {:path (str config)})))))
+        (b/delete {:path (str directory)})))))

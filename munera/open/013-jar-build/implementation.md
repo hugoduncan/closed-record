@@ -141,3 +141,105 @@
   implementation work. Runtime source and API are unchanged. No install,
   deploy, release-tag, or CI machinery was added. The task remains open for
   implementation review; build output was removed by final clean checks.
+
+## 2026-10-23 — Implementation review
+
+- No new actionable issues. Build tests (3 tests, 66 assertions) and runtime
+  tests on Clojure 1.11 (97 tests, 379 assertions) passed with isolated CLI
+  configuration; both exited 0 with empty `.scry-results`.
+
+## 2026-10-23 — Test review
+
+- Added 2 steps to be addressed.
+
+## 2026-10-23 — Review follow-up 1
+
+- Addressed 1 review step: artifact builds and inspection use a temporary Git
+  project, removed in `finally`. Production code is unchanged.
+- Focused suite with isolated `CLJ_CONFIG`: exit 0, 3 tests, 66 assertions;
+  `.scry-results` empty. Checkout `target/` inventory and bytes were unchanged.
+
+## 2026-10-23 — Review follow-up 2
+
+- Addressed 1 review step: derive runtime entries from fixture source files,
+  retain required entries and byte checks, and permit standard manifest, index,
+  and signature metadata. Reject other entries, classes, JARs, and stale output.
+  An added fixture source verifies that source-tree growth is accepted.
+- Focused suite with isolated `CLJ_CONFIG`: exit 0, 3 tests, 71 assertions;
+  `.scry-results` empty. Checkout output remained unchanged. Both review steps
+  are complete; design and production code are unchanged.
+
+## 2026-10-23 — Test re-review
+
+- Added 1 step to be addressed.
+
+## 2026-10-23 — Review follow-up 3
+
+- Addressed 1 review step: added real excluded-file probes under `test/`,
+  `dev/bench/`, `munera/`, and `mementum/` in the temporary artifact fixture.
+  Existing archive checks pass with all probes absent from the JAR.
+- `clojure -M:test:build-test -m scry.cli --dir test-build` with isolated
+  `CLJ_CONFIG`: exit 0, 3 tests, 71 assertions, no failures or errors;
+  `.scry-results` empty. Design and production code are unchanged.
+
+## 2026-10-23 — Final test review
+
+- No new actionable issues. Focused build suite: exit 0, 3 tests,
+  71 assertions, no failures or errors; `.scry-results` empty.
+
+## 2026-10-23 — Git fixture test review
+
+- Added 1 step to be addressed.
+
+## 2026-10-23 — Review follow-up 4
+
+- Addressed 1 review step: fixture-owned Git configuration and empty hooks;
+  Git and build processes discard inherited `GIT_*` overrides. No production
+  or design changes.
+- Focused suite with isolated `CLJ_CONFIG`, an external rejecting pre-commit
+  hook, repository/worktree/index overrides, and environment-injected hook
+  configuration: exit 0, 3 tests, 71 assertions; `.scry-results` empty.
+  Confirmed the external hook rejects a real commit before verification.
+  External repository, hook, configuration, and checkout output bytes remained
+  unchanged. The first verification wrapper also compared CLI cache files;
+  corrected that check to compare only the protected external files.
+- `clj-kondo --lint test-build/build_test.clj`: no errors or warnings.
+
+## 2026-10-23 — Git fixture re-review
+
+- No further test-shaping issues after follow-up 4. Focused build suite:
+  exit 0, 71 assertions passed; `.scry-results` empty.
+
+## 2026-10-23 — Documentation review
+
+- Added 1 step to be addressed.
+
+## 2026-10-23 — Documentation follow-up
+
+- Addressed 1 review step: documented build artifacts, alias responsibilities,
+  runtime dependency separation, and source-only, no-deployment scope. Linked
+  README build instructions. Checked against `build.clj`, `deps.edn`, and
+  `test-build/build_test.clj`; the link target exists. Documentation only;
+  no test run required. `git diff --check` passed.
+
+## 2026-10-23 — Documentation re-review
+
+- No new actionable documentation issues.
+
+## 2026-10-23 — Code-shaper review
+
+- Added 1 step to be addressed.
+
+## 2026-10-23 — Code-shaper follow-up
+
+- Addressed 1 review step: extracted private project setup, source and archive
+  inventory, and archive inspection helpers. Paths remain explicit; cleanup
+  remains in the test's `finally` block. All assertions and real processes remain.
+- Focused build suite with isolated `CLJ_CONFIG`: exit 0, 3 tests, 71 assertions,
+  no failures or errors; `.scry-results` empty. Checkout `target/` inventory and
+  bytes were unchanged. `clj-kondo` and `git diff --check` passed.
+
+## 2026-10-23 — Code-shaper re-review
+
+- No new actionable issues. Focused build suite: exit 0, 3 tests,
+  71 assertions passed; `.scry-results` empty.

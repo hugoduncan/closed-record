@@ -34,3 +34,64 @@ slice proceeds. Mark an item complete only after its stated check passes.
 - [x] Run `clojure -M:test:clj-1.12 -m scry.cli`; verify the exit code and `.scry-results` and record the Clojure 1.12 result.
 - [x] Run `clojure -M:test:clj-1.13 -m scry.cli`; verify the exit code and `.scry-results` and record the Clojure 1.13 result.
 - [x] Review the final diff against all seven design acceptance criteria; confirm runtime source and API are unchanged, all evidence is in `implementation.md`, and no install, deploy, release-tag, or CI machinery was added, then commit the documentation and final checks.
+
+## Test review follow-up — 2026-10-23
+
+- [x] Isolate `artifact-and-stale-output-test` in `test-build/build_test.clj`
+  from the checkout's Git history and `target/`. It currently runs both builds
+  in `.` and deletes existing maintainer output; concurrent builds or commits
+  can also change its result. Use a temporary project with real Git metadata,
+  pass its directory to the process and inspection helpers, and remove it in
+  `finally`. Keep the real CLI and consumer checks; do not add production
+  test-only options or replace process functions. Verify that the focused suite
+  leaves checkout output unchanged.
+- [x] Replace the fixed archive file set in `artifact-and-stale-output-test`
+  with checks of required content and excluded content. The current assertion
+  rejects an additional runtime source file or permitted standard JAR metadata,
+  although neither violates the design. Derive runtime entries from the fixture's
+  source tree, retain required source/license/Maven metadata and byte checks,
+  permit standard metadata, and continue to reject classes, bundled dependencies,
+  development files, and the stale sentinel.
+
+- [x] Add excluded-directory probes to the temporary project in
+  `artifact-and-stale-output-test` (`test-build/build_test.clj`). The fixture
+  has no test, benchmark, task, or working-memory files, so the archive checks
+  cannot detect accidental copying of those directories. Add representative
+  files under `test/`, `dev/bench/`, `munera/`, and `mementum/` before building;
+  keep the existing archive checks and verify that none of these files enter
+  the JAR. Use fixture state, not mocks or production test-only options.
+
+- [x] Isolate Git configuration and hooks in `artifact-and-stale-output-test`
+  (`test-build/build_test.clj`). Its Git commands inherit global/system
+  configuration and environment overrides; a configured `core.hooksPath`
+  with a rejecting pre-commit hook prevents fixture creation before the build
+  is tested. Use fixture-owned Git configuration and an empty hooks directory
+  for fixture commands, and prevent inherited Git repository overrides from
+  redirecting fixture or build commands. Verify that the focused suite passes
+  with an external rejecting hook configured and leaves external repositories
+  unchanged. Keep real Git processes; do not use mocks.
+
+## Documentation review follow-up — 2026-10-23
+
+- [x] Update `ramora/defclosedrecord/embodiment.md` for the JAR build.
+  The artifact table omits `build.clj`, `LICENSE`, and
+  `test-build/build_test.clj`; its `deps.edn` row omits `:build` and
+  `:build-test`. Document their responsibilities and the separation of build
+  tooling from runtime dependencies. Link to README's build instructions for
+  commands, output paths, and the Git version rule rather than duplicate them.
+  Check the updated text against `build.clj`, `deps.edn`, and the focused build
+  tests; keep the source-only artifact and no-deployment scope clear.
+
+## Code-shaper review follow-up — 2026-10-23
+
+- [x] Separate fixture setup and archive inspection from orchestration in
+  `artifact-and-stale-output-test` (`test-build/build_test.clj`). The test
+  currently combines project creation, Git setup, two builds, source inventory
+  calculation, archive policy, byte comparisons, metadata checks, and consumer
+  execution in one form. Extract cohesive private helpers for project setup and
+  archive inspection, as already done for POM and consumer checks. Keep paths
+  explicit and keep temporary-directory cleanup in the test's `finally` block.
+  Separate source/entry inventory from the checks that use it so archive policy
+  can be read without tracing fixture setup. Preserve the real-process checks
+  and assertions; verify the focused build suite still passes and leaves checkout
+  output unchanged. Do not add a general fixture framework.

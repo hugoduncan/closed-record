@@ -58,8 +58,18 @@ version override. Test an actual failed Git lookup in a temporary project
 copy without Git metadata, outside any Git work tree. Confirm failure leaves
 no new JAR or POM. Keep version validation before all artifact writes.
 
+Run both artifact builds in a temporary project with one real Git commit.
+Pass that project to artifact, POM, and consumer dependency inspection. Delete
+the fixture in `finally`; never build in the checkout during tests.
+Use fixture-owned Git configuration and an empty hooks directory. Remove
+inherited `GIT_*` variables before setting the fixture environment for Git
+and build processes; disable system configuration and replace global configuration.
+
 Inspect archive entries and parse POM XML and Maven properties. Compare the
-packaged source and license bytes with repository files. Permit standard
+packaged source and license bytes with fixture files. Derive runtime entries
+from the fixture source tree, including an added source probe. Add excluded-file probes under
+`test/`, `dev/bench/`, `munera/`, and `mementum/` before building so the archive
+checks detect accidental inclusion of those directories. Permit standard
 JAR metadata, but reject classes, dependency content, and all excluded
 project files. Verify the version against Git at build time, before any
 verification commit changes the count.

@@ -15,7 +15,20 @@
 | `test/closed_record/bench_report_test.clj` | Tests of the bench pure layer (`closed-record.bench.report`): per-call stats, pass rule, table and exit code (V-11). No benchmark run. |
 | `test/closed_record/bench_fork_test.clj` | Tests of the bench fork layer (`closed-record.bench.fork`): fork failure causes and parent exit codes with short shell commands in place of child JVMs, the fork numbers of a full run (0 to 4, in start order), the child command against the state of the test JVM, and the run order of each fork (V-11). No benchmark run. |
 | `dev/bench/` | `closed_record/bench.clj` (`closed-record.bench`): criterium benchmarks of the six S-03 operations against `defrecord` (V-11), over 5 child JVM forks. The child entry point measures and writes its result to a file. `closed_record/bench/fork.clj` (`closed-record.bench.fork`): the run order of a fork, the child command and the parent, which starts the forks, without criterium. `closed_record/bench/report.clj` (`closed-record.bench.report`): the pure layer (per-call stats, encode and decode of the child result, statistics over forks, pass rule, table, exit code), without criterium. |
-| `deps.edn` | Clojure 1.11 dependency. Aliases `:test`, `:bench`, `:nrepl`, `:clj-1.12` and `:clj-1.13`. The `:test` alias has scry, `test.check` and malli (`metosin/malli`), and the path `dev/bench` for the bench report and fork layer tests. The `:bench` alias has criterium (`org.hugoduncan/criterium` 0.5.251-ALPHA). |
+| `build.clj` | Maintainer build: validates the Git version, clears stale output, and packages runtime source, Maven metadata, and the license in one source-only library JAR. `clean` removes build output without Git metadata. |
+| `LICENSE` | Complete EPL-2.0 license text for the repository and the JAR root. |
+| `test-build/build_test.clj` | Separate build tests: version validation, missing-Git failure, repeatable clean, artifact contents and metadata, stale-output removal, and an isolated consumer JVM. Uses real processes and temporary project fixtures. |
+| `deps.edn` | Clojure 1.11 runtime dependency. Maintainer aliases `:build` and `:build-test` supply tools.build; `:build` selects the `build` namespace, and `:build-test` adds root and build-test paths for use with `:test`. Other aliases `:test`, `:bench`, `:nrepl`, `:clj-1.12` and `:clj-1.13`. The `:test` alias has scry, `test.check` and malli (`metosin/malli`), and the path `dev/bench` for the bench report and fork layer tests. The `:bench` alias has criterium (`org.hugoduncan/criterium` 0.5.251-ALPHA). |
+
+## Packaging
+
+Build tooling stays in maintainer aliases, not runtime dependencies. The build
+uses the base dependency configuration without user configuration or aliases
+for Maven metadata. The JAR has no AOT classes, bundled dependencies, or
+development files. No local Maven installation or deployment is provided.
+
+See [README build instructions](../../README.md#build-a-library-jar) for
+commands, output paths, the Git version rule, and history requirements.
 
 ## Boundaries
 
