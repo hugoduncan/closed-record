@@ -72,15 +72,15 @@
   "Return the ex-info of a rejected key operation on a closed record.
   Internal: the generated assoc and without call it through its var, on the
   rejected path only (D-21). `t` is :closed-record/undeclared-key or
-  :closed-record/declared-key-dissoc."
-  [t record k]
+  :closed-record/declared-key-dissoc. `c` is the record class."
+  [t c k]
   (ex-info (case t
              :closed-record/undeclared-key
-             (str "Undeclared key " k " for closed record " (class-name record))
+             (str "Undeclared key " k " for closed record " (class-name c))
              :closed-record/declared-key-dissoc
              (str "Cannot dissoc declared key " k " from closed record "
-                  (class-name record)))
-           {:type t :record record :key k}))
+                  (class-name c)))
+           {:type t :record c :key k}))
 
 (defn check
   "Return x if x is a closed record with no extra literal keys.

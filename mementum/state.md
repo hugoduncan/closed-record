@@ -26,7 +26,9 @@ Main form: `defclosedrecord`.
   `test/closed_record/differential_test.clj` (`closed-record.differential-test`, V-02: test.check property that
   compares a closed record with a `defrecord` after random permitted steps),
   `test/closed_record/malli_test.clj` (`closed-record.malli-test`, V-07: malli map schemas and transformers;
-  `metosin/malli` 0.20.3 is in the `:test` alias).
+  `metosin/malli` 0.20.3 is in the `:test` alias),
+  `test/closed_record/rejected_key_message_test.clj` (`closed-record.rejected-key-message-test`: the `ex-info`
+  message of a rejected `assoc` or `dissoc`, Scope 2).
 - Verification plan done: V-01 to V-15 (all). V-11: task 012 acceptance run (5 forks, criterium 0.5.251), all six
   rows pass (`assoc` `P / R` 1.000, `get` 0.996, `=` 0.902); the field declaration test (`field_value_test.clj`)
   passes. Measured cause of the earlier `assoc` gap (task 011: 1.193): the method size stopped C2 inlining

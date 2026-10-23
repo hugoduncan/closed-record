@@ -122,3 +122,37 @@ No `src`, `test` or `dev` change in this slice.
 - [x] `clj-kondo --lint src test dev`: no errors and no warnings (acceptance 5).
 - [x] `cljfmt check src test dev` passes (acceptance 5).
 - [x] Verify all acceptance criteria 1–6 are met and recorded; commit.
+
+## Implementation review
+
+- [x] Move `## D-21 Method size` in `ramora/defclosedrecord/decisions/type-structure.md` after `## D-15 Syntax`.
+  Each decisions file lists its records in ID order; D-21 is now between D-10 and D-15.
+
+## Test review
+
+- [x] Rewrite `test/closed_record/key_error_test.clj` to test only observable behaviour.
+  - Now it calls the private `#'closed-record.core/key-error` directly, and it compares the `assoc`/`dissoc`
+    message with the helper result. These tests fix an implementation decision (helper name, arguments, "returns,
+    does not throw") and the comparison passes if both are wrong.
+  - Remove the direct helper calls. Assert the literal message of `(assoc (->K 1) :z 2)` and
+    `(dissoc (->K 1) :a)` (the Scope 2 text, with the munged class name). The `ex-data` is already covered in
+    `defclosedrecord_test.clj`, `property_test.clj` and `malli_test.clj`; do not repeat it.
+  - Change the ns docstring: D-03 makes the `ex-data` public, not the message. Say that the test keeps the message
+    text unchanged (Scope 2). Rename the file and ns if the helper name no longer describes it.
+  - Then run the three-version tests, clj-kondo and cljfmt. This is a `test` change after the acceptance run; record
+    it in `implementation.md` (no `src` change, so the gate result stays valid).
+
+## Docs review
+
+- [x] Add `test/closed_record/rejected_key_message_test.clj` to the Tests list in `mementum/state.md`
+  (`closed-record.rejected-key-message-test`: the `ex-info` message of a rejected `assoc` or `dissoc`, Scope 2).
+  The list names each test file; this task added the file (test review follow-up) and did not list it.
+
+## Code-shaper review
+
+- [x] Rename the `record` parameter of `key-error` in `src/closed_record/core.cljc` to `c`, as in `class-name`.
+  - The call sites pass `(class this)`, not a record. `(class-name record)` reads as a bug, and the docstring does
+    not say that the argument is a class. Keep the `:record` key of the `ex-data` (D-03): `{:type t :record c :key k}`.
+  - Say in the docstring that `c` is the record class. Then run the three-version tests, clj-kondo and cljfmt. This
+    is a `src` change after the acceptance run; record it in `implementation.md` (the bytecode of the generated
+    methods does not change, so the gate result stays valid).

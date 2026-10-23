@@ -377,3 +377,62 @@ exit 0. All six rows pass (`assoc` P / R 1.000). V-11 done if `field_value_test.
 - Scope 6 documents updated. `benchmarks.md` "Known limits" has a 💡 entry on method size and inlining (how to find it).
 - Slice 6: no `src`/`test`/`dev` diff vs gate `96f229e`; tests 97/0/0 on default, `:clj-1.12`, `:clj-1.13`;
   clj-kondo 0/0; cljfmt ok. Acceptance 1–6 met.
+
+## Implementation review (2026-10-20)
+
+- added 1 step to be addressed
+
+## Review follow-up (2026-10-20)
+
+- addressed 1 review step: D-21 moved after D-15 in `type-structure.md` (ID order).
+
+## Implementation review 2 (2026-10-20)
+
+- no new review findings
+
+## Test review (2026-10-20)
+
+- added 1 step to be addressed
+
+## Test review follow-up (2026-10-20)
+
+- addressed 1 review step: `key_error_test.clj` → `rejected_key_message_test.clj`. It asserts only the literal
+  `assoc`/`dissoc` messages; no private helper call, no `ex-data` repeat. Docstring: D-03 makes `ex-data` public, the
+  test keeps the message text (Scope 2).
+- `test` change after the acceptance run; no `src`/`dev` change vs gate `96f229e`, so the gate result stays valid.
+  Tests 97/0/0 on default, `:clj-1.12`, `:clj-1.13`; clj-kondo 0/0; cljfmt ok.
+
+## Test review 2 (2026-10-20)
+
+- no new review findings
+
+## Test review 3 (2026-10-20)
+
+- no new review findings
+
+## Docs review (2026-10-20)
+
+- added 1 step to be addressed
+
+## Docs review follow-up (2026-10-20)
+
+- addressed 1 review step: listed `rejected_key_message_test.clj` in `mementum/state.md` Tests
+
+## Docs review 2 (2026-10-20)
+
+- no new review findings
+
+## Code-shaper review (2026-10-20)
+
+- added 1 step to be addressed
+
+## Code-shaper review follow-up (2026-10-20)
+
+- addressed 1 review step: `key-error` parameter `record` → `c`; docstring says `c` is the record class; `ex-data`
+  key `:record` unchanged (D-03).
+- `src` change after the acceptance run; only the helper body changes, not the generated methods, so the gate result
+  (`96f229e`) stays valid. Tests 97/0/0 on default, `:clj-1.12`, `:clj-1.13`; clj-kondo 0/0; cljfmt ok.
+
+## Code-shaper review 2 (2026-10-20)
+
+- no new review findings

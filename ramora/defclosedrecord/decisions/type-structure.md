@@ -57,6 +57,17 @@
 - Scope: JVM emitter.
 - Commitment: low.
 
+## D-15 Syntax
+
+- Subject: the `defclosedrecord` macro syntax.
+- Choice: the same syntax as `defrecord`: name, fields with type hints, options, protocol and interface implementations.
+  `->Name` and `map->Name` are generated, also for more than 20 fields.
+- Reserved field names: `__meta`, `__extmap`, `__hash`, `__hasheq`. The macro rejects them.
+- Rejected: a new syntax with key specifications (optional keys, defaults). It breaks O-02 and K-04.
+- Rationale: O-02.
+- Scope: all hosts.
+- Commitment: high.
+
 ## D-21 Method size
 
 - Subject: the size of the generated `assoc`, `without`, `containsKey` and `entryAt`, and their throw paths.
@@ -85,14 +96,3 @@
   name, as they refer to the D-17 protocol interface. Before the first release, K-03 applies. After it, a change adds
   a helper with a new name and keeps the old helper, so that the earlier AOT classes still work. The message and the
   data of D-03 do not change.
-
-## D-15 Syntax
-
-- Subject: the `defclosedrecord` macro syntax.
-- Choice: the same syntax as `defrecord`: name, fields with type hints, options, protocol and interface implementations.
-  `->Name` and `map->Name` are generated, also for more than 20 fields.
-- Reserved field names: `__meta`, `__extmap`, `__hash`, `__hasheq`. The macro rejects them.
-- Rejected: a new syntax with key specifications (optional keys, defaults). It breaks O-02 and K-04.
-- Rationale: O-02.
-- Scope: all hosts.
-- Commitment: high.
