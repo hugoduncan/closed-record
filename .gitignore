@@ -4,3 +4,4 @@
 /.scry-results/
 /.nrepl-port
 /.clj-kondo/.cache/
+/target/

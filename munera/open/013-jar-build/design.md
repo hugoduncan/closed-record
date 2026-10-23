@@ -7,7 +7,7 @@ closed-record. Keep the build small and separate from runtime dependencies.
 
 ## Context
 
-The project has no JAR build. `deps.edn` has `src` as its runtime path and
+At task design, the project had no JAR build. `deps.edn` has `src` as its runtime path and
 Clojure 1.11.4 as its only runtime dependency. Test, benchmark and REPL tools
 are in development aliases. The README gives a git dependency for installation.
 

@@ -160,3 +160,32 @@ Run the tests in the REPL:
 Run the benchmarks against `defrecord` (about 6 minutes):
 
     clojure -M:bench
+
+### Build a library JAR
+
+Build the source-only JAR for `org.hugoduncan/closed-record`:
+
+    clojure -T:build jar
+
+The build writes `target/closed-record-<version>.jar` and generates the POM
+at `target/classes/META-INF/maven/org.hugoduncan/closed-record/pom.xml`.
+The JAR contains runtime source, Maven metadata, and the EPL-2.0 license.
+Build tools are not runtime dependencies.
+
+The version is `0.1.<count>`, where `<count>` is the output of
+`git rev-list --count HEAD`. Git and repository history are required;
+version lookup failure stops the build. Use a full checkout for a
+release-quality build. A shallow checkout can give a smaller count.
+Each build removes stale output from `target/` before packaging.
+
+Run the separate build tests, including a consumer JVM that loads the JAR:
+
+    clojure -M:test:build-test -m scry.cli --dir test-build
+
+Remove build output:
+
+    clojure -T:build clean
+
+`clean` is safe to repeat and does not require Git metadata. Generated
+output under `target/` is ignored by Git. These commands do not install or
+deploy the artifact; there is no published Clojars release yet.

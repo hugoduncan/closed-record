@@ -47,6 +47,10 @@ empty `deps.edn` map; pass this environment to child CLI processes. Resolve
 consumer dependencies from the base project basis, including transitive
 runtime JARs. Remove temporary fixtures after each check.
 
+Use `clojure.java.shell/sh` for test subprocesses so the test harness runs
+on Clojure 1.11. tools.build 0.10.10 process execution needs Clojure 1.12;
+the isolated `-T:build` process supplies its own tooling runtime.
+
 Use real processes and temporary filesystem fixtures for build and clean
 checks. Use pure process-result validation tests for non-numeric output,
 blank output, and failed exit status; do not mock Git or add a test-only
@@ -100,7 +104,9 @@ fixtures outside `target/` when they must survive a clean operation.
    results. Covers criteria 6 and 7 and confirms the complete contract.
 
 Commit each completed implementation slice with its verification evidence.
-This planning pass does not execute the slices.
+Artifact verification was completed in smaller commits. All three slices are
+complete, including documentation and final version-matrix verification.
+Commands and results are recorded in `implementation.md`.
 
 ## Planning review — 2026-10-23
 

@@ -40,6 +40,22 @@ Main form: `defclosedrecord`.
   in the suite (`bench_report_test.clj`, `bench_fork_test.clj`).
 - REPL: `clojure -M:test:nrepl`. In the REPL: `(require '[scry.core :as scry]) (scry/run)`.
 
+## Packaging
+
+- `clojure -T:build jar` builds a source-only `org.hugoduncan/closed-record` JAR
+  under `target/`; version is `0.1.<Git commit count>`. Git metadata is required.
+- `clojure -T:build clean` removes `target/` without Git lookup.
+- The build uses tools.build 0.10.10. Runtime dependencies are unchanged.
+- Root `LICENSE` contains EPL-2.0 text and is included in the JAR.
+- README Development documents build, clean, version/history requirements,
+  artifact paths, and the separate build-test command. No release is published.
+- Focused build tests: `clojure -M:test:build-test -m scry.cli --dir test-build`.
+  Test subprocesses use `clojure.java.shell` to retain Clojure 1.11 support.
+  Archive tests compare an exact file inventory and packaged bytes, parse Maven
+  metadata, and rebuild with stale output to check cleanup. A separate consumer JVM
+  uses only the artifact and base runtime dependency JARs; resource-origin checks
+  confirm both core and emitter load from the artifact.
+
 ## Tasks
 
 Munera tracks the tasks. Do not record tasks or task progress in this file.
