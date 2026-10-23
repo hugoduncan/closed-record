@@ -28,10 +28,12 @@ Main form: `defclosedrecord`.
   `test/closed_record/malli_test.clj` (`closed-record.malli-test`, V-07: malli map schemas and transformers;
   `metosin/malli` 0.20.3 is in the `:test` alias).
 - Verification plan done: V-01, V-02, V-03, V-04, V-05, V-06, V-07, V-08, V-09, V-10, V-12, V-13, V-14, V-15.
-  Not done: V-11 (the bench exists; `=` fails, `P / R` 1.086; field access `(.a x)` is not measured: the JIT
-  hoists the read, about 0.06 ns).
+  Not done: V-11. Task 011 acceptance run (5 forks, criterium 0.5.251): `(assoc x :a 2)` fails, `P / R` 1.193
+  (7.93 against 6.65 ns). The other five rows pass (`get` 1.049, `(.a x)` 0.995). The field declaration test
+  (`field_value_test.clj`) passes. The `assoc` gap is an emitter cost (`case` against `condp identical?`): a new task.
 - Tests: `clojure -M:test -m scry.cli`. Other versions: add `:clj-1.12` or `:clj-1.13`.
-- Bench: `clojure -M:bench` (V-11). It exits 1 if an operation fails. The pure layer
+- Bench: `clojure -M:bench` (V-11), 5 child JVM forks, about 6 min. It exits 1 if an operation fails, 2 if a fork
+  fails. The pure layer
   (`closed-record.bench.report`) has tests in the suite (`bench_report_test.clj`).
 - REPL: `clojure -M:test:nrepl`. In the REPL: `(require '[scry.core :as scry]) (scry/run)`.
 

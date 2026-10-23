@@ -98,8 +98,10 @@ See [D-03](decisions/failure-and-validation.md#d-03-failure-signal) for the data
 
 - S-01 (O-01) Each row of the behaviour tables has a test.
 - S-02 (O-02) Differential tests: a closed record and an equivalent `defrecord` give the same result for each permitted operation.
-- S-03 (O-03) criterium benchmarks for keyword lookup, field access, `assoc` of a declared key, `hash` and `=`.
+- S-03 (O-03) criterium benchmarks for keyword lookup, `get`, field access, `assoc` of a declared key, `hash` and `=`.
   For each operation, the mean time of the closed record is not more than 5% above the `defrecord` mean (`P / R ≤ 1.05`), or the 95% confidence intervals overlap.
+  The means and intervals are over 5 JVM forks.
+  Field access has two checks: the timed `(.a x)` row and the field declaration test. Field access passes only if both checks pass.
 - S-04 (O-02) Tests show compatibility with malli map schemas and nil field values.
 
 ## Priority

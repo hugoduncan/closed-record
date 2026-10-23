@@ -1,7 +1,10 @@
 (ns closed-record.field-value-test
   "V-06 (keyword call sites), V-08 (nil values) and V-09 (type hints).
   V-08 and V-09 are differential: each case runs with the closed type
-  and with the `defrecord`, and the outcomes must agree."
+  and with the `defrecord`, and the outcomes must agree.
+  V-11 (field access, S-03): `field-declaration-test` checks that the
+  closed type declares the same instance fields as the `defrecord` (D-01),
+  so `(.a x)` compiles to the same `getfield`."
   (:require
    [clojure.test :refer [deftest is testing]]
    [closed-record.core :refer [defclosedrecord]]))
@@ -151,3 +154,20 @@
   ;; A, B, A is the first sequence that it sees.
   (let [site (fn [x] (:a x))]
     (is (= [1 2 3] [(site (->N 1 nil)) (site (->N2 2 nil)) (site (->N 3 nil))]))))
+
+(defclosedrecord FL [a ^long n])
+
+(defrecord DFL [a ^long n])
+
+(defn- instance-fields
+  "Return `[name type modifiers]` of the non-static declared fields of `c`,
+  in declaration order."
+  [^Class c]
+  (->> (.getDeclaredFields c)
+       (remove #(java.lang.reflect.Modifier/isStatic (.getModifiers ^java.lang.reflect.Field %)))
+       (mapv (fn [^java.lang.reflect.Field f] [(.getName f) (.getType f) (.getModifiers f)]))))
+
+(deftest field-declaration-test
+  (testing "V-11: same instance fields as defrecord, in name, order, type and modifiers"
+    (is (= (instance-fields DFL) (instance-fields FL)))
+    (is (= ["a" "n"] (mapv first (take 2 (instance-fields FL)))))))

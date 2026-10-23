@@ -158,3 +158,44 @@
   - No new design steps. The only open item is the SCOPE_QUESTION. Do not tick it and do not edit `design.md`
     for it without a human decision (the "Design review 2" notes say what to change if it is decided).
   - With no decision, the plan and steps are ready for `implement-task`. Steps Slice 6 has the conditional step.
+
+## Implementation pass 1 (2026-10-23)
+
+### Acceptance run
+
+Clojure 1.11.4, criterium 0.5.251-ALPHA, OpenJDK 25.0.2 (build 25.0.2+10-69), Apple M5 Max (arm64), commit
+`61b630a`. Command: `clojure -M:bench 2>&1 | tee <file>; echo "exit ${PIPESTATUS[0]}"`. Complete output:
+
+```text
+CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole = true
+CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole = true
+CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole = true
+CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole = true
+CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole = true
+CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole = true
+| Operation      | P mean [low, high] ns | R mean [low, high] ns | P / R | Result | Forks |
+|----------------|-----------------------|-----------------------|-------|--------|-------|
+| (:a x)         | 0.98 [0.95, 1.01]     | 1.00 [0.94, 1.05]     | 0.982 | pass   | 5     |
+| (get x :a)     | 4.30 [3.47, 5.13]     | 4.10 [3.83, 4.37]     | 1.049 | pass   | 5     |
+| (.a x)         | 0.33 [0.31, 0.35]     | 0.33 [0.29, 0.37]     | 0.995 | pass   | 5     |
+| (assoc x :a 2) | 7.93 [7.82, 8.05]     | 6.65 [6.32, 6.97]     | 1.193 | fail   | 5     |
+| (hash x)       | 4.41 [4.24, 4.59]     | 4.38 [4.19, 4.57]     | 1.007 | pass   | 5     |
+| (= x y)        | 5.06 [3.70, 6.42]     | 5.20 [3.89, 6.50]     | 0.974 | pass   | 5     |
+exit 1
+```
+
+- 6 blackhole lines (parent + 5 children), `Forks` 5. Exit 1: `assoc` fails (1.193). V-11 not done.
+
+### Notes for review
+
+- `run` takes `[fork limit-s]`; it builds 12 thunks (one per `bench-op` call site) and calls each pair in parity
+  order (`in-order`). Operation texts come from `report/ops`.
+- `-main`: 0 args → `parent`; 2 args → child (exit 0 after `spit`); other → usage on stderr, exit 64.
+- The parent keeps the temp result file (does not delete it before the child), so `true` gives an empty-file
+  decode error ("not a vector of 6 entries"), as in the steps.
+- Slice 3 `parent` checks (exit 3, rm, true, truncated EDN, valid fixture) gave the expected causes and 2 / 0.
+  Manual child run with fork 1: exit 0, decode `{:result ...}`.
+- Field test: `FL [a ^long n]` vs `DFL`; compares `[name type modifiers]` of non-static `getDeclaredFields`.
+  Passes on 1.11, 1.12, 1.13.
+- SCOPE_QUESTION still open: `qualities.md` V-11 row and the `embodiment.md` `bench_report_test.clj` row not changed.
+- Final: scry 91 tests / 345 assertions, 0 failures, on all three aliases; clj-kondo 0/0; cljfmt ok.

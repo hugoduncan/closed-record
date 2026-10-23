@@ -13,7 +13,7 @@
 | `test/closed_record/differential_test.clj` | Differential property test against `defrecord` after random permitted steps (V-02). |
 | `test/closed_record/malli_test.clj` | Tests of malli map schemas and transformers on a closed record (V-07). |
 | `test/closed_record/bench_report_test.clj` | Tests of the bench pure layer (`closed-record.bench.report`): per-call stats, pass rule, table and exit code (V-11). No benchmark run. |
-| `dev/bench/` | `closed_record/bench.clj` (`closed-record.bench`): criterium benchmarks of the five S-03 operations against `defrecord` (V-11). `closed_record/bench/report.clj` (`closed-record.bench.report`): the pure layer (per-call stats, pass rule, table, exit code), without criterium. |
+| `dev/bench/` | `closed_record/bench.clj` (`closed-record.bench`): criterium benchmarks of the six S-03 operations against `defrecord` (V-11), over 5 child JVM forks. The parent starts the forks. The child entry point measures and writes its result to a file. `closed_record/bench/report.clj` (`closed-record.bench.report`): the pure layer (per-call stats, encode and decode of the child result, statistics over forks, pass rule, table, exit code), without criterium. |
 | `deps.edn` | Clojure 1.11 dependency. Aliases `:test`, `:bench`, `:nrepl`, `:clj-1.12` and `:clj-1.13`. The `:test` alias has scry, `test.check` and malli (`metosin/malli`), and the path `dev/bench` for the bench report tests. The `:bench` alias has criterium (`org.hugoduncan/criterium` 0.5.251-ALPHA). |
 
 ## Boundaries

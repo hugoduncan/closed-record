@@ -14,5 +14,6 @@
 - Each invariant names its tests in `verified-by`.
 - Rejected: example tests only. They do not show parity with `defrecord` or catch compiler changes.
 - Rationale: S-01 to S-04. R-01 needs an early signal on each Clojure version.
-- Scope: CI matrix Clojure 1.11, 1.12, 1.13.
+- Scope: the test suite runs on Clojure 1.11, 1.12 and 1.13 (aliases). The bench runs on Clojure 1.11.
+  CI is deferred: all runs are manual.
 - Commitment: low.

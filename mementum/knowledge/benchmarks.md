@@ -45,24 +45,48 @@ criterium 0.5.243-ALPHA, OpenJDK 25, arm64), updated for 0.5.251-ALPHA (2026-10-
 - The blackhole `:jvm-opts` must be in the alias. Without them, criterium warns and adds about 3 ns for each
   call. The `CompileCommand: blackhole ...` line at start is a HotSpot notice, not that warning.
 
+## Forks (task 011)
+
+- 🎯 `clojure -M:bench` (no arguments) is the parent. It starts 5 child JVMs (forks 0 to 4), one after the other,
+  with its classpath (`java.class.path`), its java binary (`java.home`/`bin/java`) and all its JVM input arguments
+  (`RuntimeMXBean/getInputArguments`, no filter). The parent does no measurement.
+- A child is `clojure.main -m closed-record.bench <fork> <result-file>`. It runs the six operations in
+  `report/ops` order, 5 s for each run. Even forks run `P` then `R` for each operation; odd forks `R` then `P`.
+  Each `bench` call site runs once in a child (one thunk for each call site), so the divide by zero fault does
+  not occur. The child exits 0 after it writes its result (a fail row is not a fork fault).
+- Transport: the child writes EDN (`report/encode-result`) to a temp file; the parent reads it with
+  `report/decode-result` (`{:result v}` or `{:error msg}`, no throw). Not stdout: the JVM prints the
+  `CompileCommand: blackhole ...` notice to stdout (one line for the parent and each child: 6 in a full run).
+- Statistics (`report/fork-stats`): the mean of the 5 fork means, and the Student t interval
+  mean ± 2.776 · s / √5 (s with divisor 4). The `:low` / `:high` of a child are not used.
+- ❌ A failed fork (exit not 0, missing file, decode error) stops the run: `fork <n> failed: <cause>` on stderr,
+  no table, exit 2. The result files stay in the temp dir for inspection.
+- `parent` takes the child command function, so the failure paths are tested with `sh` / `rm` / `true` / `cp`
+  commands and no JVM.
+- First fork run (2026-10-23): fork intervals are wide for `get` and `=` (±0.8 and ±1.4 ns): the variation
+  between JVMs is large, as expected.
+
 ## Known limits
 
 - ✅ (0.5.251) `(.a ^P x)` is now measured: the opaque barrier stops the lift. With 0.5.243 it gave about
   0.06 ns, because the JIT lifted the read out of the loop.
 - ❌ Results near the 1.05 ratio change from run to run on one machine (`=`: 1.086 fail, then 0.957 pass;
-  `assoc`: 1.111 in a 1 s run, 1.011 in a 10 s run). One run does not prove S-03. A stable bench needs more
-  (for example several JVM forks).
+  `assoc`: 1.111 in a 1 s run, 1.011 in a 10 s run). One run does not prove S-03. See "Forks".
 - 🎯 The acceptance run is the first full run of the fixed harness. Do not choose a later run that passes.
-  ❌ Capture the full output of each run to a file (`clojure -M:bench | tee <file>`). In task 010 the acceptance
+  ❌ Capture the full output of each run to a file (`clojure -M:bench 2>&1 | tee <file>; echo "exit ${PIPESTATUS[0]}"`: `2>&1` captures the
+  child stderr and the fork error; `tee` hides the exit code). In task 010 the acceptance
   run output was only partly captured, so its table is lost.
 
 ## Code structure
 
-- 🔁 Keep the pure layer (`closed-record.bench.report`: stats, pass rule, table, exit code) in a namespace with
+- 🔁 Keep the pure layer (`closed-record.bench.report`: stats, encode and decode of the child result,
+  statistics over forks, pass rule, table, exit code) in a namespace with
   no criterium dependency. The `:test` alias adds `dev/bench` to the paths and tests it with injected
-  `last-bench`-shaped maps. criterium stays out of `:test`. Only `-main` has side effects (`System/exit`).
+  `last-bench`-shaped maps. criterium stays out of `:test`. Only `closed-record.bench` has side effects (process start, file I/O,
+  `System/exit`).
 - ❌ `format` uses the JVM default locale. With `de_DE`, `1.23` prints as `1,23`, and an interval
   `[1,20, 1,30]` is ambiguous. Format numbers with `(String/format java.util.Locale/ROOT ...)`. To test, run the
   suite with `-Duser.language=de -Duser.country=DE`.
-- To use the `:bench` classpath in a REPL or with `-e`: `:main-opts` in `:bench` runs `-main` (a 100 s run). Add an
+- To use the `:bench` classpath in a REPL or with `-e`: `:main-opts` in `:bench` runs `-main` (a run of 5 forks, about
+  300 s plus JVM start). Add an
   alias that clears it: `clojure -Sdeps '{:aliases {:e {:main-opts []}}}' -M:bench:e -e ...`.
