@@ -24,6 +24,10 @@ This page gives the rules that the commands do not show.
 - Pin all versions. Do not use `RELEASE`.
 - A top-level `org.clojure/clojure` has priority over the transitive Clojure of scry. Check the version with
   `clojure -M:<aliases> -e '(print (clojure-version))'`.
+- ❌ A command in a scratch directory outside the repository does not read the repository `deps.edn`.
+  `clojure -Sdeps "{:paths [...]}"` then uses the Clojure version of the root deps (`~/.clojure/deps.edn` or the
+  CLI default, 1.12.6 here), not 1.11.4. Add `:deps {org.clojure/clojure {:mvn/version "1.11.4"}}` to the
+  `-Sdeps` map and print `(clojure-version)` with the evidence (task 012, found in plan review).
 
 ## Scry
 
