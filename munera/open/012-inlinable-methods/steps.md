@@ -26,33 +26,64 @@
 - [ ] Remove the now-unused `case`/`closed-throw` use from these four methods only;
   `closed-throw` stays for `empty` and `map->Name`. Remove `key-case` users accordingly
   (`valAt` and `getLookupThunk` keep it).
-- [ ] Run `clojure -M:test -m scry.cli` on the default alias; zero failures and errors.
-- [ ] Run `clj-kondo --lint src test dev` and `cljfmt check src test dev` now, so that no
-  `src` change is needed after the acceptance run.
+- [ ] Change the ns docstring of `src/closed_record/impl/jvm.clj` (lines 5–6): "It emits
+  the ClosedRecord protocol interface only as a symbol." becomes "It emits the
+  ClosedRecord protocol interface name and the key-error var name only as symbols."
+- [ ] Run `clojure -M:test -m scry.cli`, `clojure -M:test:clj-1.12 -m scry.cli` and
+  `clojure -M:test:clj-1.13 -m scry.cli`; each exits 0 with zero failures and errors.
+- [ ] Run `clj-kondo --lint src test dev` (no errors, no warnings) and
+  `cljfmt check src test dev` (passes).
+- [ ] Commit the `src`, `test` and `dev` changes of Slices 1 and 2. This is the gate
+  commit (plan, Key decisions). If a later step needs a `src`, `test` or `dev` change
+  before the acceptance run, commit it, then repeat the checks above and Slice 3 on the
+  new commit (the new gate commit).
 
 ## Slice 3: evidence (Scope 4)
 
 - [ ] AOT-compile the scratch namespace (outside the repo) with `(defclosedrecord P [a b c])`
-  and `(defrecord R [a b c])`, using the recorded commands in `implementation.md`.
-- [ ] Record in `implementation.md`: the `javap` size table for `P` and `R`
-  (`assoc`, `without`, `containsKey`, `entryAt`, `valAt`; the `IPersistentMap assoc` row),
-  the `java -version` output, and the exact commands and scratch namespace.
+  and `(defrecord R [a b c])` from the gate commit, on Clojure 1.11.4. Use the commands of
+  `plan.md` "Measurement (Slice 3)": each `-Sdeps` has
+  `:deps {org.clojure/clojure {:mvn/version "1.11.4"}}`, each `-e` prints
+  `(clojure-version)`, and the `javap` `grep` names the 8 methods
+  (`grep -E " (assoc|without|getLookupThunk|entryAt|containsKey|valAt|cons|equiv)\("`).
+  Each `(clojure-version)` output must be `1.11.4`; else fix the command and measure again.
+- [ ] Record in `implementation.md`: the `javap` size table for `P` and `R` with the 8
+  rows of the design Observed facts table (`without`, `assoc`, `getLookupThunk`,
+  `entryAt`, `containsKey`, `valAt(k, nf)`, `cons`, `equiv`; the `IPersistentMap assoc`
+  row, not the 9-byte bridge; not `valAt(Object)`), the `(clojure-version)` output
+  (`1.11.4`), the `java -version` output, the gate commit sha, and the exact commands and
+  scratch namespace.
 - [ ] Verify acceptance 1: `assoc`, `without`, `containsKey`, `entryAt` of `P` each below
   325 bytes code length.
-- [ ] Run `PrintInlining` (per-method `CompileCommand`, boxed-value hot loop) and record
-  the C2 line `P::assoc (<n> bytes) inline (hot)` in `implementation.md` (acceptance 2).
+- [ ] Run `PrintInlining` (per-method `CompileCommand`, boxed-value hot loop, Clojure
+  1.11.4 pinned as above) and record the C2 line `P::assoc (<n> bytes) inline (hot)` and
+  the `(clojure-version)` output in `implementation.md` (acceptance 2).
 
 ## Slice 4: bench acceptance run (Scope 5)
 
-- [ ] Confirm the emitter is final: tests pass, size table and `PrintInlining` recorded.
-- [ ] Run `clojure -M:bench` (5 forks). Record the complete output and exit code in
-  `implementation.md`. This first full run is the acceptance run; no later run replaces
-  it, and the emitter does not change after it in this task.
-- [ ] Determine V-11: done only if all six timed rows pass and
+- [ ] Gate: `git diff --stat <gate-sha> HEAD -- src test dev` and `git status --short src
+  test dev` are empty; the size table and the `PrintInlining` line of the gate commit
+  (Clojure 1.11.4) are in `implementation.md`, with the gate commit sha.
+- [ ] In bash, run `clojure -M:bench 2>&1 | tee /tmp/012-bench-1.txt; echo "exit
+  ${PIPESTATUS[0]}"` (5 forks). Record the complete file content and the exit code in
+  `implementation.md`.
+  - Classify the run by the table, not by the exit code (plan, Key decisions, Run
+    classification). Table check: `grep -E '^\| (Operation|\()' /tmp/012-bench-1.txt`
+    prints 7 lines (the header line and the six operation rows).
+  - Table present (any exit code): this is the acceptance run. No later run replaces it.
+    `src`, `test` and `dev` do not change after it in this task.
+  - No table (fewer than 7 lines, any exit code, for example 2, 1, 137 or 130): not the
+    acceptance run. Record it, do not change `src`, `test` or `dev`, and do one more full
+    run (`/tmp/012-bench-2.txt`), with the same rules. If that run also has no table,
+    stop and ask the user.
+- [ ] Determine V-11 from the Result column of the acceptance-run table: done only if all
+  six timed rows pass and
   `test/closed_record/field_value_test.clj` passes (S-03). If a timed row fails, note the
   ratio for the `state.md` update in slice 5.
 
 ## Slice 5: documents (Scope 6)
+
+No `src`, `test` or `dev` change in this slice.
 
 - [ ] Add `D-21 Method size` to `ramora/defclosedrecord/decisions/type-structure.md` with
   the full record shape (subject, choice, rejected, rationale, assumptions, qualities,
@@ -79,8 +110,11 @@
   and how to find it; replace the "current gap / start point" lines with the task 012
   acceptance-run `assoc` result; keep the task 011 result and 0.5.243 lines as history.
 
-## Slice 6: final checks
+## Slice 6: final checks (re-check of the gate commit)
 
+- [ ] `git diff --stat <gate-sha> HEAD -- src test dev` and `git status --short src test
+  dev` are empty. If a check below fails, do not change `src`; record the failure in
+  `implementation.md`, keep the task open and ask the user (plan, Key decisions).
 - [ ] `clojure -M:test -m scry.cli` on the default alias, `:clj-1.12` and `:clj-1.13`:
   zero failures and errors (acceptance 3).
 - [ ] `clj-kondo --lint src test dev`: no errors and no warnings (acceptance 5).

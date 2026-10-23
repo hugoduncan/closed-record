@@ -94,3 +94,67 @@
     gap" and "start point" are stale.
   - Say if the update replaces these sentences with the task 012 acceptance-run result for `assoc` (ratio and pass
     or fail) and the measured cause (method size), or keeps them as history.
+
+## Plan review (ambiguity)
+
+- [x] Ambiguity: state when the `:clj-1.12` and `:clj-1.13` test runs occur, and what follows if a final check fails
+  after the acceptance run.
+  - Slice 2 runs the tests on the default alias only. Slice 4 "Confirm the emitter is final: tests pass" does not
+    name the versions. Slice 6 runs the three versions after the acceptance run.
+  - Scope 5 and the plan Risks say that the emitter does not change after the acceptance run. If a slice 6 check
+    fails on `src` (a test on 1.12 or 1.13, clj-kondo, cljfmt), the fix needs a `src` change that is not permitted.
+  - Say if the three-version tests (and lint and format) run before the acceptance run, as part of the "emitter is
+    final" gate. Say what the task does if a check fails after the run.
+- [x] Ambiguity: state what follows if the acceptance run exits 2 (a fork fails).
+  - Scope 5 and Slice 4 give the rules for a failed row (exit 1) only. With exit 2 the parent prints no table, so
+    there are no ratios for `state.md` and V-11 has no result. "The first full run is the acceptance run. No later
+    run replaces it" then leaves the task with no bench result.
+  - Say if a run that exits 2 counts as the acceptance run, or if the task records it and does one more full run
+    (the emitter does not change).
+  - Say how the run is captured, so that "complete output and exit code" is repeatable: for example the
+    `tee` and `PIPESTATUS` command of `mementum/knowledge/benchmarks.md` (🎯 acceptance run).
+
+## Plan review (inconsistency)
+
+- [x] Inconsistency: the rows of the evidence size table differ between Scope 4 and Slice 3.
+  - Scope 4: "the bytecode size table above for the changed emitter". The Observed facts table has 8 rows
+    (`without`, `assoc`, `getLookupThunk`, `entryAt`, `containsKey`, `valAt(k, nf)`, `cons`, `equiv`).
+  - Slice 3 and the recorded `javap` command (`grep -E " (assoc|without|containsKey|entryAt|valAt)\("`) give 5
+    methods. Acceptance 1 says only "the size table for `P` and `R`".
+  - Choose one row set (for example the 5 rows, with `valAt` as the unchanged reference), and make Scope 4,
+    acceptance 1 and Slice 3 name it.
+- [x] Inconsistency: the `closed-record.impl.jvm` namespace docstring is not in the plan, but Scope 6 changes the
+  same claim in `embodiment.md`.
+  - `src/closed_record/impl/jvm.clj` lines 5–6: "This namespace does not require closed-record.core. It emits the
+    ClosedRecord protocol interface only as a symbol." After Slice 2 it also emits `#'closed-record.core/key-error`.
+  - Scope 6 changes the `embodiment.md` sentence to "the protocol name and the `key-error` var name only as
+    symbols". The docstring then disagrees with it.
+  - The docstring is in `src`, so the change must occur before the acceptance run (Scope 5, plan Risks). Add it to
+    Scope 1 or Scope 6 and to Slice 2.
+
+## Plan review 2 (ambiguity)
+
+- [x] Ambiguity: state how Slice 4 classifies a full run that exits 1 (or with another code) and prints no table.
+  - Plan Key decisions and Slice 4: "Exit 0 or 1: the run printed the table. It is the acceptance run." The
+    exit code does not prove this. `clojure -M -m` exits 1 on an uncaught exception, for example a start-up or
+    dependency failure, or an exception in `report/fork-stats` or `report/table` before `println`
+    (`dev/bench/closed_record/bench/fork.clj` `parent`). Then exit 1 has no table. A kill or an interrupt gives
+    another code (for example 137 or 130), and the plan does not name it.
+  - With such a run, the two rules disagree: "exit 1 → acceptance run" and "no table → no timed result" (the
+    exit 2 rule).
+  - Say which signal classifies the run (for example: the table is in the captured output). Say that a run with
+    no table, with any exit code, follows the exit 2 rule (record it, no `src`, `test` or `dev` change, one more
+    full run, a second such run → ask the user). Align plan Key decisions, Risks and Slice 4.
+
+## Plan review 3 (ambiguity)
+
+- [x] Ambiguity: state how the Slice 3 commands select Clojure 1.11.4 (Scope 4: "Clojure 1.11.4 (the default
+  alias)").
+  - Slice 3 says "using the recorded commands in `implementation.md`". These commands run in a scratch directory
+    outside the repository with `-Sdeps "{:paths [...]}"` only. Thus the CLI uses the Clojure version of the root
+    deps (observed: 1.12.6 with CLI 1.12.6.1673), not the 1.11.4 of the repository `deps.edn`.
+  - The same applies to the `PrintInlining` command. Slice 3 records the `java -version` output, but not the
+    Clojure version.
+  - Say how the commands pin 1.11.4 (for example `:deps {org.clojure/clojure {:mvn/version "1.11.4"}}` in each
+    `-Sdeps`), and that `implementation.md` records the `(clojure-version)` output with the evidence. Align plan
+    Key decisions (size table) and `steps.md` Slice 3.
