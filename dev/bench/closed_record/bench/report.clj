@@ -44,11 +44,19 @@
   "Return an error text when `s` is not a `{:mean :low :high}` map of numbers."
   [s]
   (cond
-    (not (map? s))                        "stats is not a map"
-    (not= #{:mean :low :high} (set (keys s))) "stats keys are not :mean :low :high"
-    (not (every? number? (vals s)))       "stats value is not a number"))
+    (not (map? s))
+    "stats is not a map"
 
-(defn- entry-error [i entry]
+    (not= #{:mean :low :high} (set (keys s)))
+    "stats keys are not :mean :low :high"
+
+    (not (every? number? (vals s)))
+    "stats value is not a number"))
+
+(defn- entry-error
+  "Return an error text when entry `i` is not `[op p r]` with the `i`-th
+  operation of `ops`."
+  [i entry]
   (let [op (nth ops i)]
     (when-let [msg (cond
                      (not (and (vector? entry) (= 3 (count entry))))
@@ -62,25 +70,27 @@
                      (some stats-error (rest entry)))]
       (str "entry " i ": " msg))))
 
+(defn- result-error
+  "Return an error text when `v` is not a vector of `[op p r]` in `ops` order."
+  [v]
+  (if-not (and (vector? v) (= (count ops) (count v)))
+    (str "not a vector of " (count ops) " entries")
+    (some identity (map-indexed entry-error v))))
+
 (defn decode-result
   "Return `{:result v}` when `text` is a valid child result, or `{:error msg}`
   if not. Does not throw."
   [text]
-  (let [v (try {:value (edn/read-string text)}
-               (catch Exception e {:error (str "invalid EDN: " (ex-message e))}))]
-    (if-let [e (:error v)]
-      {:error e}
-      (let [v (:value v)]
-        (if-not (and (vector? v) (= (count ops) (count v)))
-          {:error (str "not a vector of " (count ops) " entries")}
-          (if-let [e (some identity (map-indexed entry-error v))]
-            {:error e}
-            {:result v}))))))
+  (try
+    (let [v (edn/read-string text)]
+      (if-let [e (result-error v)] {:error e} {:result v}))
+    (catch Exception e {:error (str "invalid EDN: " (ex-message e))})))
 
 (defn- mean-interval
   "Return `{:mean :low :high}`: the mean of `xs` and the Student t 95%
-  interval of the mean."
+  interval of the mean. `xs` has `fork-count` values, as `t-975-df4` needs."
   [xs]
+  {:pre [(= fork-count (count xs))]}
   (let [n    (count xs)
         mean (/ (reduce + xs) n)
         s    (Math/sqrt (/ (reduce + (map #(let [d (- % mean)] (* d d)) xs))
@@ -93,7 +103,6 @@
   `p` and `r` are the mean and t interval of the fork means; `n` is the
   number of forks."
   [results]
-  {:pre [(= fork-count (count results))]}
   (vec
    (for [i (range (count ops))]
      (let [entries (map #(nth % i) results)

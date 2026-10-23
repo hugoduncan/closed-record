@@ -3,7 +3,7 @@ title: Benchmarks against defrecord (criterium 0.5, V-11)
 status: active
 category: tooling
 tags: [bench, criterium, jit, blackhole, variance, locale, format, macro, call-site, V-11, S-03]
-related: [dev/bench/closed_record/bench.clj, dev/bench/closed_record/bench/report.clj, test/closed_record/bench_report_test.clj, mementum/knowledge/dev-tooling.md, ramora/defclosedrecord/purpose.md]
+related: [dev/bench/closed_record/bench.clj, dev/bench/closed_record/bench/report.clj, dev/bench/closed_record/bench/fork.clj, test/closed_record/bench_report_test.clj, test/closed_record/bench_fork_test.clj, mementum/knowledge/dev-tooling.md, ramora/defclosedrecord/purpose.md]
 depends-on: [deps.edn]
 ---
 
@@ -20,9 +20,11 @@ criterium 0.5.243-ALPHA, OpenJDK 25, arm64), updated for 0.5.251-ALPHA (2026-10-
 - The reported time includes the barrier, which is not subtracted: about 0.1 ns for a `(do x)` body with one
   reference argument on this machine. The criterium changelog gives 0.2–0.35 ns for each reference argument.
 - ❌ Results from 0.5.243 for cheap operations are not valid. In 0.5.243, `(.a x)` gave 0.03–0.06 ns (lifted out of
-  the loop) and `assoc` gave `P / R` about 1.01. With 0.5.251: `(.a x)` gives 0.30 / 0.36 ns, and `assoc` gives
-  `P / R` 1.44–1.64 (8.6–11.0 ns against 6.0–6.7 ns). It stays about 1.44 when a macro keeps `:a` literal. The
-  `assoc` gap is a real emitter cost that the folding hid.
+  the loop) and `assoc` gave `P / R` about 1.01. With 0.5.251, in one JVM (10 s and 3 s runs, before task 011):
+  `(.a x)` gives 0.30 / 0.36 ns, and `assoc` gives `P / R` 1.44–1.64 (8.6–11.0 ns against 6.0–6.7 ns). It stays
+  about 1.44 when a macro keeps `:a` literal. The `assoc` gap is a real emitter cost that the folding hid.
+- The task 011 acceptance run (means over 5 JVM forks) gives `assoc` `P / R` 1.193 (7.93 ns against 6.65 ns), a
+  fail. This is the current gap, the start point for the `assoc` task.
 - ❌ Still open in 0.5.251: array-typed locals fail (#156), and class symbols and nested forms are hoisted as
   arguments (#157).
 - ❌ `ArithmeticException: Divide by zero` in `criterium.collect/batch-size`, also in 0.5.243. It happens when one
@@ -73,20 +75,26 @@ criterium 0.5.243-ALPHA, OpenJDK 25, arm64), updated for 0.5.251-ALPHA (2026-10-
 - ❌ Results near the 1.05 ratio change from run to run on one machine (`=`: 1.086 fail, then 0.957 pass;
   `assoc`: 1.111 in a 1 s run, 1.011 in a 10 s run). One run does not prove S-03. See "Forks".
 - 🎯 The acceptance run is the first full run of the fixed harness. Do not choose a later run that passes.
-  ❌ Capture the full output of each run to a file (`clojure -M:bench 2>&1 | tee <file>; echo "exit ${PIPESTATUS[0]}"`: `2>&1` captures the
-  child stderr and the fork error; `tee` hides the exit code). In task 010 the acceptance
-  run output was only partly captured, so its table is lost.
+  ❌ Capture the full output of each run to a file (`clojure -M:bench 2>&1 | tee <file>; echo "exit
+  ${PIPESTATUS[0]}"`: `2>&1` captures the child stderr and the fork error; `tee` hides the exit code). In task 010
+  the acceptance run output was only partly captured, so its table is lost.
 
 ## Code structure
 
-- 🔁 Keep the pure layer (`closed-record.bench.report`: stats, encode and decode of the child result,
-  statistics over forks, pass rule, table, exit code) in a namespace with
-  no criterium dependency. The `:test` alias adds `dev/bench` to the paths and tests it with injected
-  `last-bench`-shaped maps. criterium stays out of `:test`. Only `closed-record.bench` has side effects (process start, file I/O,
-  `System/exit`).
+- 🔁 Keep the pure layer (`closed-record.bench.report`: stats, encode and decode of the child result, statistics
+  over forks, pass rule, table, exit code) in a namespace with no criterium dependency. The `:test` alias adds
+  `dev/bench` to the paths and tests it with injected `last-bench`-shaped maps and child results. criterium stays
+  out of `:test`. Only `closed-record.bench` and `closed-record.bench.fork` have side effects (process start, file
+  I/O, `System/exit`).
+- 🔁 The fork layer (`closed-record.bench.fork`: run order `in-order`, `default-child-cmd`, `parent`) has no
+  criterium dependency either. The suite tests `parent` with a `child-cmd` of short shell commands (`sh`, `rm`,
+  `true`, `cp` of a fixture written with `report/encode-result`; no child JVM), also the fork numbers 0 to 4 of a
+  full run; `default-child-cmd` against the state of the test JVM (`java.home`, JVM options, `java.class.path`,
+  entry point); and `in-order` with thunks that record their calls. `closed-record.bench` keeps only the criterium part
+  (`run`, the child) and `-main`.
 - ❌ `format` uses the JVM default locale. With `de_DE`, `1.23` prints as `1,23`, and an interval
   `[1,20, 1,30]` is ambiguous. Format numbers with `(String/format java.util.Locale/ROOT ...)`. To test, run the
   suite with `-Duser.language=de -Duser.country=DE`.
-- To use the `:bench` classpath in a REPL or with `-e`: `:main-opts` in `:bench` runs `-main` (a run of 5 forks, about
-  300 s plus JVM start). Add an
-  alias that clears it: `clojure -Sdeps '{:aliases {:e {:main-opts []}}}' -M:bench:e -e ...`.
+- To use the `:bench` classpath in a REPL or with `-e`: `:main-opts` in `:bench` runs `-main` (a run of 5 forks,
+  about 300 s plus JVM start). Add an alias that clears it:
+  `clojure -Sdeps '{:aliases {:e {:main-opts []}}}' -M:bench:e -e ...`.

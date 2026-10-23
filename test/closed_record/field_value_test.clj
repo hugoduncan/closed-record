@@ -170,4 +170,5 @@
 (deftest field-declaration-test
   (testing "V-11: same instance fields as defrecord, in name, order, type and modifiers"
     (is (= (instance-fields DFL) (instance-fields FL)))
-    (is (= ["a" "n"] (mapv first (take 2 (instance-fields FL)))))))
+    (is (= ["a" "n"] (mapv first (take 2 (instance-fields FL)))))
+    (is (= Long/TYPE (second (second (instance-fields FL)))))))

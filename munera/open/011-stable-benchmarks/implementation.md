@@ -199,3 +199,110 @@ exit 1
   Passes on 1.11, 1.12, 1.13.
 - SCOPE_QUESTION still open: `qualities.md` V-11 row and the `embodiment.md` `bench_report_test.clj` row not changed.
 - Final: scry 91 tests / 345 assertions, 0 failures, on all three aliases; clj-kondo 0/0; cljfmt ok.
+
+## Implementation review (2026-10-23, sha `be92d14`)
+
+- Added 3 steps to be addressed.
+
+- addressed 3 review steps (Long/TYPE assert; assoc cause as probable; re-wrap to 120 columns). Suite 91/346 pass.
+
+## Implementation review 2 (2026-10-23, sha `19e6ed2`)
+
+- Added 2 steps to be addressed.
+
+- addressed 2 review steps (stats-error: no alignment, as entry-error; benchmarks.md: tests also inject child results). Suite 91/346 pass; clj-kondo 0/0; cljfmt ok.
+
+## Implementation review 3 (2026-10-23, sha `e74fd5d`)
+
+- No new steps.
+
+## Test review (2026-10-23, sha `8433f8d`)
+
+- Added 2 steps to be addressed.
+
+- addressed 2 test review steps. Moved `in-order`, `default-child-cmd`, `run-fork` and `parent` to the new
+  namespace `closed-record.bench.fork` (no criterium), so criterium stays out of `:test`. Added
+  `test/closed_record/bench_fork_test.clj`: fork failure causes (exit 3, missing file, empty file, invalid EDN),
+  stop after a fork 1 failure (marker files), 5 good forks with exit 0 and 1, `in-order` for forks 0 to 4. Updated
+  `benchmarks.md` "Code structure", `embodiment.md`, `state.md`. Suite 95/370 pass on 1.11, 1.12, 1.13;
+  clj-kondo 0/0; cljfmt ok.
+
+## Test review 2 (2026-10-23, sha `545bd27`)
+
+- Added 1 step to be addressed.
+
+- addressed 1 test review step (`default-child-cmd-test` in `bench_fork_test.clj`: java binary, input arguments in
+  order, `-cp`, entry point and args, total length). Suite 96/375 pass on 1.11, 1.12, 1.13; clj-kondo 0/0; cljfmt ok.
+
+## Test review 3 (2026-10-23, sha `c2921ac`)
+
+- Added 1 step to be addressed.
+
+- addressed 1 test review step (`parent-good-forks-test`: each fork command appends its fork number to a log file;
+  assert `["0" "1" "2" "3" "4"]`). Suite 96/377 pass; clj-kondo 0/0; cljfmt ok.
+
+## Test review 4 (2026-10-23, sha `c4609bb`)
+
+- No new steps.
+
+## Test review 5 (2026-10-23, sha `c91897f`)
+
+- No new steps.
+
+## Docs review (2026-10-23, sha `68b0ca5`)
+
+- Added 2 steps to be addressed.
+
+## Docs review follow-up
+
+- addressed 2 review steps (fork layer test texts in `embodiment.md`, `benchmarks.md`, `dev-tooling.md`).
+
+## Docs review 2 (2026-10-23, sha `fd8a7eb`)
+
+- Added 2 steps to be addressed.
+
+## Docs review 2 follow-up
+
+- addressed 2 review steps (V-11 in `state.md` "Tests" item; `benchmarks.md` `assoc` values: one JVM vs 5 forks).
+
+## Docs review 3 (2026-10-23, sha `dcfd714`)
+
+- Added 1 step to be addressed.
+
+## Docs review 3 follow-up
+
+- addressed 1 review step (`dev-tooling.md`: version aliases as a rule for the deferred CI, D-16).
+
+## Docs review 4 (2026-10-23, sha `f6de55c`)
+
+- Added 1 step to be addressed.
+
+## Docs review 4 follow-up
+
+- addressed 1 review step (`benchmarks.md` "Code structure": `rm` in the `parent` test commands).
+
+## Docs review 5 (2026-10-23, sha `12f4447`)
+
+- No new steps.
+
+## Code shape review (2026-10-23, sha `7b89056`)
+
+- Added 2 steps to be addressed.
+
+## Code shape review follow-up
+
+- addressed 2 review steps (`report/result-error` extracted, `decode-result` reads and validates; `bench.clj`
+  local `fork` renamed `n`, parsed once in `-main`).
+
+## Code shape review 2 (2026-10-23, sha `04161b3`)
+
+- Added 3 steps to be addressed.
+
+## Code shape review 2 follow-up
+
+- addressed 3 review steps (`mean-interval` has the `fork-count` `:pre`, removed from `fork-stats`; `entry-error`
+  docstring; `rm` in the `bench_fork_test.clj` ns docstring).
+
+## Code shape review 3 (2026-10-23, sha `56942d0`)
+
+- No new steps.

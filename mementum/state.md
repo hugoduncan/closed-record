@@ -19,7 +19,7 @@ Main form: `defclosedrecord`.
 - Tests: `test/closed_record/compiler_rules_test.clj` (K-06..K-08 compiler rules),
   `test/closed_record/defclosedrecord_test.clj` (behaviour, errors, factories),
   `test/closed_record/literal_test.clj` (V-04, V-05: print, read and code constants),
-  `test/closed_record/field_value_test.clj` (V-06, V-08, V-09: field values),
+  `test/closed_record/field_value_test.clj` (V-06, V-08, V-09: field values; V-11: field declarations),
   `test/closed_record/hidden_key_test.clj` (V-14: hidden extra keys of a literal, and their retention),
   `test/closed_record/property_test.clj` (`closed-record.property-test`, V-03: test.check property of random
   `assoc`/`dissoc` sequences; `org.clojure/test.check` 1.1.3 is in the `:test` alias),
@@ -30,11 +30,12 @@ Main form: `defclosedrecord`.
 - Verification plan done: V-01, V-02, V-03, V-04, V-05, V-06, V-07, V-08, V-09, V-10, V-12, V-13, V-14, V-15.
   Not done: V-11. Task 011 acceptance run (5 forks, criterium 0.5.251): `(assoc x :a 2)` fails, `P / R` 1.193
   (7.93 against 6.65 ns). The other five rows pass (`get` 1.049, `(.a x)` 0.995). The field declaration test
-  (`field_value_test.clj`) passes. The `assoc` gap is an emitter cost (`case` against `condp identical?`): a new task.
+  (`field_value_test.clj`) passes. The probable cause of the `assoc` gap is the emitter dispatch (`case` against
+  `condp identical?`); no measurement isolates it. A new task.
 - Tests: `clojure -M:test -m scry.cli`. Other versions: add `:clj-1.12` or `:clj-1.13`.
 - Bench: `clojure -M:bench` (V-11), 5 child JVM forks, about 6 min. It exits 1 if an operation fails, 2 if a fork
-  fails. The pure layer
-  (`closed-record.bench.report`) has tests in the suite (`bench_report_test.clj`).
+  fails. The pure layer (`closed-record.bench.report`) and the fork layer (`closed-record.bench.fork`) have tests
+  in the suite (`bench_report_test.clj`, `bench_fork_test.clj`).
 - REPL: `clojure -M:test:nrepl`. In the REPL: `(require '[scry.core :as scry]) (scry/run)`.
 
 ## Tasks

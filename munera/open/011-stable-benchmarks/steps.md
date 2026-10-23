@@ -107,3 +107,108 @@ run (Slice 5).
 - [x] `clojure -M:test -m scry.cli` on the default alias, `:clj-1.12` and `:clj-1.13`: zero failures and errors.
 - [x] `clj-kondo --lint src test dev`: no errors, no warnings.
 - [x] `cljfmt check src test dev`: passes.
+
+## Implementation review follow-up
+
+- [x] `field_value_test.clj` `field-declaration-test`: also assert that the `n` field of `FL` has the type
+      `Long/TYPE`. Now the test passes also if both emitters drop the `^long` hint, so the typed-field case of
+      Scope 4 is not shown.
+- [x] `mementum/state.md` V-11 item: "The `assoc` gap is an emitter cost (`case` against `condp identical?`)" states
+      the cause as a fact. No measurement isolates the dispatch. Write it as the probable cause, for the new task.
+- [x] Re-wrap the edited text to the 120-column width, with even line breaks: `mementum/knowledge/benchmarks.md`
+      ("Known limits" capture item, "Code structure" pure-layer item and `:main-opts` item) and the
+      `mementum/state.md` "Bench" item.
+
+## Implementation review 2 follow-up
+
+- [x] `report.clj` `stats-error`: the `cond` result texts are aligned at two different columns. Align all three
+      clauses, or use no alignment, as in `entry-error`.
+- [x] `mementum/knowledge/benchmarks.md` "Code structure": "tests it with injected `last-bench`-shaped maps" is now
+      incomplete. The tests also inject child results (as the `bench_report_test.clj` ns docstring says). Add them.
+
+## Test review follow-up
+
+- [x] No suite test covers the fork failure rules of Scope 1 and the parent exit codes of Scope 5. Slice 3 checked
+      them by hand only. Add suite tests for `closed-record.bench/parent` with injected `child-cmd` commands
+      (`sh`, `true`, `cp` of a fixture written with `report/encode-result`; no child JVM):
+  - each cause (exit value not 0, missing result file, decode error) prints `fork <n> failed: <cause>` to stderr,
+    prints no table and returns 2;
+  - a failure at fork 1 or later starts no more forks (for example, the command of each fork writes a marker file);
+  - 5 good forks print the table with `Forks` 5 and return `report/exit-code` (0 and 1).
+  - The `:test` alias cannot load `closed-record.bench` now, because it requires criterium. Add criterium to
+    `:test`, or move `parent` and `run-fork` to a namespace with no criterium dependency (then update the
+    `benchmarks.md` "Code structure" and `embodiment.md` `dev/bench/` texts).
+- [x] No suite test covers the run sequence of Scope 1 (even forks: `P` then `R`; odd forks: `R` then `P`). Add a
+      test of `in-order` with thunks that record their call order in an atom (state, not stubs): forks 0 to 4,
+      each thunk called once, and the return value is `[p r]` for both orders.
+
+## Test review 2 follow-up
+
+- [x] No suite test covers the child command of Scope 1 (the child has the classpath and the JVM options of the
+      parent; its entry point is `closed-record.bench/-main` with the fork number and the result file). Add a
+      test of `fork/default-child-cmd` in `bench_fork_test.clj`, against the state of the test JVM: the first
+      element is `bin/java` under `java.home`; it contains all `RuntimeMXBean/getInputArguments` in order; it has
+      `-cp` with `java.class.path`; it ends with `clojure.main -m closed-record.bench <fork> <file>`.
+
+## Test review 3 follow-up
+
+- [x] No suite test shows the fork numbering of Scope 1 (forks 0 to 4, in start order) for a full run.
+      `parent-stops-after-failure-test` shows only forks 0 and 1. In `parent-good-forks-test`, let the command
+      of each fork record its fork number (for example, append it to a file with `sh -c`), and assert
+      `[0 1 2 3 4]`.
+
+## Docs review follow-up
+
+- [x] The texts on the fork layer tests do not include the `default-child-cmd` test (test review 2) and the fork
+      numbering check (test review 3). Add the child command test to:
+  - `ramora/defclosedrecord/embodiment.md` `bench_fork_test.clj` row ("fork failure causes and parent exit codes
+    ..., and the run order of each fork");
+  - `mementum/knowledge/benchmarks.md` "Code structure" fork layer item ("The suite tests `parent` ... and
+    `in-order` ...").
+- [x] The texts on the `:test` path `dev/bench` name only the pure layer tests. The path is now also for the fork
+      layer tests (`bench_fork_test.clj`). Update `ramora/defclosedrecord/embodiment.md` `deps.edn` row ("the path
+      `dev/bench` for the bench report tests") and `mementum/knowledge/dev-tooling.md` (":test has the extra path
+      `dev/bench`, so the suite tests the bench pure layer").
+
+## Docs review 2 follow-up
+
+- [x] `mementum/state.md` "Tests" item: `field_value_test.clj` is listed as "(V-06, V-08, V-09: field values)". It
+      now also has the V-11 field declaration test (its ns docstring names V-11). Add V-11 to the item.
+- [x] `mementum/knowledge/benchmarks.md` "criterium 0.5.251-ALPHA" section: "`assoc` gives `P / R` 1.44–1.64" is
+      from one JVM (10 s and 3 s runs, before task 011). The acceptance run over 5 forks gave 1.193 (7.93 against
+      6.65 ns). Say that the 1.44–1.64 values are from one JVM, and add the 5 fork result, so that the `assoc` task
+      starts from the current gap.
+
+## Docs review 3 follow-up
+
+- [x] `mementum/knowledge/dev-tooling.md` "Alias composition": "The CI matrix (D-16) must use these aliases." D-16
+      Scope now says that CI is deferred and all runs are manual (this task). D-16 no longer names a CI matrix.
+      Write it as a rule for the deferred CI, for example: "When CI is added (deferred, D-16), it must use these
+      aliases."
+
+## Docs review 4 follow-up
+
+- [x] `mementum/knowledge/benchmarks.md` "Code structure" fork layer item lists the `parent` test commands as
+      "`sh`, `true`, `cp` of a fixture". The "Forks" section of the same page lists `sh` / `rm` / `true` / `cp`,
+      and `bench_fork_test.clj` uses `rm` for the missing result file cause. Add `rm` to the "Code structure" list.
+
+## Code shape review follow-up
+
+- [x] `report.clj` `decode-result`: the `{:value v}` / `{:error e}` wrapper and the nested `if-let` / `if-not` /
+      `if-let` mix the read and the validation. Extract a `result-error` function (`v` → error text or `nil`: the
+      "not a vector of 6 entries" check, then `(some identity (map-indexed entry-error v))`), in the same idiom as
+      `entry-error` and `stats-error`. Then `decode-result` only reads the EDN (catch → `invalid EDN: ...`) and
+      returns `(if-let [e (result-error v)] {:error e} {:result v})`. The `encode-decode-test` texts do not change.
+- [x] `bench.clj`: the local `fork` in `run` and `child` has the name of the `fork` ns alias (`fork/in-order fork
+      ...`), and it is a string in `child` but a number in `run`. Rename the local (for example `n`, as in
+      `bench_fork_test.clj` and `fork/parent`'s commands), and parse it in one place.
+
+## Code shape review 2 follow-up
+
+- [x] `report.clj` `mean-interval`: it takes `n` from `(count xs)`, but `t-975-df4` is valid only for
+      `fork-count` values. Only the caller (`fork-stats` `:pre`) enforces this. Move the precondition into
+      `mean-interval` (`{:pre [(= fork-count (count xs))]}`), so the invariant is local to the code that uses `t`.
+- [x] `report.clj` `entry-error`: it has no docstring. Its siblings `stats-error` and `result-error` have one. Add
+      one in the same form ("Return an error text when entry `i` is not ...").
+- [x] `bench_fork_test.clj` ns docstring: it lists the `parent` commands as "`sh`, `true`, `cp` of a fixture". The
+      tests also use `rm` (missing result file cause). Add `rm`, as in `benchmarks.md` "Code structure".

@@ -17,9 +17,10 @@ This page gives the rules that the commands do not show.
 - `:bench` has `:main-opts` (`clojure -M:bench` runs the bench). It is a standalone alias, not for composition.
   To use its classpath with `-e` or a REPL, clear `:main-opts` with an extra alias. See
   `mementum/knowledge/benchmarks.md`.
-- `:test` has the extra path `dev/bench`, so the suite tests the bench pure layer. criterium is not in `:test`.
+- `:test` has the extra path `dev/bench`, so the suite tests the bench pure layer and fork layer. criterium is not
+  in `:test`.
 - 🎯 Version aliases (`:clj-1.12`, `:clj-1.13`) use `:override-deps`. They compose with `:test` and `:nrepl`.
-  The CI matrix (D-16) must use these aliases. Do not add a version parameter.
+  When CI is added (deferred, D-16), it must use these aliases. Do not add a version parameter.
 - Pin all versions. Do not use `RELEASE`.
 - A top-level `org.clojure/clojure` has priority over the transitive Clojure of scry. Check the version with
   `clojure -M:<aliases> -e '(print (clojure-version))'`.
