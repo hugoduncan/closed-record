@@ -312,3 +312,68 @@ for t in p r; do clojure -Sdeps "{:paths [\"$REPO\" \"src\"]}" -J-XX:+UnlockDiag
   (Slice 1). `design.md`, `plan.md` and `steps.md` need no edit before it.
 - Keep: no `src`, `test` or `dev` change after the gate commit. Slice 3 commands come from `plan.md`
   "Measurement (Slice 3)", not from the older "Measurement commands" section above.
+
+## Slices 1–3 done (2026-10-20)
+
+- Gate commit: `96f229e` (src + test). Tests 97/0/0 on default, `:clj-1.12`, `:clj-1.13`; clj-kondo 0/0; cljfmt ok.
+- `key-error` is in `core.cljc` after `class-name` (`case` on `t` for the message). The emitter refers to it by the
+  private def `key-error` in `jvm.clj`, value `'(var closed-record.core/key-error)`, spliced as `(throw (~key-error ...))`.
+- `key-case` stays (`valAt`, `getLookupThunk`); `closed-throw` stays (`empty`, `map->Name`).
+- Tests: new `test/closed_record/key_error_test.clj` (message, `ex-data` for both `t`; generated `assoc`/`dissoc` throw
+  the same message). No other test changed.
+
+### Evidence (Clojure 1.11.4 printed by each run; plan "Measurement (Slice 3)" commands, unchanged)
+
+`java -version`: OpenJDK 25.0.2 (build 25.0.2+10-69), 64-Bit Server VM, mixed mode.
+
+| Method | `P` bytes | `R` bytes |
+|---|---|---|
+| `without` | 89 | 149 |
+| `assoc` | 217 | 228 |
+| `getLookupThunk` | 876 | 876 |
+| `entryAt` | 40 | 40 |
+| `containsKey` | 52 | 52 |
+| `valAt(k, nf)` | 838 | 846 |
+| `cons` | 275 | 21 |
+| `equiv` | 182 | 221 |
+
+Acceptance 1 holds (all four < 325). `PrintInlining` (three identical C2 lines each):
+
+```
+@ 51   user012.n.P::assoc (217 bytes)   inline (hot)
+@ 51   user012.n.R::assoc (228 bytes)   inline (hot)
+```
+
+- Next: Slice 4 (gate check vs `96f229e`, then the one acceptance bench run), Slice 5 docs, Slice 6 re-check.
+
+## Slice 4: acceptance run (2026-10-20)
+
+Gate check vs `96f229e`: `git diff --stat` and `git status --short` on `src test dev` empty.
+Command: `clojure -M:bench 2>&1 | tee /tmp/012-bench-1.txt; echo "exit ${PIPESTATUS[0]}"`. Table check: 7 lines. This is the acceptance run.
+
+```
+CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole = true
+CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole = true
+CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole = true
+CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole = true
+CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole = true
+CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole = true
+| Operation      | P mean [low, high] ns | R mean [low, high] ns | P / R | Result | Forks |
+|----------------|-----------------------|-----------------------|-------|--------|-------|
+| (:a x)         | 0.97 [0.93, 1.00]     | 0.96 [0.93, 0.99]     | 1.006 | pass   | 5     |
+| (get x :a)     | 4.00 [3.88, 4.11]     | 4.01 [3.78, 4.25]     | 0.996 | pass   | 5     |
+| (.a x)         | 0.34 [0.32, 0.36]     | 0.35 [0.28, 0.41]     | 0.975 | pass   | 5     |
+| (assoc x :a 2) | 6.67 [6.15, 7.18]     | 6.67 [6.46, 6.88]     | 1.000 | pass   | 5     |
+| (hash x)       | 4.40 [4.22, 4.58]     | 4.39 [4.19, 4.58]     | 1.004 | pass   | 5     |
+| (= x y)        | 3.31 [3.16, 3.45]     | 3.66 [3.02, 4.31]     | 0.902 | pass   | 5     |
+```
+
+exit 0. All six rows pass (`assoc` P / R 1.000). V-11 done if `field_value_test.clj` passes (Slice 6 suite run).
+
+## Slices 5–6 done (2026-10-20)
+
+- V-11 done: all six rows pass and `field_value_test.clj` passes (default-alias suite, 97/0/0). `state.md` now lists
+  V-01 to V-15 as done.
+- Scope 6 documents updated. `benchmarks.md` "Known limits" has a 💡 entry on method size and inlining (how to find it).
+- Slice 6: no `src`/`test`/`dev` diff vs gate `96f229e`; tests 97/0/0 on default, `:clj-1.12`, `:clj-1.13`;
+  clj-kondo 0/0; cljfmt ok. Acceptance 1–6 met.

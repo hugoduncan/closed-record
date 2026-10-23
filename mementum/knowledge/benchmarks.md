@@ -22,9 +22,9 @@ criterium 0.5.243-ALPHA, OpenJDK 25, arm64), updated for 0.5.251-ALPHA (2026-10-
 - ❌ Results from 0.5.243 for cheap operations are not valid. In 0.5.243, `(.a x)` gave 0.03–0.06 ns (lifted out of
   the loop) and `assoc` gave `P / R` about 1.01. With 0.5.251, in one JVM (10 s and 3 s runs, before task 011):
   `(.a x)` gives 0.30 / 0.36 ns, and `assoc` gives `P / R` 1.44–1.64 (8.6–11.0 ns against 6.0–6.7 ns). It stays
-  about 1.44 when a macro keeps `:a` literal. The `assoc` gap is a real emitter cost that the folding hid.
+  about 1.44 when a macro keeps `:a` literal. The `assoc` gap is a real emitter cost that the folding hid. Measured cause (task 012): the method size stopped C2 inlining (`P::assoc` 995 bytes, above `FreqInlineSize` 325).
 - The task 011 acceptance run (means over 5 JVM forks) gives `assoc` `P / R` 1.193 (7.93 ns against 6.65 ns), a
-  fail. This is the current gap, the start point for the `assoc` task.
+  fail. The task 012 acceptance run (after D-21, `P::assoc` 217 bytes) gives `assoc` `P / R` 1.000, a pass.
 - ❌ Still open in 0.5.251: array-typed locals fail (#156), and class symbols and nested forms are hoisted as
   arguments (#157).
 - ❌ `ArithmeticException: Divide by zero` in `criterium.collect/batch-size`, also in 0.5.243. It happens when one
@@ -72,6 +72,12 @@ criterium 0.5.243-ALPHA, OpenJDK 25, arm64), updated for 0.5.251-ALPHA (2026-10-
   between JVMs is large, as expected.
 
 ## Known limits
+
+- 💡 Method size is a gap cause. C2 does not inline a hot method above `FreqInlineSize` (325 bytes code length).
+  A `case` on keywords is a `tableswitch` over the hash range (`:a :b :c`: 768 bytes). Find it: AOT-compile a scratch
+  ns, `javap -c` (code length = last offset + 1), and `-XX:CompileCommand=PrintInlining,<loop-class>::invokeStatic`
+  on a loop of `(.assoc ^clojure.lang.IPersistentMap r :a (num i))` ("hot method too big" vs "inline (hot)"). A loop
+  of `(assoc x ...)` shows only "virtual call". Commands: `munera/*/012-inlinable-methods/plan.md`.
 
 - ✅ (0.5.251) `(.a ^P x)` is now measured: the opaque barrier stops the lift. With 0.5.243 it gave about
   0.06 ns, because the JIT lifted the read out of the loop.

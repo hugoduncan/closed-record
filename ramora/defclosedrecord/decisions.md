@@ -13,7 +13,7 @@ Commitment levels:
 ## Index
 
 - [Type structure](decisions/type-structure.md):
-  D-01 type base, D-06 record identity, D-07 equality and hash, D-10 keyword lookup, D-15 syntax.
+  D-01 type base, D-06 record identity, D-07 equality and hash, D-10 keyword lookup, D-15 syntax, D-21 method size.
 - [Closed key set](decisions/closed-key-set.md):
   D-02 closed key set, D-04 `dissoc` of an undeclared key, D-05 `empty`, D-08 `map->Name`,
   D-09 reader literals and printing, D-19 missing primitive field.

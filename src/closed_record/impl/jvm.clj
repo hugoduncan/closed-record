@@ -3,10 +3,15 @@
   factories. Internal: the function name and argument shape can change.
 
   This namespace does not require closed-record.core. It emits the
-  ClosedRecord protocol interface only as a symbol.")
+  ClosedRecord protocol interface name and the key-error var name only as
+  symbols.")
 
 (def ^:private protocol-interface
   'closed_record.core.ClosedRecord)
+
+(def ^:private key-error
+  "The private throw helper of closed-record.core, as a var form (D-21)."
+  '(var closed-record.core/key-error))
 
 (def hidden-fields
   "The hidden fields of a closed record type, with their deftype* metadata,
@@ -169,32 +174,29 @@
                                       `(= ~fld (. ~hinted-target ~(symbol (str "-" fld)))))
                                     fields)))))))
      `(~'containsKey [~this ~k]
-                     ~(if (seq kws) `(case ~k (~@kws) true false) false))
+                     (not (identical? ~this (.valAt ~this ~k ~this))))
      `(~'entryAt [~this ~k]
-                 ~(key-case k kws fields
-                            (fn [kw fld] `(clojure.lang.MapEntry/create ~kw ~fld))
-                            nil))
+                 (let [~v (.valAt ~this ~k ~this)]
+                   (when-not (identical? ~this ~v)
+                     (clojure.lang.MapEntry/create ~k ~v))))
      `(~'seq [~this]
              (seq [~@(map (fn [kw fld] `(clojure.lang.MapEntry/create ~kw ~fld))
                           kws fields)]))
      `(~'iterator [~this]
                   (clojure.lang.RecordIterator. ~this ~kws (clojure.lang.RT/iter nil)))
      `(~'assoc [~this ~k ~v]
-               ~(key-case k kws fields
-                          (fn [_ fld] `(new ~tname ~@(replace {fld v} fields) ~'__meta ~'__extmap))
-                          (closed-throw ["Undeclared key " k " for closed record " cname-str]
-                                        `{:type :closed-record/undeclared-key
-                                          :record (class ~this)
-                                          :key ~k})))
+               (condp identical? ~k
+                 ~@(mapcat (fn [kw fld]
+                             [kw `(new ~tname ~@(replace {fld v} fields)
+                                       ~'__meta ~'__extmap)])
+                           kws fields)
+                 (throw (~key-error :closed-record/undeclared-key
+                                    (class ~this) ~k))))
      `(~'without [~this ~k]
                  ~(if (seq kws)
-                    `(case ~k
-                       (~@kws)
-                       ~(closed-throw ["Cannot dissoc declared key " k
-                                       " from closed record " cname-str]
-                                      `{:type :closed-record/declared-key-dissoc
-                                        :record (class ~this)
-                                        :key ~k})
+                    `(if (or ~@(map (fn [kw] `(identical? ~k ~kw)) kws))
+                       (throw (~key-error :closed-record/declared-key-dissoc
+                                          (class ~this) ~k))
                        ~this)
                     this))
      ;; java.util.Map

@@ -27,11 +27,11 @@ Main form: `defclosedrecord`.
   compares a closed record with a `defrecord` after random permitted steps),
   `test/closed_record/malli_test.clj` (`closed-record.malli-test`, V-07: malli map schemas and transformers;
   `metosin/malli` 0.20.3 is in the `:test` alias).
-- Verification plan done: V-01, V-02, V-03, V-04, V-05, V-06, V-07, V-08, V-09, V-10, V-12, V-13, V-14, V-15.
-  Not done: V-11. Task 011 acceptance run (5 forks, criterium 0.5.251): `(assoc x :a 2)` fails, `P / R` 1.193
-  (7.93 against 6.65 ns). The other five rows pass (`get` 1.049, `(.a x)` 0.995). The field declaration test
-  (`field_value_test.clj`) passes. The probable cause of the `assoc` gap is the emitter dispatch (`case` against
-  `condp identical?`); no measurement isolates it. A new task.
+- Verification plan done: V-01 to V-15 (all). V-11: task 012 acceptance run (5 forks, criterium 0.5.251), all six
+  rows pass (`assoc` `P / R` 1.000, `get` 0.996, `=` 0.902); the field declaration test (`field_value_test.clj`)
+  passes. Measured cause of the earlier `assoc` gap (task 011: 1.193): the method size stopped C2 inlining
+  (`P::assoc` 995 bytes, `FreqInlineSize` 325). The `case` `tableswitch` and the inline throw form made the size.
+  D-21 fixed it (`P::assoc` 217 bytes, inlined).
 - Tests: `clojure -M:test -m scry.cli`. Other versions: add `:clj-1.12` or `:clj-1.13`.
 - Bench: `clojure -M:bench` (V-11), 5 child JVM forks, about 6 min. It exits 1 if an operation fails, 2 if a fork
   fails. The pure layer (`closed-record.bench.report`) and the fork layer (`closed-record.bench.fork`) have tests

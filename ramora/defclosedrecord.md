@@ -10,16 +10,17 @@ Purpose + Context → Architecture → Embodiment → Observed qualities
 Read this file first. Then read only the documents that you need.
 
 - [Purpose](defclosedrecord/purpose.md): mission, outcomes, capabilities, scope, behaviour, value, success criteria.
-- [Context](defclosedrecord/context.md): users, interacting systems, constraints K-01 to K-08, evidence E-01 to E-07.
+- [Context](defclosedrecord/context.md): users, interacting systems, constraints K-01 to K-10, evidence E-01 to E-07.
 - [Principles](defclosedrecord/principles.md): principles that the decisions apply.
-- [Decisions](defclosedrecord/decisions.md): index of architectural decisions D-01 to D-20.
+- [Decisions](defclosedrecord/decisions.md): index of architectural decisions D-01 to D-21.
 - [Embodiment](defclosedrecord/embodiment.md): artifacts, boundaries, generated type, methods, state, allocation.
 - [Invariants](defclosedrecord/invariants.md): invariants I-01 to I-09 as assertion records, with enforcement and verification.
 - [Qualities](defclosedrecord/qualities.md): quality targets, trade-offs, verification plan V-01 to V-15, risks.
 
 Assertions marked `observed` come from tests on Clojure 1.11.4 and 1.13.0-alpha6 (2026-10-19), and from the
 1.13.0-alpha6 source. The source locations are in [context evidence](defclosedrecord/context.md#evidence).
-V-13 keeps these observations as tests.
+V-13 keeps these observations as tests. K-09 and K-10 come from the task 012 measurements (Clojure 1.11.4,
+OpenJDK 25.0.2), not from tests. V-13 does not keep them (no size test in the suite). V-11 is their signal (R-05).
 
 ## Summary
 

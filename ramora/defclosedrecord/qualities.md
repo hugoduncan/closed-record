@@ -23,6 +23,9 @@
   equal plain map.
 - Missing primitive field (D-19): parity, but the error is a host exception with no data.
 - No disable switch (D-12): the same behaviour everywhere, but a small cost in error paths only.
+- Out-of-line throw helper (D-21): the generated methods stay small enough for C2 inlining (K-09), but the generated
+  code depends on a private var of `core`, and AOT-compiled user classes refer to it by name. Mitigation: the D-21
+  commitment (a new helper name after the first release).
 - Closed maps in an open-map ecosystem: errors are found early, but some generic map code throws.
   This is intended. The docs must name the common cases: malli default-value transformers and code that adds keys such as `:db/id`.
 
@@ -52,3 +55,4 @@
 - R-02 babashka cannot implement the necessary interfaces. Likelihood: unknown. A spike is necessary before work on that host.
 - R-03 Users expect `dissoc` to make a plain map, as with `defrecord`. Mitigation: a clear error message, and the docs.
 - R-04 A literal with extra keys loses them when it is printed or made into a constant. After that, `check` passes. Mitigation: call `check` where literals are read, and the docs.
+- R-05 A future JDK changes the C2 inline limits (K-09), or a JVM uses a different JIT compiler. Likelihood: low. Effect: a generated method is not inlined, and a gap to `defrecord` can return. Signal: V-11.

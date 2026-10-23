@@ -78,6 +78,12 @@
   (observed, E-02, E-04).
 - K-08 The type must not implement `clojure.lang.IType`. Otherwise `Compiler.emitValue` builds constants through the
   `IType` path, not `create` (observed, E-03). `defrecord` does not implement `IType` (observed, 1.11.4 and 1.13.0-alpha6).
+- K-09 C2 inline limit (observed, OpenJDK 25.0.2, `PrintInlining`). C2 does not inline a hot method with a code length
+  above `FreqInlineSize` (default 325 bytes). It reports "hot method too big".
+- K-10 Keyword `case` size (observed, Clojure 1.11.4; `prep-hashes` in `core.clj`). A `case` on keywords dispatches on
+  `Util.hash` with a `tableswitch` over the range of the hashes (after a shift and a mask if the range is 8192 or
+  more; a `lookupswitch` if no mask makes the hashes distinct). Its size depends on the hashes, not only on the key
+  count (`:a :b :c`: 192 entries).
 
 ## Evidence
 

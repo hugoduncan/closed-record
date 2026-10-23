@@ -4,7 +4,7 @@
 
 | Artifact | Responsibility |
 |---|---|
-| `src/closed_record/core.cljc` | Public API: the `defclosedrecord` macro and `check`. Internal protocol `ClosedRecord` (D-17). |
+| `src/closed_record/core.cljc` | Public API: the `defclosedrecord` macro and `check`. Internal protocol `ClosedRecord` (D-17). Internal run-time helper `key-error`, which the generated code calls (D-21). |
 | `src/closed_record/impl/jvm.clj` | JVM emitter. Builds the `deftype*` form and the factories. |
 | `test/closed_record/*_test.clj` | Behaviour, differential, equality, malli, nil, literal and constant tests. |
 | `test/closed_record/compiler_rules_test.clj` | Tests that fix K-06 to K-08 (V-13). |
@@ -22,7 +22,7 @@
 | Side | Contents |
 |---|---|
 | Public | `defclosedrecord`, `check`, generated `->Name` and `map->Name`, the `ex-data` of D-03. |
-| Internal | `closed-record.impl.*`, the `ClosedRecord` protocol, the fields `__meta __extmap __hash __hasheq`. |
+| Internal | `closed-record.impl.*`, the `ClosedRecord` protocol, `closed-record.core/key-error`, the fields `__meta __extmap __hash __hasheq`. |
 
 Permitted dependencies:
 
@@ -30,11 +30,12 @@ Permitted dependencies:
 - `core` → `impl.*`. The macro calls the emitter at expansion time.
 - Generated code → `closed-record.core/ClosedRecord`, `clojure.lang`, public `clojure.core` vars and JDK classes
   (`java.lang`, `java.util`, `java.io`).
+- Generated code → the private helper `closed-record.core/key-error` (through its var, D-21).
 
 Forbidden dependencies:
 
 - User code → `impl.*`. User code must not extend `ClosedRecord`.
-- `impl.*` → `core`. An emitter does not require `core`. It emits the protocol name only as a symbol.
+- `impl.*` → `core`. An emitter does not require `core`. It emits the protocol name and the `key-error` var name only as symbols.
 - Generated code → `impl.*`. The emitter runs only at expansion time.
 - Generated code, `core` or `impl.*` → private `clojure.core` vars. A private var can change in each Clojure version,
   and V-13 does not find the change.
@@ -81,15 +82,15 @@ The expansion has the shape of the `defrecord` expansion: `declare` of `->Name` 
 | `valAt k nf` | `case` on the declared keywords. Default → `nf`. |
 | `valAt k` | `valAt k nil`. |
 | `getLookupThunk k` | A thunk for each declared field. The thunk checks the class identity. Undeclared key → nil. |
-| `assoc k v` | Declared key → new instance. Other key → throw `undeclared-key`. |
-| `without k` | Declared key → throw `declared-key-dissoc`. Other key → `this`. |
+| `assoc k v` | `condp identical?` on the declared keys. Declared key → new instance. Other key → throw the `undeclared-key` error of `key-error` (D-21). |
+| `without k` | `identical?` tests on the declared keys. Declared key → throw the `declared-key-dissoc` error of `key-error` (D-21). Other key → `this`. |
 | `cons e` | Map entry, vector pair or map → `assoc` for each entry. |
 | `empty` | Throw `empty`. |
 | `count` | Number of declared fields. A constant. |
 | `isEmpty` | `count` is 0. |
 | `containsValue` | A declared field has the value. |
 | `seq`, `iterator` | Declared fields only, in declaration order. |
-| `containsKey`, `entryAt` | Declared keys only. |
+| `containsKey`, `entryAt` | Declared keys only. They call `valAt` with `this` as the not-found value (D-21). |
 | `java.util.Map` views | `size`, `get`, `containsKey`, `keySet`, `values`, `entrySet`: declared entries only (I-09). |
 | `equiv` | Same class and equal declared fields (D-07). |
 | `equals` | `APersistentMap/mapEquals` (D-07). |

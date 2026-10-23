@@ -7,7 +7,7 @@
 - Rejected: a separate checked `assoc` function. Users can still call `clojure.core/assoc`, so the key set stays open.
 - Rationale: these are the only paths that can change the key set. `conj`, `merge`, `into`, `update` and `assoc-in` all use them.
 - Assumptions: `clojure.core` map functions do not change a record by another path.
-- Qualities: + correctness. The check costs nothing on the declared-key path, because only the `case` default branch throws.
+- Qualities: + correctness. The check costs nothing on a permitted path: the key dispatch that selects the result is the check (on the JVM, the `identical?` tests of `defrecord` `assoc`, D-21), and only the rejected path calls the throw helper.
 - Scope: all hosts.
 - Commitment: high.
 
