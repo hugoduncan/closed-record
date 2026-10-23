@@ -24,3 +24,21 @@
 - Verified license source: `~/projects/hugoduncan/scry/scry-master/LICENSE`
   contains EPL-2.0 text. Use this file, not the reference build's POM metadata,
   as the source for the license file.
+
+## 2026-10-23 — Plan ambiguity review
+
+- No new ambiguity review feedback on `plan.md` and `steps.md`.
+
+## 2026-10-23 — Plan inconsistency review
+
+- No new inconsistency review feedback across the task files.
+
+## 2026-10-23 — Plan review handoff
+
+- Checked the pinned scry `0.1.61` JAR, not only the reference checkout:
+  `scry/cli.clj` supports `--dir`; `scry/core.clj` documents default discovery
+  under `test`. The planned build-test directory needs no runner upgrade.
+- For consumer error assertions, use the `:type` values in
+  `src/closed_record/core.cljc` and the assoc/dissoc checks in
+  `test/closed_record/defclosedrecord_test.clj`; both rejected operations
+  throw `ExceptionInfo`, so the class alone does not distinguish them.
