@@ -28,7 +28,7 @@ Task 010 made `clojure -M:bench`, but one run does not give a reliable result:
   code). Tests of the pure layer: `test/closed_record/bench_report_test.clj`.
 - Architecture: S-03 in `ramora/defclosedrecord/purpose.md`, V-11 in `qualities.md`, D-16 in
   `decisions/verification.md`, D-01 (the `defrecord` field layout).
-- criterium 0.5.243-ALPHA has no fork support.
+- criterium 0.5.251-ALPHA (`org.hugoduncan/criterium`) has no fork support.
 
 ### Observed facts (2026-10-20, Clojure 1.11.4, OpenJDK 25.0.2, arm64, commit `80492fb`)
 

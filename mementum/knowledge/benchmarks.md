@@ -8,7 +8,26 @@ depends-on: [deps.edn]
 ---
 
 💡 Rules for the bench (`clojure -M:bench`) and for a change to it. Observed in task 010 (Clojure 1.11.4,
-criterium 0.5.243-ALPHA, OpenJDK 25, arm64). The pass rule (S-03) is in `purpose.md`.
+criterium 0.5.243-ALPHA, OpenJDK 25, arm64), updated for 0.5.251-ALPHA (2026-10-23). The pass rule (S-03) is in
+`purpose.md`.
+
+## criterium 0.5.251-ALPHA (2026-10-23)
+
+- 🔄 Coordinate: `org.hugoduncan/criterium` (group id changed in 0.5.245). `criterium/criterium` stops at 0.5.243.
+- 🔄 Opaque input barrier (criterium #155, PR #160): `measured/expr` stores each argument in an atomic cell and reads
+  it with `getOpaque` on each iteration. The JIT no longer lifts or folds the expression. Literal arguments
+  (`:a`, `2`) also go through the barrier (`symbolic`: `(let [arg1 x arg2 :a arg3 2] ...)`).
+- The reported time includes the barrier, which is not subtracted: about 0.1 ns for a `(do x)` body with one
+  reference argument on this machine. The criterium changelog gives 0.2–0.35 ns for each reference argument.
+- ❌ Results from 0.5.243 for cheap operations are not valid. In 0.5.243, `(.a x)` gave 0.03–0.06 ns (lifted out of
+  the loop) and `assoc` gave `P / R` about 1.01. With 0.5.251: `(.a x)` gives 0.30 / 0.36 ns, and `assoc` gives
+  `P / R` 1.44–1.64 (8.6–11.0 ns against 6.0–6.7 ns). It stays about 1.44 when a macro keeps `:a` literal. The
+  `assoc` gap is a real emitter cost that the folding hid.
+- ❌ Still open in 0.5.251: array-typed locals fail (#156), and class symbols and nested forms are hoisted as
+  arguments (#157).
+- ❌ `ArithmeticException: Divide by zero` in `criterium.collect/batch-size`, also in 0.5.243. It happens when one
+  `bench` call site runs a second time in a JVM: the single-eval estimate `t0` is 0 ns. The bench runs each call
+  site once, so it does not trigger this.
 
 ## Measurement
 
@@ -28,8 +47,8 @@ criterium 0.5.243-ALPHA, OpenJDK 25, arm64). The pass rule (S-03) is in `purpose
 
 ## Known limits
 
-- ❌ `(.a ^P x)` gives about 0.06 ns: the JIT hoists the field read. The row passes with no signal. A real field
-  measurement needs a body that the JIT cannot hoist. Not solved yet.
+- ✅ (0.5.251) `(.a ^P x)` is now measured: the opaque barrier stops the lift. With 0.5.243 it gave about
+  0.06 ns, because the JIT lifted the read out of the loop.
 - ❌ Results near the 1.05 ratio change from run to run on one machine (`=`: 1.086 fail, then 0.957 pass;
   `assoc`: 1.111 in a 1 s run, 1.011 in a 10 s run). One run does not prove S-03. A stable bench needs more
   (for example several JVM forks).
