@@ -84,3 +84,77 @@
     - The `bench_report_test.clj` row (`ramora/defclosedrecord/embodiment.md`) must use the same pure-layer list
       as Acceptance 2.
     - Add both rows to Acceptance 6.
+
+## Plan review (2026-10-23, sha `0da1f23`)
+
+- Ambiguity review added 5 new design steps.
+  - Classified as actionable: the Slice 3 notice check is a full 300 s run, so it can be "the first full run of
+    the finished harness" (Scope 6) before Slice 5. The order of these runs decides which output goes to
+    `implementation.md`.
+  - Not filed (an option for the plan, not an ambiguity): the plan doubles the call sites to alternate the order
+    (24 `bench-op` sites, 12 run in each JVM). One thunk for each of the 12 call sites, called in the fork order,
+    also runs each call site once, with no macro risk.
+- Inconsistency review added 2 new design steps.
+  - Correction: the ambiguity item on the Slice 2 command said `:e` is a user alias. It is defined inline with
+    `-Sdeps` (`benchmarks.md`, Code structure). The design-steps item is corrected.
+  - The thunk option above wraps a whole `bench-op` form (its literal expression stays at its own call site). It
+    does not conflict with the `benchmarks.md` rule "the bench helper is a macro, not a function that takes a
+    thunk", which is about the measured expression.
+  - For Slice 5: `benchmarks.md` Known limits says to capture each full run with `clojure -M:bench | tee <file>`.
+    `tee` gets only stdout: use `2>&1` so that it also captures the child stderr and an error on stderr. `tee`
+    hides the exit code, so record it with `${PIPESTATUS[0]}`.
+- For the design-steps work (after the plan review):
+  - Principles: the 7 plan review items change `plan.md` and `steps.md` (not yet started, so edit in place).
+    Change `design.md` only if an answer changes the design (Scope 6 acceptance run, Scope 7 document list). Keep
+    the SCOPE_QUESTION open; do not decide it.
+  - Do these items together, because they change the same text:
+    - "`Forks` value" and "`decode-result` contract" (plan 1, Slice 1, `report.clj`).
+    - "`decode-result` contract" and "decode each result file when its child exits" (plan 3, Slice 3: the parent
+      prints the cause from the error value after each fork).
+    - "which run is the acceptance run" and "manual verification commands" (Slice 3 verification, Slice 5).
+  - Options found during the review:
+    - `Forks`: `exit-code` destructures `[_ p r]`, so a fourth element in each `fork-stats` entry does not break it.
+    - Acceptance run: move the "blackhole notice for each child" check from Slice 3 to Slice 5, on the recorded
+      acceptance output. Then Slice 3 needs no full run. The failure check (forced fork 0 failure) is short.
+  - Paths for the stale-text item: `dev/bench/closed_record/bench.clj` (ns docstring, `run` docstring "the five
+    operations"), `dev/bench/closed_record/bench/report.clj` (ns docstring),
+    `test/closed_record/bench_report_test.clj` (ns docstring "inject `last-bench`-shaped data"; the new tests
+    also inject child results), `mementum/knowledge/benchmarks.md` (Code structure, "a 100 s run").
+
+## Plan design steps (2026-10-23)
+
+- Done: the 7 plan review items, in `plan.md` and `steps.md` only. `design.md` does not change. The SCOPE_QUESTION
+  stays open (Slice 6 has a conditional step for it).
+- Choices made: `Forks` = fourth element `n` of each `fork-stats` entry (`row [op p r n]`); `decode-result` returns
+  `{:result v}` / `{:error msg}`, no throw; the child gets all parent input arguments; `parent` takes a
+  `child-cmd` function, so the failure path is verified with `sh` / `rm` / `true` / `cp` commands and no JVM; the
+  blackhole notice check and the exit-2 rule are in Slice 5; the harness is finished at the end of Slice 3.
+- Observed (`clojure -M:bench:e`, 2026-10-23):
+  - `-Dclojure.basis=.cpcache/<hash>.basis` is a persistent file with a relative path. A child started with the
+    same working directory (the `ProcessBuilder` default) can use it, so no filter is needed.
+  - The parent JVM also prints `CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole =
+    true` (the alias `:jvm-opts`), so a full run has 6 such lines.
+  - `clojure.edn/read-string ""` gives `nil`; `"[1"` throws `RuntimeException` (EOF).
+- Tests that call `report/row` with 3 args (`pass?-test` uses `(nth (report/row "op" p r) 3)`, `row-test`,
+  `table-test`) must get the `n` argument in Slice 1.
+
+## Plan review 2 (2026-10-23, after the plan design steps, sha `df35caa`)
+
+- Ambiguity review: no ambiguity review feedback.
+  - Not filed (the implementer can choose; no design effect):
+    - `-main` with 1 or 3+ args: the plan gives only 0 (parent) and 2 (child). A usage error with a non-0 exit
+      is the safe choice; a parent then sees a fork failure.
+    - The `run` signature: it needs the fork number for the parity. The operation strings in `run` can come from
+      `report/ops`, so that `decode-result` cannot reject a child for a text mismatch.
+- Inconsistency review: no inconsistency review feedback.
+  - Not filed (minor wording; the explicit rule governs):
+    - plan Risks says a child option fault is "a fork failure (exit 2) in the acceptance run". Plan 5 and steps
+      Slice 5 say an exit-2 run is not the acceptance run. Follow Slice 5.
+    - The plan puts the `bench.clj` ns docstring in item 2 (child mode). The steps put it in Slice 3. Do it in
+      Slice 3, when exit 2 exists.
+  - Checked, still true after the task (no change needed): `mementum/state.md` "It exits 1 if an operation
+    fails", `README.md` `clojure -M:bench`, `dev-tooling.md` `:bench` line.
+- For the design-steps work (after plan review 2):
+  - No new design steps. The only open item is the SCOPE_QUESTION. Do not tick it and do not edit `design.md`
+    for it without a human decision (the "Design review 2" notes say what to change if it is decided).
+  - With no decision, the plan and steps are ready for `implement-task`. Steps Slice 6 has the conditional step.

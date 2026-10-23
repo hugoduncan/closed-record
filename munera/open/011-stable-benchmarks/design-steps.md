@@ -52,3 +52,52 @@
   - "`embodiment.md`: the `dev/bench/` row" does not say the new text. The row now says "the five S-03
     operations" and does not name forks.
   - Acceptance 6 cannot check these changes without the text or its content items.
+- [x] Plan ambiguity review: say where the `Forks` value comes from (plan 1, steps Slice 1).
+  - Plan: "extend `header` and `row` with a final `Forks` cell (value 5)". Scope 5: the cell "shows the number of
+    fork means in the statistics of the row".
+  - The plan does not say if `row` prints a constant 5, or gets the count as data (for example a fourth element
+    of each `fork-stats` entry, or a `fork-count` constant that the parent loop, `fork-stats` and `row` share).
+    The `row` signature `[op p r]` and the table tests depend on this choice.
+- [x] Plan ambiguity review: give the `decode-result` contract (plan 1, Key decisions, steps Slice 1).
+  - "an error value" does not give its shape. The parent must print the cause from it (Scope 1), and the tests of
+    "decode rejection" must check it.
+  - Say if decode catches EDN reader exceptions (truncated or empty file) and returns the error value for them.
+    The parent makes the temporary file before the child starts, so an empty file is the likely case when the
+    child writes no result; "missing result file" can then occur only if the child deletes it.
+  - Say what the validation checks: six entries, the operation strings in the Scope 3 order (or only as a set),
+    and the keys and number type of `:mean :low :high`.
+- [x] Plan ambiguity review: say which JVM options the child gets (plan 3, Risks, steps Slice 3).
+  - Scope 1: the child has "the JVM options of the parent". Steps: "`RuntimeMXBean/getInputArguments`, keep the
+    blackhole opts" can mean all input arguments or a filter to the blackhole options. Plan: "drop
+    `-Dclojure.basis=...` if it is not re-usable" gives no test for "re-usable".
+  - Say: pass all input arguments, and the observed condition (if any) that removes `-Dclojure.basis`.
+- [x] Plan ambiguity review: say which run is the acceptance run (Scope 6, steps Slice 3 and 5).
+  - Slice 3 "Verify the blackhole `CompileCommand` notice appears for each child" needs a full parent run (5
+    forks, about 300 s). Scope 6 makes "the first full run of the finished harness" the acceptance run, and
+    Slice 5 is after Slice 4.
+  - Say if the Slice 3 run is the acceptance run, or if Slice 3 verifies with a shorter run (and how, because the
+    run limit and the fork count are fixed), or which slice makes the harness "finished".
+  - Say if a run that exits 2 (a harness fault) counts as the acceptance run, or the fault is fixed and the next
+    run is the acceptance run.
+- [x] Plan ambiguity review: give the manual verification commands (steps Slice 2 and 3).
+  - Slice 2: "`clojure -M:bench:<no-main> ...`": no such alias is in `deps.edn`. The `:e` alias of the design notes is
+    defined inline (`benchmarks.md`: `clojure -Sdeps '{:aliases {:e {:main-opts []}}}' -M:bench:e ...`). `clojure -M:bench 0 <file>` gives the args to `-main` after the `:main-opts`.
+  - Slice 3: "force a child failure (for example a bad result file path)": the parent makes the path, so the step
+    does not say how to force it (a temporary edit that is not committed, a REPL call with a different child
+    command, or another hook). Say which of the three causes (exit code, missing file, bad content) to check.
+- [x] Plan inconsistency review: decode each result file when its child exits (steps Slice 3).
+  - Steps Slice 3, item 3: "On 5 good forks: decode the 5 files". Item 2 and Scope 1: an invalid decode is a fork
+    failure, and then the parent "starts no more forks". Scope 1: the parent reads the file "after the child
+    exits".
+  - If the parent decodes only after the 5 forks, a bad result in fork 0 does not stop forks 1 to 4. Make item 3
+    use the 5 results that the parent decoded after each fork (plan 3 has the same gap: it does not say when the
+    decode occurs).
+- [x] Plan inconsistency review: add the texts that the task makes false and that Scope 7 and the plan do not
+  change.
+  - `dev/bench/closed_record/bench.clj` ns docstring: "Exits 0 when all operations pass, 1 if not." The task adds
+    exit 2 and the child entry point (`-main` with the fork number and the result file).
+  - `dev/bench/closed_record/bench/report.clj` ns docstring: lists "per-call stats ..., the pass rule, the table
+    and the exit code". The task adds the encode and decode of the child result and the statistics over forks.
+  - `mementum/knowledge/benchmarks.md` "Code structure": "`:main-opts` in `:bench` runs `-main` (a 100 s run)".
+    After the task, a run is 5 forks × 12 runs × 5 s (about 300 s, plus JVM start).
+  - Add these to the plan and steps (Slice 1–3 for the docstrings, Slice 6 for `benchmarks.md`), or to Scope 7.
