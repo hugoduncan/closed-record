@@ -33,6 +33,8 @@ Observed in task 002 on Clojure 1.11.4, 1.12.6 and 1.13.0-alpha9. The helpers ar
 - `RT/classForName` finds the class in memory without initialisation, so it gives no `VerifyError`.
 - Read constructors with `.getConstructors` and `.getParameterTypes`. Do not depend on their order: it differs
   between Clojure versions.
+- `.getDeclaredFields`: the Javadoc gives no order. HotSpot gives declaration order (Clojure 1.11, 1.12, 1.13;
+  task 011). Remove the static fields to compare the instance layout with `defrecord` (D-01).
 
 ## Values in forms
 
@@ -79,6 +81,9 @@ Observed in task 004 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `
   casts as `new` does (`9.9` gives `9`, nil gives NPE).
 - No emitter code, so no mutation: `.-field` (a compiled field read), and a `getLookupThunk` that gives nil (the call
   site falls back to `valAt`, with the same result).
+- ❌ A differential check (closed type = `defrecord`) does not see a fault that both sides share, or a case that
+  neither side has. Also assert the case under test on one side (for example: the `^long` field has type
+  `Long/TYPE`). This is the same rule as the `check` guard in the literal and hidden-key tests (task 011).
 - Differential helper (closed type vs `defrecord`): give `[:ok v]` or `[:ex class]`. Pair each value with its class:
   `(= (int 5) 5)` is true, so `=` alone misses a wrong box class. Compare a record as `(into {} x)`: `=` of two types
   is false. Do not compare `hash` across types: `hasheq` includes the type hash (D-07). Compare exception classes,
