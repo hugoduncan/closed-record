@@ -67,30 +67,69 @@ One JVM, `clojure -M:bench` (10 s for each run), exit code 1:
 
 In scope:
 
-1. Forks. `clojure -M:bench` starts 5 child JVMs, one after the other. Each child has the classpath and JVM
-   options of the parent, runs each operation once on `P` and once on `R`, and gives its per-call stats to the
-   parent. In even forks, `P` runs first; in odd forks, `R` runs first. The run limit is 5 s.
-2. Statistics. For each operation and type, the mean is the mean of the 5 per-call fork means. The 95% interval is
-   the Student t interval of the 5 fork means (4 degrees of freedom). The pass rule of S-03 does not change, but it
-   uses these values.
+1. Forks. `clojure -M:bench` starts 5 child JVMs, one after the other. The parent JVM does no measurement.
+   - Numbering: the forks are 0 to 4, in start order.
+   - Child: each child has the classpath and the JVM options of the parent. Its entry point is
+     `closed-record.bench/-main` with two arguments: the fork number and the path of the result file. With no
+     arguments, `-main` is the parent.
+   - Run sequence in one fork: for each operation in the Scope 3 order, one run on each type. In even forks (0, 2,
+     4), `P` runs first, then `R`. In odd forks (1, 3), `R` runs first, then `P`. The run limit is 5 s.
+   - Transport: the child writes its result to the result file as EDN. The parent makes one temporary result file
+     for each fork, and reads it after the child exits. The parent does not parse the output of the child. The
+     child output (for example the `CompileCommand: blackhole ...` notice of the JVM) goes to the output of the
+     parent.
+   - Result format: a vector of `[op p r]`, one for each operation, in the Scope 3 order. `op` is the operation
+     text of the table (for example `"(:a x)"`). `p` and `r` are the per-call stats `{:mean :low :high}` (ns) of
+     one run on `P` and on `R`.
+   - Layers: `closed-record.bench.report` (the pure layer) encodes and decodes the result and computes the
+     statistics over forks. The suite tests these functions. `closed-record.bench` starts the processes and does
+     the file I/O.
+   - Failure: a fork fails if the child exits with a value that is not 0, or if its result file is missing, or if
+     the decode finds that the file content is not a result in the format above with the six operations. When a
+     fork fails, the parent starts no more forks, prints an error that names the fork and the cause, prints no
+     table, and exits with 2. The parent does not compute a result from fewer than 5 forks.
+2. Statistics. For each operation and type, the mean is the arithmetic mean of the 5 fork means (the `:mean` of
+   each child result). The 95% interval is the Student t interval of the 5 fork means: mean ± t · s / √5. `s` is
+   the sample standard deviation (divisor 4). `t` is 2.776, the 0.975 quantile of the t distribution with 4
+   degrees of freedom. The statistics do not use the `:low` and `:high` of the child results. The pass rule of
+   S-03 does not change, but it uses these values.
 3. Operations: the five operations of task 010, `(:a x)`, `(.a x)`, `(assoc x :a 2)`, `(hash x)` and `(= x y)`,
    and `(get x :a)`. Order: `(:a x)`, `(get x :a)`, `(.a x)`, `(assoc x :a 2)`, `(hash x)`, `(= x y)`.
-4. Field access, structural check. A test in `test/closed_record/compiler_rules_test.clj`: for a closed type and a
+4. Field access, structural check. A test in `test/closed_record/field_value_test.clj`: for a closed type and a
    `defrecord` with the same fields (one untyped field and one `^long` field), the non-static declared fields are
-   equal in name, order, type and modifiers.
-5. Output. The table of task 010, with one more column: the number of forks. The exit code does not change: 0 if
-   all operations pass, 1 if not.
+   equal in name, order, type and modifiers. The test checks the emitter output (the D-01 field layout). It
+   supports S-03 field access and V-11. The ns docstring of `field_value_test.clj` names V-11 for this test.
+   `compiler_rules_test.clj` (V-13) does not change: it uses only Clojure forms, not `closed-record.core`.
+5. Output. The table of task 010, with one more column, `Forks`, after `Result`. It shows the number of fork means
+   in the statistics of the row. The value is always 5, because a run with a failed fork prints no table
+   (Scope 1). Exit code: 0 if all operations pass, 1 if not, 2 if a fork fails (Scope 1). The exit code uses only
+   the timed rows.
 6. Acceptance run. The first full run of the finished harness is the acceptance run. Its complete output and
    its exit code go to `implementation.md`. No later run replaces it.
 7. Documents:
    - `purpose.md` S-03: add `get` to the operations. The means and intervals are over 5 JVM forks. Field access
-     has the timed row and the field declaration test.
+     has two checks: the timed `(.a x)` row and the field declaration test. Field access passes only if both
+     checks pass.
    - D-16 Scope: the test suite runs on Clojure 1.11, 1.12 and 1.13 (aliases). The bench runs on Clojure 1.11.
      CI is deferred: all runs are manual.
-   - `mementum/state.md`: the V-11 status from the acceptance run. V-11 is done only if all six operations pass.
-     Replace the task 010 ratios, which are not valid.
-   - `mementum/knowledge/benchmarks.md`: the fork rule.
-   - `embodiment.md`: the `dev/bench/` row.
+   - `mementum/state.md`: the V-11 status from the acceptance run. V-11 is done only if all six timed rows pass in
+     the acceptance run and the field declaration test passes. Replace the task 010 ratios, which are not valid.
+   - `mementum/knowledge/benchmarks.md`:
+     - A new section "Forks" with the rules of Scope 1 and 2: the parent starts 5 child JVMs, one after the other,
+       with its classpath and JVM options, and does no measurement. The fork numbering and the run sequence. The
+       5 s run limit. Each child runs each `bench` call site once, so the divide by zero fault does not occur. The
+       result file transport (EDN), not stdout, because the JVM prints the blackhole notice to stdout. The mean
+       and the t interval over the fork means. A failed fork stops the run with exit code 2.
+     - "Known limits": in the item "Results near the 1.05 ratio change ...", replace "A stable bench needs more
+       (for example several JVM forks)." with a reference to the "Forks" section.
+     - "Code structure": the pure layer also has the encode and decode of the child result and the statistics
+       over forks. Replace "Only `-main` has side effects (`System/exit`)." with: only `closed-record.bench` has
+       side effects (process start, file I/O, `System/exit`).
+   - `embodiment.md`: the `dev/bench/` row becomes: "`closed_record/bench.clj` (`closed-record.bench`): criterium
+     benchmarks of the six S-03 operations against `defrecord` (V-11), over 5 child JVM forks. The parent starts
+     the forks. The child entry point measures and writes its result to a file. `closed_record/bench/report.clj`
+     (`closed-record.bench.report`): the pure layer (per-call stats, encode and decode of the child result,
+     statistics over forks, pass rule, table, exit code), without criterium."
 
 ## Out of scope
 
@@ -111,7 +150,15 @@ In scope:
   zero fault does not occur.
 - 5 forks, 12 runs each, 5 s each: about 300 s of measurement. The interval uses the variation between JVMs, which
   is the variation that changed the result in task 010.
-- Alternate the run order, so that an order effect does not favour one type.
+- Alternate the run order, so that an order effect does not favour one type. The order alternates for each
+  operation, not for blocks of all `P` runs and all `R` runs, so that the two runs of one operation are near in
+  time. With 5 forks, `P` runs first in 3 forks and `R` runs first in 2 forks.
+- A result file, not stdout. The JVM prints the blackhole notice to stdout, and other code can also print. A file
+  keeps the result apart from the output. The encode and decode are pure, so the suite tests them with no child
+  JVM.
+- A failed fork stops the run. The t interval of Scope 2 needs 5 fork means. A fault in one child can be a fault of
+  the harness, so a result from fewer forks can hide it. Exit code 2 keeps a fault apart from a failed operation
+  (1).
 - The Student t interval over fork means, not the bootstrap interval of one run. The fork means are independent;
   the samples inside one run are not independent of the JIT state of that run.
 - Add `get`. Keyword lookup uses a keyword call site; `get` uses `RT.get` → `valAt`. In criterium 0.5.251 the key
@@ -119,17 +166,18 @@ In scope:
   is the same dispatch as in `assoc`, so the row shows whether lookup has the cost of the `assoc` gap.
 - Field access by time and by structure. With criterium 0.5.251, the timed row measures a real field read. The
   structural test shows the reason for parity (the same field declaration, thus the same `getfield`), and it does
-  not change from run to run.
+  not change from run to run. Field access passes only if both checks pass: the timed row measures the cost, and
+  the structural test shows the cause.
 - The barrier cost stays in the result. It adds the same time to `P` and `R`, so it moves `P / R` a little toward
   1. For `(.a x)` this effect is largest, because the barrier is a large part of the time.
 - D-16 records the deferral. Without it, D-16 states a scope that the project does not meet.
 
 ## Acceptance criteria
 
-1. `clojure -M:bench` runs 5 forks with alternating order and prints the table of Scope 5 for the six operations
-   of Scope 3, with the statistics of Scope 2. Its exit code follows the pass rule.
-2. The pure layer (statistics over forks, pass rule, table) has tests in the suite, with no criterium and no
-   child JVM.
+1. `clojure -M:bench` runs 5 forks with the run sequence of Scope 1 and prints the table of Scope 5 for the six
+   operations of Scope 3, with the statistics of Scope 2. Its exit code follows Scope 5.
+2. The pure layer (encode and decode of the child result, statistics over forks, pass rule, table, exit code) has
+   tests in the suite, with no criterium and no child JVM.
 3. The field declaration test of Scope 4 passes on the default alias, `:clj-1.12` and `:clj-1.13`.
 4. `implementation.md` has the complete output and the exit code of the acceptance run, with the JVM and machine.
 5. `clojure -M:test -m scry.cli` on the three aliases: zero failures and errors. `clj-kondo --lint src test dev`:
