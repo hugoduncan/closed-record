@@ -243,3 +243,11 @@
 
 - No new actionable issues. Focused build suite: exit 0, 3 tests,
   71 assertions passed; `.scry-results` empty.
+
+## 2026-10-23 — Closure
+
+- Closed at the user's request after implementation, review follow-ups, and
+  knowledge extraction completed. All steps are complete. This closure
+  supersedes the earlier note that the task was open for implementation review.
+- Moved the task to `munera/closed/013-jar-build/` and removed its entry from
+  `munera/plan.md`. No code changed; tests were not rerun for closure.
