@@ -164,3 +164,13 @@
 
 - No new actionable code-shape issues. cljfmt, clj-kondo, and actionlint
   exited 0. The build-test baseline diff contains only whitespace changes.
+
+## 2026-10-23 — Closure
+
+- Closed at the user's request after implementation and review completed.
+  All implementation steps are complete. This closure supersedes the earlier
+  note to keep the task open for review.
+- Hosted event execution, fork-PR behaviour, and failure uploads remain
+  unverified. Closure does not change these verification limits.
+- Moved the task to `munera/closed/014-github-ci/` and removed its entry from
+  `munera/plan.md`. No code changed; tests were not rerun for closure.
