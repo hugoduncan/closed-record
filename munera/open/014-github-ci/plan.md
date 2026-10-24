@@ -118,6 +118,10 @@ execution as unverified. Do not push solely to obtain evidence.
 
 ## Slice order
 
+The plan-review follow-up in `design-steps.md` corrects task navigation only.
+It is complete: `munera/plan.md` now points to Slice 1 in `steps.md`, not to
+another planning pass. This does not verify any CI implementation item.
+
 1. Establish the pinned, passing formatting and lint baseline.
 2. Add the workflow jobs, runtime matrix, build verification, and failure uploads.
 3. Validate commands and failure paths; update documentation and record evidence.

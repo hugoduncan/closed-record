@@ -1,5 +1,9 @@
 # Steps: GitHub CI
 
+## Plan-review follow-up
+
+- [x] Correct the stale task 014 planning status in `munera/plan.md` (inconsistency review, plan-review turn 2; `design-steps.md`). Preserved the task entry and linked to Slice 1 here. Checked the index against `plan.md`; all CI implementation items remain unchecked.
+
 ## Slice 1 — Quality baseline
 
 - [ ] Make Clojure CLI `1.12.6.1673`, cljfmt `0.16.4`, clj-kondo `2026.04.15`, and Temurin 21 available locally; record their reported versions and the host OS in `implementation.md`.
