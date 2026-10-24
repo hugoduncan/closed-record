@@ -104,11 +104,11 @@
 (defn- check-pom
   [directory pom version]
   (doseq [[tag expected] {:groupId "org.hugoduncan"
-                        :artifactId "closed-record"
-                        :version version
-                        :name "closed-record"
-                        :description "A Clojure record type with a fixed key set."
-                        :url "https://github.com/hugoduncan/closed-record"}]
+                          :artifactId "closed-record"
+                          :version version
+                          :name "closed-record"
+                          :description "A Clojure record type with a fixed key set."
+                          :url "https://github.com/hugoduncan/closed-record"}]
     (is (= expected (element-text pom tag)) (name tag)))
   (let [scm (first (child-elements pom :scm))
         license (first (child-elements (first (child-elements pom :licenses)) :license))
@@ -124,9 +124,9 @@
     (is (= "repo" (element-text license :distribution)))
     (is (= (:deps (edn/read-string (slurp (io/file directory "deps.edn"))))
            (into {} (map (fn [dependency]
-                          [(symbol (element-text dependency :groupId)
-                                   (element-text dependency :artifactId))
-                           {:mvn/version (element-text dependency :version)}]))
+                           [(symbol (element-text dependency :groupId)
+                                    (element-text dependency :artifactId))
+                            {:mvn/version (element-text dependency :version)}]))
                  dependencies)))))
 
 (defn- entry-bytes
@@ -226,12 +226,12 @@
                 extra)
         (str "Unexpected archive entries: " extra))
     (is (not-any? #(or (str/ends-with? % ".class")
-                      (str/ends-with? % ".jar")) entries)
+                       (str/ends-with? % ".jar")) entries)
         "No compiled classes or bundled JARs")
     (is (not (contains? entries "stale.txt")))
     (doseq [[entry source] (assoc sources
-                                 "LICENSE" (io/file directory "LICENSE")
-                                 pom-path (io/file directory "target/classes" pom-path))]
+                                  "LICENSE" (io/file directory "LICENSE")
+                                  pom-path (io/file directory "target/classes" pom-path))]
       (is (Arrays/equals (Files/readAllBytes (.toPath source))
                          (entry-bytes archive entry)) entry))))
 

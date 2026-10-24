@@ -15,5 +15,8 @@
 - Rejected: example tests only. They do not show parity with `defrecord` or catch compiler changes.
 - Rationale: S-01 to S-04. R-01 needs an early signal on each Clojure version.
 - Scope: the test suite runs on Clojure 1.11, 1.12 and 1.13 (aliases). The bench runs on Clojure 1.11.
-  CI is deferred: all runs are manual.
+  GitHub CI runs all three test aliases on Ubuntu with Temurin Java 21 for
+  pushes to `master` and pull requests. Separate jobs check formatting and
+  lint, and run focused build tests plus the JAR build. Performance benchmarks
+  remain manual; benchmark-support tests are part of the default suite.
 - Commitment: low.

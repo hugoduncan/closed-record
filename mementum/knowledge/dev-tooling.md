@@ -20,7 +20,7 @@ This page gives the rules that the commands do not show.
 - `:test` has the extra path `dev/bench`, so the suite tests the bench pure layer and fork layer. criterium is not
   in `:test`.
 - 🎯 Version aliases (`:clj-1.12`, `:clj-1.13`) use `:override-deps`. They compose with `:test` and `:nrepl`.
-  When CI is added (deferred, D-16), it must use these aliases. Do not add a version parameter.
+  CI uses these aliases. Do not add a separate workflow version override.
 - Pin all versions. Do not use `RELEASE`.
 - A top-level `org.clojure/clojure` has priority over the transitive Clojure of scry. Check the version with
   `clojure -M:<aliases> -e '(print (clojure-version))'`.
@@ -40,6 +40,24 @@ This page gives the rules that the commands do not show.
   pinned scry supports `--dir test-build`; its default discovery is under
   `test`. See `mementum/knowledge/artifact-verification.md` for fixture and
   consumer isolation rules.
+
+## Continuous integration
+
+- `.github/workflows/ci.yml` owns setup and orchestration for pushes to
+  `master` and all pull-request targets. It uses Ubuntu, Temurin 21,
+  read-only contents access, and no stored checkout credentials.
+- Pinned tools: Clojure CLI 1.12.6.1673, cljfmt 0.16.4, clj-kondo 2026.04.15.
+  Quality commands: `cljfmt check src test dev test-build build.clj` and
+  `clj-kondo --lint src test dev test-build build.clj --fail-level warning`.
+- The runtime matrix uses the three README test commands, with fail-fast
+  disabled. `deps.edn` owns runtime versions, not the CLI setup version.
+- Build verification runs once outside the matrix: focused `test-build`
+  tests, then `clojure -T:build jar`, with full history. Keep real temporary
+  project and isolated-consumer checks. Performance benchmarks remain manual.
+- Failed test steps upload hidden `.scry-results/` files under distinct
+  `scry-runtime-<version>` and `scry-build` names. Missing files warn without
+  clearing the test failure. A JAR-only failure does not upload test results.
+- Local validation is not proof of hosted Ubuntu or fork-event execution.
 
 ## Scry
 

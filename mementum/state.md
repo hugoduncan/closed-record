@@ -40,6 +40,22 @@ Main form: `defclosedrecord`.
   in the suite (`bench_report_test.clj`, `bench_fork_test.clj`).
 - REPL: `clojure -M:test:nrepl`. In the REPL: `(require '[scry.core :as scry]) (scry/run)`.
 
+## Continuous integration
+
+- `.github/workflows/ci.yml` defines read-only checks for pushes to `master`
+  and pull requests: code quality, three Clojure runtime versions, and separate
+  build verification on Ubuntu with Temurin 21. Failed tests upload hidden
+  `.scry-results/` files. Local Java 21 checks passed for all three runtime
+  aliases, focused build tests, and JAR packaging; quality checks and
+  actionlint passed. Hosted execution is not yet verified.
+
+## Local verification environment
+
+- Pinned quality tools are available: cljfmt 0.16.4 and clj-kondo 2026.04.15.
+- Java defaults to 25. For Java 21 checks, set `JAVA_HOME` to
+  `/Users/duncan/.local/share/mise/installs/java/temurin-21` and prepend
+  `$JAVA_HOME/bin` to `PATH` (Temurin 21.0.10+7-LTS).
+
 ## Packaging
 
 - `clojure -T:build jar` builds a source-only `org.hugoduncan/closed-record` JAR
