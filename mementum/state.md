@@ -49,6 +49,26 @@ Main form: `defclosedrecord`.
   aliases, focused build tests, and JAR packaging; quality checks and
   actionlint passed. Hosted execution is not yet verified.
 
+## Release architecture
+
+- Intended architecture: `ramora/release-workflow.md`. Follow scry's build.clj:
+  check credentials, build the one JAR/POM, call stock deps-deploy, return paths.
+- Manual master dispatch, default dry run, one full-history dispatch-SHA checkout,
+  one job, checks before writes, and step-scoped secrets. Deployment may rebuild
+  from that checkout. GitHub assets use the deployment outputs.
+- Use ordinary Git tag push and `gh release create --verify-tag --notes-file`.
+  Standard tool-internal retries, redirects, checksum handling, and temporary
+  draft cleanup are accepted. No custom transport or remote-absence proof.
+- All task-015 implementation is reverted to baseline `c9066bd`: no release or
+  deployment source/tests, changelog, or release/deploy aliases remain. Packaging
+  docs also match the baseline. Build the small path without restoring that
+  module hierarchy; the architecture above is intended, not implemented.
+- Existing packaging remains in `build.clj`. No release has been published by
+  this work. The new path will add stock deps-deploy 0.2.2 outside runtime deps.
+- Historical transport findings are in the closed release task's implementation
+  log. They describe library behaviour, not active release blockers. For current
+  work and acceptance, follow `munera/plan.md`.
+
 ## Local verification environment
 
 - Pinned quality tools are available: cljfmt 0.16.4 and clj-kondo 2026.04.15.
