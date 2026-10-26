@@ -67,3 +67,12 @@ Pure notes, local preparation, and notes CLI integration are complete (slices 2a
 - [x] Run actionlint on both workflows and check documentation links; record results.
 - [x] Audit all six acceptance criteria, runtime isolation, and absence of task-015 infrastructure; record local evidence and hosted limits in implementation.md.
 - [x] Commit slice 4 without pushing, configuring secrets, or publishing.
+
+## 5. Test review follow-up
+
+- [x] Cover shallow-history rejection for notes export in `test-release/closed_record/release_test.clj`. The shallow fixture currently exercises only `prepare`; removing the separate guard in `write-notes` would not fail a test. Run the notes CLI in a real shallow clone with otherwise valid notes, in both publication and preview modes. Assert a nonzero exit and unchanged notes/output files, so a truncated Git count cannot supply release metadata.
+- [x] Cover valid credential acceptance in `test-build/build_test.clj`. The current deployment credential tests exercise only rejection; a validator that always rejects would pass them. Call the existing pure `assert-deploy-credentials!` helper with an environment map containing two nonblank fixture values and assert success. Keep this test local: do not invoke deployment, inject transport behaviour, or add a test-only production option.
+
+## 6. Documentation review follow-up
+
+- [x] Add factual Unreleased notes to `CHANGELOG.md` for the new release tooling. The current entries describe only `defclosedrecord` and JAR packaging; they omit the user-visible `prepare` command, manual default-dry-run workflow, and Clojars/GitHub publication path added by this task. Summarize these additions without claiming that a release has been published, and keep the headings valid under the shared changelog contract.

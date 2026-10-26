@@ -223,3 +223,48 @@
 - Hosted permissions, service credentials, remote files, and publication success
   remain unverified by design. No implementation follow-up or blocker remains;
   task remains open for review rather than being closed by this pass.
+
+## 2026-10-26 — Implementation review
+
+- No new actionable findings.
+
+## 2026-10-23 — Test review
+
+- Added 2 steps to be addressed.
+
+## 2026-10-23 — Test review follow-up: shallow notes
+
+- Addressed 1 review step. Real depth-one clone has valid matching notes; both
+  CLI modes reject it and preserve notes/output bytes.
+- Java 21 release suite: exit 0, 9 tests, 104 assertions; no scry failure files.
+  Changed-file cljfmt and clj-kondo passed. No publication.
+
+## 2026-10-23 — Test review follow-up: valid credentials
+
+- Addressed 1 review step. The pure credential helper accepts two nonblank
+  fixture values; the new test does not build or deploy.
+- Repaired an extra delimiter with clj-paren-repair. Java 21 build suite:
+  exit 0, 6 tests, 100 assertions; no scry failure files. Changed-file cljfmt
+  and clj-kondo passed. Both review steps are complete; no blockers.
+
+## 2026-10-23 — Test review after follow-up
+
+- No new actionable test findings.
+
+## 2026-10-23 — Documentation review
+
+- Added 1 step to be addressed.
+
+## 2026-10-23 — Documentation review follow-up
+
+- Addressed 1 review step: added factual Unreleased release-tooling notes.
+- Java 21 shared changelog validation and preview selection passed;
+  `git diff --check` passed. No publication.
+
+## 2026-10-23 — Documentation review after follow-up
+
+- No new actionable documentation findings.
+
+## 2026-10-23 — Code-shaper review
+
+- No new actionable code-shaping findings.

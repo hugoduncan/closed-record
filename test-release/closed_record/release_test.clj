@@ -161,3 +161,26 @@
         (spit output "unchanged")
         (is (not (zero? (:exit (run-notes "--preview")))))
         (is (= "unchanged" (slurp body) (slurp output)))))))
+
+(deftest shallow-notes-cli-test
+  ;; A truncated count must not export release metadata in either mode.
+  (with-project
+    (fn [project root _]
+      (let [clone (io/file root "shallow")
+            body (io/file root "notes.md")
+            output (io/file root "outputs")]
+        (spit (io/file project "CHANGELOG.md")
+              (str initial "\n## [0.1.1] - 2025-01-01\nValid truncated-count notes\n"))
+        (git project "commit" "-am" "Add matching notes")
+        (git root "clone" "--depth=1" (str "file://" (.getAbsolutePath project)) (str clone))
+        (is (= "true" (git clone "rev-parse" "--is-shallow-repository")))
+        (is (= "1" (git clone "rev-list" "--count" "HEAD")))
+        (doseq [options [[] ["--preview"]]]
+          (testing (str "shallow notes with options " options)
+            (spit body "existing notes\n")
+            (spit output "existing=value\n")
+            (let [result (apply cli clone "notes" (str body) (str output) options)]
+              (is (not (zero? (:exit result))))
+              (is (str/includes? (:err result) "requires complete history")))
+            (is (= "existing notes\n" (slurp body)))
+            (is (= "existing=value\n" (slurp output)))))))))

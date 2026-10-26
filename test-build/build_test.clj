@@ -335,3 +335,10 @@
             (is (not (str/includes? diagnostic secret)))
             (is (= "unchanged" (slurp sentinel))))))
       (finally (b/delete {:path (str directory)})))))
+
+(deftest valid-deployment-credentials-test
+  ;; Nonblank fixture credentials pass validation without building or deploying.
+  (testing "both deployment credentials are present"
+    (is (nil? (#'build/assert-deploy-credentials!
+               {"CLOJARS_USERNAME" "fixture-user"
+                "CLOJARS_PASSWORD" "fixture-password"})))))
