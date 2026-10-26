@@ -56,7 +56,7 @@ Main form: `defclosedrecord`.
 - Manual master dispatch, default dry run, one full-history dispatch-SHA checkout,
   one job, checks before writes, and step-scoped secrets. Deployment may rebuild
   from that checkout. GitHub assets use the deployment outputs.
-- Intended changelog contract: exact Unreleased/dated version headings, unique
+- Implemented changelog contract: exact Unreleased/dated version headings, unique
   versions, nonblank dated bodies, and shared validation before preparation or
   note selection. Body Markdown is opaque; empty Unreleased is valid unless used.
 - Use ordinary Git tag push and `gh release create --verify-tag --notes-file`.
@@ -82,7 +82,8 @@ Main form: `defclosedrecord`.
   passes; hosted execution and publication remain unverified.
 - Historical transport findings are in the closed release task's implementation
   log. They describe library behaviour, not active release blockers. For current
-  work and acceptance, follow `munera/plan.md`.
+  work, follow `munera/plan.md`. Release acceptance evidence is in
+  `munera/closed/016-simple-release-workflow/implementation.md`.
 
 ## Local verification environment
 

@@ -37,7 +37,7 @@ new version before publication.
 
 Dated sections must have unique versions and nonempty bodies. The full
 changelog is validated, including earlier entries. See the
-[changelog contract](../munera/open/016-simple-release-workflow/design.md#notes-and-preparation)
+[changelog contract](../munera/closed/016-simple-release-workflow/design.md#notes-and-preparation)
 for exact heading rules.
 
 ## Preview

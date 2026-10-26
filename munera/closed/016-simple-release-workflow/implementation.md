@@ -268,3 +268,15 @@
 ## 2026-10-23 — Code-shaper review
 
 - No new actionable code-shaping findings.
+
+
+## Closure
+
+- Closed at the user's request after implementation, review follow-ups, and
+  knowledge extraction completed. All implementation checklist items are checked;
+  no unresolved findings or implementation blockers remain recorded.
+- Moved the task to munera/closed and removed it from the task plan. Updated
+  links to the closed task. Historical review and verification evidence is retained.
+- Closure changes documentation only. Markdown links and git diff --check were
+  checked; code tests were not rerun. Hosted publication remains unverified.
+  No push, secret configuration, or real release occurred during closure.

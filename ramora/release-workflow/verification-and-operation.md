@@ -2,7 +2,7 @@
 
 ## Acceptance evidence
 
-Use [task 016](../../munera/open/016-simple-release-workflow/design.md)'s six
+Use [task 016](../../munera/closed/016-simple-release-workflow/design.md)'s six
 acceptance criteria. Required evidence is proportionate to the small release path:
 
 - Pure notes checks and real temporary Git preparation tests.

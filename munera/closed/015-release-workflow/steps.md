@@ -3,7 +3,7 @@
 Closed without completion on 2026-10-23. The user requested the simpler scry
 build/deploy approach. This document records the abandoned scope, not current
 requirements. Do not continue its checklist or enforce its transport policies.
-See [016 Simple release workflow](../../open/016-simple-release-workflow/design.md).
+See [016 Simple release workflow](../../closed/016-simple-release-workflow/design.md).
 
 All checks are local unless stated otherwise. Do not push, configure secrets,
 run benchmarks, or publish for acceptance. Record results and limits in

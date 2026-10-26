@@ -5,7 +5,7 @@
 Publish one source JAR/POM with matching changelog notes on Clojars and GitHub.
 Follow `~/projects/hugoduncan/scry/scry-master/build.clj`: credentials, build,
 stock deps-deploy, artifact details. Do not copy its second artifact or automatic
-tag-triggered publication. [Task 016](../../munera/open/016-simple-release-workflow/design.md)
+tag-triggered publication. [Task 016](../../munera/closed/016-simple-release-workflow/design.md)
 is authoritative for scope and acceptance.
 
 ## Ownership
