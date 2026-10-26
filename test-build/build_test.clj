@@ -188,6 +188,8 @@
   (spit (io/file directory "src/packaging_probe.clj") "(ns packaging-probe)\n")
   (doseq [path ["test/excluded_test.clj"
                 "dev/bench/excluded_bench.clj"
+                "dev/release/excluded_release.clj"
+                "test-release/excluded_test.clj"
                 "munera/excluded-task.md"
                 "mementum/excluded-memory.md"]]
     (let [probe (io/file directory path)]
@@ -267,7 +269,18 @@
     (try
       (prepare-artifact-project directory config)
       (testing "two builds use the Git version and remove stale output"
-        (is (= 0 (:exit (run-cli directory config "jar"))))
+        (let [result (shell/sh "clojure" "-M:build-test:clj-1.12" "-e"
+                               "(require 'build) (prn (build/jar nil))"
+                               :dir (str directory)
+                               :env (fixture-env directory config))
+              artifact-map (when (zero? (:exit result)) (edn/read-string (:out result)))]
+          (is (= 0 (:exit result)) (pr-str result))
+          (is (= {:version version
+                  :jar-file (str "target/closed-record-" version ".jar")
+                  :pom-file "target/classes/META-INF/maven/org.hugoduncan/closed-record/pom.xml"}
+                 artifact-map))
+          (doseq [key [:jar-file :pom-file]]
+            (is (.isFile (io/file directory (get artifact-map key "missing"))))))
         (io/make-parents sentinel)
         (spit sentinel "stale staging")
         (spit obsolete "stale artifact")
@@ -281,3 +294,44 @@
         (check-isolated-consumer directory artifact config))
       (finally
         (b/delete {:path (str directory)})))))
+
+(deftest deployment-output-test
+  ;; Step outputs append artifact data without replacing earlier outputs.
+  (let [file (java.io.File/createTempFile "deploy-output-" ".txt")]
+    (try
+      (spit file "prior=value\n")
+      (#'build/write-github-output! file
+                                    {:version "0.1.9" :jar-file "target/library.jar" :pom-file "target/pom.xml"})
+      (is (= "prior=value\nversion=0.1.9\njar-file=target/library.jar\npom-file=target/pom.xml\n"
+             (slurp file)))
+      (finally (.delete file)))))
+
+(deftest deployment-credentials-test
+  ;; Invalid credentials must fail before any build or dependency loading.
+  (let [directory (.toFile (Files/createTempDirectory
+                            "closed-record-deploy-" (make-array FileAttribute 0)))
+        config (io/file directory "cli-config")
+        sentinel (io/file directory "target/keep")
+        secret "fixture-secret-never-print"]
+    (try
+      (prepare-config config)
+      (doseq [path ["deps.edn" "build.clj"]]
+        (io/copy (io/file path) (io/file directory path)))
+      (io/make-parents sentinel)
+      (spit sentinel "unchanged")
+      (doseq [missing ["CLOJARS_USERNAME" "CLOJARS_PASSWORD"]
+              value [nil "" " \t"]]
+        (testing (str missing " rejects " (pr-str value))
+          (let [environment (assoc (fixture-env directory config)
+                                   "CLOJARS_USERNAME" secret "CLOJARS_PASSWORD" secret)
+                result (shell/sh "clojure" "-T:build" "deploy"
+                                 :dir (str directory)
+                                 :env (if (nil? value)
+                                        (dissoc environment missing)
+                                        (assoc environment missing value)))
+                diagnostic (str (:out result) (:err result))]
+            (is (not= 0 (:exit result)))
+            (is (str/includes? diagnostic missing))
+            (is (not (str/includes? diagnostic secret)))
+            (is (= "unchanged" (slurp sentinel))))))
+      (finally (b/delete {:path (str directory)})))))

@@ -40,20 +40,20 @@ state classifier, or alternative Maven transport is needed.
   cross-service absence guarantee. Recovery and independent remote inspection
   belong to the maintainer.
 
-## Intended artifact map
+## Artifact map
 
 | Path | Responsibility |
 |---|---|
-| build.clj | Existing packaging; add simple deploy entry point |
-| deps.edn | Pinned build/deploy dependencies outside runtime; new release aliases |
+| build.clj | Packaging and simple deploy entry point |
+| deps.edn | Pinned build/deploy dependencies outside runtime; release aliases |
 | dev/release | Notes, preparation, and only the small helpers they need |
 | test-release, test-build | Local policy, preparation, and packaging verification |
 | .github/workflows/release.yml | Manual one-job release |
-| .github/workflows/ci.yml | Include new tooling in ordinary quality/test coverage |
+| .github/workflows/ci.yml | Include release tooling in ordinary quality/test coverage |
 | CHANGELOG.md | Maintained release notes |
 | README.md | Exact maintainer commands and failure inspection |
 
 Task-015 implementation, including preparation, has been reverted to the pre-015
-baseline. Build the simple path without restoring the old module hierarchy.
+baseline. The replacement uses only notes and release namespaces, without the old module hierarchy.
 Keep the closed task history for reference. Runtime source and dependencies
 remain unchanged.

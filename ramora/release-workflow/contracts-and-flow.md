@@ -56,3 +56,14 @@ Publication is not atomic. A failed step can have remote effects. Ordinary
 service conflict responses are sufficient; the workflow does not prove absence
 or independently verify every remote byte. Report step outcomes and require
 maintainer inspection after failure and before rerunning a partial release.
+
+## Local interfaces
+
+`jar` and `deploy` return `:version`, `:jar-file`, and `:pom-file`.
+Deployment optionally appends those fields to `:github-output` after success.
+Notes stay outside `target/`, which each build removes.
+
+`clojure -M:release -m closed-record.release notes NOTES_FILE GITHUB_OUTPUT [--preview]`
+validates the full changelog, writes the selected body, and appends `sha`,
+`version`, `tag`, `source`, and `preparation-required` outputs. Only `--preview`
+permits Unreleased fallback. See [maintainer commands](../../README/releases.md).

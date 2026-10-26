@@ -93,3 +93,133 @@
 
 - No new actionable plan inconsistency feedback. Task files agree; steps.md
   remains unchanged. No new design steps.
+
+## 2026-10-23 — Slice 1: build/deploy contract
+
+- Added tooling-only deps-deploy 0.2.2. `jar` now returns `:pom-file` with its
+  existing version/JAR fields. `deploy` checks environment credentials before
+  build effects, builds, loads stock deps-deploy, makes one remote installer
+  call, then returns the artifact map. No transport injection or upload tests.
+- Optional `:github-output` appends `version`, `jar-file`, and `pom-file` only
+  after deployment succeeds. Use these keys in the later workflow.
+- Real subprocess tests cover absent/empty/blank credentials for each variable,
+  secret-free diagnostics, and preserved output. Archive tests now exclude
+  release tooling probes and verify returned paths against real files.
+- Initial verification failed because the new direct build invocation used
+  Clojure 1.11, while tools.build's process task needs clojure.java.process.
+  The fixture now uses the existing :clj-1.12 alias for that invocation; normal
+  -T builds remain unchanged. The isolated library consumer still uses 1.11.
+- Java 21: focused scry build suite exited 0 (5 tests, 99 assertions), with an
+  empty .scry-results directory. cljfmt check and clj-kondo (warning threshold)
+  for build.clj/test-build exited 0. Runtime deps are unchanged. No remote writes.
+- Design remains unchanged. Next slice: shared changelog validation and local
+  preparation. Notes must remain outside build.clj; target/ is deleted by jar.
+
+## 2026-10-23 — Slice 2a: pure notes contract
+
+- Added `closed-record.notes/parse`, `stamp`, and `select-notes`. Selection returns
+  `:body`, `:source`, and `:preparation-required?`; both operations validate the
+  entire document before producing a result. Stamping takes an explicit date.
+- Added tooling-only path aliases and factual Unreleased notes. No dependencies
+  or runtime paths changed. Design scope is unchanged; split slice 2 into pure
+  logic and Git/CLI integration so each has separate verification.
+- Java 21 focused release tests passed (3 tests, 35 assertions); default runtime
+  tests passed (97 tests, 379 assertions), confirming separate discovery. Both
+  commands exited 0 with empty .scry-results. Changed-code cljfmt and clj-kondo
+  checks exited 0. An initial test expected a newline for an empty section body;
+  corrected that expectation after inspecting the structured failure.
+- Next: implement prepare and notes CLI over these pure functions, with real
+  isolated Git fixtures. No Git writes beyond this implementation commit, no
+  remote operations, and no publication were performed.
+
+## 2026-10-26 — Slice 2b: local preparation
+
+- Added `closed-record.release prepare` CLI and `prepare` function (directory
+  argument, returns version/SHA). Uses UTC date and checks the resulting count;
+  Git failures retain changes with an inspection diagnostic. No design change.
+- Real isolated Git tests cover all planned preparation guards, changelog-only
+  success, unchanged local bare remote/tags, and a rejecting commit hook.
+- First verification found a duplicate-key set literal in the date assertion and
+  a shallow-clone fixture URL that Git treated as SSH (`file:/...`). Use
+  `file:///...` for local shallow clones. Corrected both; no production change.
+- Java 21 focused release CLI exited 0: 6 tests, 66 assertions, no failure files.
+  `cljfmt check dev/release test-release` and `clj-kondo --lint dev/release
+  test-release` exited 0. No hosted checks or publication.
+- Next: notes CLI (slice 2c), including output file and step outputs, then workflow.
+  Local preparation is tested through its real function; add CLI subprocess
+  coverage with notes integration. Commit-failure test checks thrown Git error
+  and retained state; CLI nonzero-exit coverage remains for that next slice.
+
+## 2026-10-26 — Slice 2c: notes CLI
+
+- Added `notes NOTES_FILE GITHUB_OUTPUT [--preview]`; requires full history,
+  validates before output writes, and appends the output keys listed in plan.md.
+  Keep workflow notes under RUNNER_TEMP. Design scope is unchanged.
+- Real subprocess tests cover preparation success, invalid arguments, retained
+  commit failure, preview-only fallback, prepared selection, output append, and
+  invalid matching notes without output changes. No mocks or new dependencies.
+- Initial combined verification timed out: shell subprocess futures kept successful
+  CLI JVMs alive. The CLI now shuts down agents in finally; subsequent verification
+  passed. This does not change the callable preparation function.
+- Java 21 focused release suite exited 0 (8 tests, 94 assertions); .scry-results
+  was empty. Changed-code cljfmt, clj-kondo (warning threshold), and diff whitespace
+  checks passed. No hosted checks or publication. Next: workflow and CI slice 3.
+
+## 2026-10-26 — Slice 3: workflow and CI
+
+- Added the single-job manual workflow and ordinary CI release suite. No design
+  change. All publication steps require `toJSON(inputs['dry-run']) == 'false'`;
+  true, missing/null, and string values cannot authorize writes. Default success
+  gating stops publication after any failed check. Failure uploads run directly
+  after each suite; later suites cannot erase failure evidence.
+- Checkout fixes the dispatch SHA with full history and no persisted credentials.
+  Tag push uses command-scoped `gh auth git-credential`, with an empty helper
+  first to discard inherited helpers. No token is placed in the remote URL.
+  Clojars secrets occur only in credential validation and deployment. Notes stay
+  under RUNNER_TEMP; GitHub assets use successful deployment output paths.
+- The deploy CLI argument includes EDN string quotes around GITHUB_OUTPUT. Shell
+  quoting alone would not supply a Clojure string to the tools CLI.
+- Java 21: full-path cljfmt and clj-kondo checks exited 0 (no warnings). Focused
+  release CLI exited 0 (8 tests, 94 assertions), with no .scry-results files.
+  actionlint 1.7.12 passed both workflows. Manual inspection checked master guard,
+  typed gates, secret scope, fixed checkout, ordering, timeout, concurrency, and
+  normal Git/gh commands. No source-text assertion tests or service mocks added.
+- Next: README and architecture alignment, then the full three-runtime/build/
+  release acceptance run. Hosted permissions, credentials, and publication are
+  not verified. No push, secret configuration, or publication occurred.
+
+## 2026-10-26 — Slice 4: documentation and acceptance
+
+- Added exact maintainer commands and recovery guidance. Split README development
+  and release sections into linked files to keep each document below 1,000 words.
+  Updated architecture status, packaging return values, tooling boundaries, and
+  working memory. Design scope and implementation interfaces are unchanged;
+  no new tests were needed for this documentation-only slice.
+- Java 21.0.10: `cljfmt check src test dev test-build test-release build.clj`
+  and `clj-kondo --lint src test dev test-build test-release build.clj
+  --fail-level warning` exited 0, with no formatting differences or warnings.
+- Java 21 CLI verification (each exited 0; .scry-results contained no files
+  immediately after each run):
+  - `clojure -M:test -m scry.cli`: 97 tests, 379 assertions.
+  - `clojure -M:test:clj-1.12 -m scry.cli`: 97 tests, 379 assertions.
+  - `clojure -M:test:clj-1.13 -m scry.cli`: 97 tests, 379 assertions.
+  - `clojure -M:test:build-test -m scry.cli --dir test-build`: 5 tests, 99 assertions.
+  - `clojure -M:test:release:release-test -m scry.cli --dir test-release`:
+    8 tests, 94 assertions.
+  - `clojure -T:build jar`: exit 0.
+- actionlint 1.7.12 on both workflow files exited 0. Local Markdown target-path
+  checks and `git diff --check` passed.
+- Acceptance audit: (1) inspected credential-before-build and one stock remote
+  deploy call; src and LICENSE match pre-015 baseline, and base deps remain only
+  Clojure 1.11.4. (2) pure notes and real isolated Git/process tests pass.
+  (3) workflow retains manual master-only dispatch, default preview, typed-false
+  publication gates, fixed full-history SHA, all checks before writes, scoped
+  secrets, 60-minute timeout, and non-cancelling concurrency. (4) normal Git/gh
+  uses matching notes and successful deploy output paths; preview has no release
+  writes. (5) prior revert evidence remains in this log; active release tooling
+  consists of notes/release namespaces and build deploy, without old transports,
+  bundles, or publication framework. (6) all local checks and maintainer docs
+  are complete. No push, credentials setup, benchmark, or real publication ran.
+- Hosted permissions, service credentials, remote files, and publication success
+  remain unverified by design. No implementation follow-up or blocker remains;
+  task remains open for review rather than being closed by this pass.

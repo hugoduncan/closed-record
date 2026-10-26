@@ -26,9 +26,13 @@
 Build tooling stays in maintainer aliases, not runtime dependencies. The build
 uses the base dependency configuration without user configuration or aliases
 for Maven metadata. The JAR has no AOT classes, bundled dependencies, or
-development files. No local Maven installation or deployment is provided.
+development files. No local Maven installation is provided. `deploy` validates credentials, builds,
+and calls stock deps-deploy 0.2.2 through the tooling-only `:deploy` alias.
+Both `jar` and `deploy` return `:version`, `:jar-file`, and `:pom-file`.
+The `:release` and `:release-test` aliases isolate notes/preparation tooling
+and its tests from runtime paths. See the [release architecture](../release-workflow.md).
 
-See [README build instructions](../../README.md#build-a-library-jar) for
+See [README build instructions](../../README/development.md#build-a-library-jar) for
 commands, output paths, the Git version rule, and history requirements.
 
 ## Boundaries

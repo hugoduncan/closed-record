@@ -23,7 +23,7 @@ workflow inspection do not establish hosted permissions or successful publicatio
 
 ## Maintainer procedure
 
-README must give exact commands:
+[README release instructions](../../README/releases.md) give exact commands:
 
 1. Supply CLOJARS_USERNAME and CLOJARS_PASSWORD, with artifact authorization.
    Reuse secret names, not another repository's stored values.

@@ -1,0 +1,182 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Build and check without publication
+        type: boolean
+        default: true
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Require master dispatch
+        env:
+          DISPATCH_REF: ${{ github.ref }}
+        run: test "$DISPATCH_REF" = refs/heads/master
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-java@v4.7.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: DeLaGuardo/setup-clojure@13.4
+        with:
+          cli: '1.12.6.1673'
+          clj-kondo: '2026.04.15'
+          cljfmt: '0.16.4'
+      - name: GitHub CLI version
+        run: gh --version
+      - name: Check formatting
+        run: cljfmt check src test dev test-build test-release build.clj
+      - name: Lint
+        run: clj-kondo --lint src test dev test-build test-release build.clj --fail-level warning
+      - name: Test runtime-111
+        id: runtime-111
+        run: clojure -M:test -m scry.cli
+      - name: Upload runtime-111 failures
+        if: ${{ failure() && steps.runtime-111.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: release-scry-runtime-111
+          path: .scry-results/
+          include-hidden-files: true
+          if-no-files-found: warn
+      - name: Test runtime-112
+        id: runtime-112
+        run: clojure -M:test:clj-1.12 -m scry.cli
+      - name: Upload runtime-112 failures
+        if: ${{ failure() && steps.runtime-112.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: release-scry-runtime-112
+          path: .scry-results/
+          include-hidden-files: true
+          if-no-files-found: warn
+      - name: Test runtime-113
+        id: runtime-113
+        run: clojure -M:test:clj-1.13 -m scry.cli
+      - name: Upload runtime-113 failures
+        if: ${{ failure() && steps.runtime-113.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: release-scry-runtime-113
+          path: .scry-results/
+          include-hidden-files: true
+          if-no-files-found: warn
+      - name: Test build
+        id: build
+        run: clojure -M:test:build-test -m scry.cli --dir test-build
+      - name: Upload build failures
+        if: ${{ failure() && steps.build.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: release-scry-build
+          path: .scry-results/
+          include-hidden-files: true
+          if-no-files-found: warn
+      - name: Test release
+        id: release
+        run: clojure -M:test:release:release-test -m scry.cli --dir test-release
+      - name: Upload release failures
+        if: ${{ failure() && steps.release.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: release-scry-release
+          path: .scry-results/
+          include-hidden-files: true
+          if-no-files-found: warn
+      - name: Select notes
+        id: notes
+        env:
+          PUBLISH: ${{ toJSON(inputs['dry-run']) == 'false' }}
+        run: |
+          options=()
+          if [[ "$PUBLISH" != true ]]; then options+=(--preview); fi
+          clojure -M:release -m closed-record.release notes \
+            "$RUNNER_TEMP/release-notes.md" "$GITHUB_OUTPUT" "${options[@]}"
+      - name: Build preview
+        if: ${{ toJSON(inputs['dry-run']) != 'false' }}
+        run: clojure -T:build jar
+      - name: Report selection
+        env:
+          SHA: ${{ steps.notes.outputs.sha }}
+          VERSION: ${{ steps.notes.outputs.version }}
+          TAG: ${{ steps.notes.outputs.tag }}
+          SOURCE: ${{ steps.notes.outputs.source }}
+          PREPARATION_REQUIRED: ${{ steps.notes.outputs.preparation-required }}
+          DRY_RUN: ${{ toJSON(inputs['dry-run']) != 'false' }}
+        run: |
+          printf 'Dry run: %s\nSHA: %s\nVersion: %s\nTag: %s\nNotes source: %s\nPreparation required: %s\n' \
+            "$DRY_RUN" "$SHA" "$VERSION" "$TAG" "$SOURCE" "$PREPARATION_REQUIRED" >> "$GITHUB_STEP_SUMMARY"
+      - name: Validate publication credentials
+        if: ${{ toJSON(inputs['dry-run']) == 'false' }}
+        env:
+          CLOJARS_USERNAME: ${{ secrets.CLOJARS_USERNAME }}
+          CLOJARS_PASSWORD: ${{ secrets.CLOJARS_PASSWORD }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for variable in CLOJARS_USERNAME CLOJARS_PASSWORD GH_TOKEN; do
+            value=${!variable}
+            if [[ -z "${value//[[:space:]]/}" ]]; then
+              echo "Missing credential: $variable" >&2
+              exit 1
+            fi
+          done
+      - name: Create and push tag
+        if: ${{ toJSON(inputs['dry-run']) == 'false' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.notes.outputs.tag }}
+        run: |
+          git tag "$TAG" HEAD
+          git -c credential.helper= -c 'credential.helper=!gh auth git-credential' \
+            push origin "refs/tags/$TAG:refs/tags/$TAG"
+      - name: Build and deploy to Clojars
+        id: deploy
+        if: ${{ toJSON(inputs['dry-run']) == 'false' }}
+        env:
+          CLOJARS_USERNAME: ${{ secrets.CLOJARS_USERNAME }}
+          CLOJARS_PASSWORD: ${{ secrets.CLOJARS_PASSWORD }}
+        run: clojure -T:build:deploy deploy :github-output "\"$GITHUB_OUTPUT\""
+      - name: Create GitHub Release
+        if: ${{ toJSON(inputs['dry-run']) == 'false' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TAG: ${{ steps.notes.outputs.tag }}
+          JAR_FILE: ${{ steps.deploy.outputs.jar-file }}
+          POM_FILE: ${{ steps.deploy.outputs.pom-file }}
+        run: |
+          test -f "$JAR_FILE"
+          test -f "$POM_FILE"
+          gh release create "$TAG" --repo "$REPOSITORY" --title "$TAG" \
+            --verify-tag --notes-file "$RUNNER_TEMP/release-notes.md" "$JAR_FILE" "$POM_FILE"
+      - name: Report failure
+        if: ${{ failure() }}
+        env:
+          STEP_OUTCOMES: ${{ toJSON(steps) }}
+        run: |
+          {
+            echo 'Release workflow failed. Failed steps:'
+            jq -r 'to_entries[] | select(.value.outcome == "failure") | "- " + .key' <<< "$STEP_OUTCOMES"
+            echo 'See the failed step in the job log, including setup and quality checks.'
+            echo 'Inspect GitHub tags, Releases, assets, and Clojars before another attempt. Publication can be partial. No automatic rollback or resume is provided.'
+          } >> "$GITHUB_STEP_SUMMARY"

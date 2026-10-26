@@ -51,7 +51,7 @@ Main form: `defclosedrecord`.
 
 ## Release architecture
 
-- Intended architecture: `ramora/release-workflow.md`. Follow scry's build.clj:
+- Implemented architecture: `ramora/release-workflow.md`. Follow scry's build.clj:
   check credentials, build the one JAR/POM, call stock deps-deploy, return paths.
 - Manual master dispatch, default dry run, one full-history dispatch-SHA checkout,
   one job, checks before writes, and step-scoped secrets. Deployment may rebuild
@@ -62,12 +62,24 @@ Main form: `defclosedrecord`.
 - Use ordinary Git tag push and `gh release create --verify-tag --notes-file`.
   Standard tool-internal retries, redirects, checksum handling, and temporary
   draft cleanup are accepted. No custom transport or remote-absence proof.
-- All task-015 implementation is reverted to baseline `c9066bd`: no release or
-  deployment source/tests, changelog, or release/deploy aliases remain. Packaging
+- All task-015 implementation is reverted to baseline `c9066bd`: the old release and
+  deployment source/tests, changelog, and aliases were removed before replacement. Packaging
   docs also match the baseline. Build the small path without restoring that
-  module hierarchy; the architecture above is intended, not implemented.
+  module hierarchy; the replacement architecture above is now implemented.
 - Existing packaging remains in `build.clj`. No release has been published by
-  this work. The new path will add stock deps-deploy 0.2.2 outside runtime deps.
+  this work. `:deploy` now adds stock deps-deploy 0.2.2 outside runtime deps.
+- `build/deploy` checks environment credentials before building, calls stock
+  deps-deploy, and returns version/JAR/POM paths. Optional `:github-output`
+  appends `version`, `jar-file`, and `pom-file` after deployment succeeds.
+  Pure notes support is in `dev/release/closed_record/notes.clj`: full validation,
+  stamping, and preview-aware selection. Focused tests use :release:release-test
+  and --dir test-release. Local preparation is in `closed-record.release/prepare`, with clean-master
+  and full-history guards and a changelog-only commit. The notes CLI exports a supplied notes file and appends GitHub outputs
+  (`sha`, `version`, `tag`, `source`, `preparation-required`); only `--preview`
+  permits Unreleased fallback. `.github/workflows/release.yml` implements the manual
+  path with typed explicit-false publication gates and command-scoped Git token
+  authentication. Ordinary CI includes release-tooling checks. Local actionlint
+  passes; hosted execution and publication remain unverified.
 - Historical transport findings are in the closed release task's implementation
   log. They describe library behaviour, not active release blockers. For current
   work and acceptance, follow `munera/plan.md`.
@@ -88,7 +100,7 @@ Main form: `defclosedrecord`.
 - Root `LICENSE` contains EPL-2.0 text and is included in the JAR.
 - `ramora/defclosedrecord/embodiment.md` maps build artifacts and dependency
   boundaries; it links to README for build commands and version requirements.
-- README Development documents build, clean, version/history requirements,
+- README links to `README/development.md` and `README/releases.md` for build, clean, version/history requirements,
   artifact paths, and the separate build-test command. No release is published.
 - Focused build tests: `clojure -M:test:build-test -m scry.cli --dir test-build`.
   Test subprocesses use `clojure.java.shell` to retain Clojure 1.11 support.
@@ -127,3 +139,9 @@ Munera tracks the tasks. Do not record tasks or task progress in this file.
 - `README.md`
 - `munera/plan.md`
 - `ramora/INDEX.md`
+
+## Release verification
+
+Java 21 full-path format/lint, all three runtime suites, focused build/release
+suites, JAR packaging, and actionlint 1.7.12 pass locally. Maintainer commands
+and manual recovery are in `README/releases.md`. No hosted publication is verified.

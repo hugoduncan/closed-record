@@ -21,7 +21,7 @@ the artifact map. Do not add an injected transport or a second artifact.
 Pass the successful deploy result paths to subsequent workflow steps, rather
 than reconstructing filenames. A small optional `:github-output` argument to
 `deploy` will append version/JAR/POM step outputs after success when supplied; it must not
-replace the normal return map or print credentials. Test output formatting as
+replace the normal return map or print credentials. The output keys are `version`, `jar-file`, and `pom-file`. Test output formatting as
 local data handling. No bundle, manifest protocol, or publication framework.
 
 ### Notes and local preparation
@@ -43,6 +43,10 @@ from HEAD, validates the full changelog, writes the selected body to a supplied
 file, and reports notes source and preparation status as step outputs. Only an
 explicit preview option permits Unreleased fallback. Store notes under
 `RUNNER_TEMP`, not `target/`, because packaging deletes `target/`.
+
+CLI contract: `notes NOTES_FILE GITHUB_OUTPUT [--preview]`. Outputs are `sha`,
+`version`, `tag`, `source`, and `preparation-required`. Selection requires full
+history and validates before writing either file.
 
 Use pure state-based tests and real isolated Git fixtures, explicitly initialized
 on master. Disable inherited Git overrides, hooks, and signing in fixtures.
@@ -99,13 +103,14 @@ absence checks, outer retries, rollback, clobbering, release edits, or resume.
 
 1. Deployment contract and build tests (acceptance 1, 5).
 2. Shared notes validation, preparation, selection, and Git tests (acceptance 2).
-3. Manual workflow and ordinary CI coverage (acceptance 3, 4).
+   Commit pure notes support as 2a, then Git preparation as 2b and notes CLI integration as 2c.
+3. Manual workflow and ordinary CI coverage (acceptance 3, 4), implemented and locally checked.
 4. Maintainer documentation and Java 21 acceptance checks (acceptance 5, 6).
 
 Follow [steps.md](steps.md). Record commands, results, decisions, and hosted limits
 in implementation.md; commit each completed slice. Do not push, configure
-secrets, or publish. The existing README describes the baseline, not a conflict
-with this intended architecture. Task 015 remains historical only.
+secrets, or publish. README now links to development and release instructions; architecture docs
+describe the implemented path. All four slices passed local acceptance. Task 015 remains historical only.
 
 ## Plan and design review
 

@@ -1,6 +1,6 @@
 # Release Workflow Design
 
-Status: intended. [Task 016](../munera/open/016-simple-release-workflow/design.md)
+Status: implemented; locally verified. Hosted publication is not verified. [Task 016](../munera/open/016-simple-release-workflow/design.md)
 owns scope and acceptance. The release path follows scry's build.clj deployment
 pattern, with manual dispatch and normal GitHub CLI publication.
 
