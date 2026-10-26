@@ -41,14 +41,27 @@ This page gives the rules that the commands do not show.
   `test`. See `mementum/knowledge/artifact-verification.md` for fixture and
   consumer isolation rules.
 
+## CLI process lifetime and arguments
+
+- `clojure.java.shell/sh` uses futures that can keep a successful CLI JVM alive.
+  The release CLI timed out in subprocess tests until its `-main` called
+  `shutdown-agents` in `finally`. Keep this cleanup at the standalone CLI
+  boundary, not in callable functions used by a REPL or another application.
+- Tools CLI arguments are EDN, not just shell strings. To pass a path as a
+  string, preserve EDN quotes through shell parsing. The workflow uses
+  `:github-output "\"$GITHUB_OUTPUT\""`; shell quoting alone is insufficient.
+
+Evidence: task 016 implementation log, slices 2c and 3; commits `d8378b2`
+and `c1112e4`.
+
 ## Continuous integration
 
 - `.github/workflows/ci.yml` owns setup and orchestration for pushes to
   `master` and all pull-request targets. It uses Ubuntu, Temurin 21,
   read-only contents access, and no stored checkout credentials.
 - Pinned tools: Clojure CLI 1.12.6.1673, cljfmt 0.16.4, clj-kondo 2026.04.15.
-  Quality commands: `cljfmt check src test dev test-build build.clj` and
-  `clj-kondo --lint src test dev test-build build.clj --fail-level warning`.
+  Quality commands: `cljfmt check src test dev test-build test-release build.clj` and
+  `clj-kondo --lint src test dev test-build test-release build.clj --fail-level warning`.
 - The runtime matrix uses the three README test commands, with fail-fast
   disabled. `deps.edn` owns runtime versions, not the CLI setup version.
 - Build verification runs once outside the matrix: focused `test-build`
@@ -57,6 +70,12 @@ This page gives the rules that the commands do not show.
 - Failed test steps upload hidden `.scry-results/` files under distinct
   `scry-runtime-<version>` and `scry-build` names. Missing files warn without
   clearing the test failure. A JAR-only failure does not upload test results.
+- Release-tooling tests run separately with `--dir test-release` and the
+  `:test:release:release-test` aliases; their failure artifact is `scry-release`.
+- When one job runs several scry suites, preserve each suite's hidden failure
+  files before another invocation can clear `.scry-results/`. The manual
+  release workflow uploads failures immediately after each suite and stops
+  later suites through normal success gating (task 016, `c1112e4`).
 - Local validation is not proof of hosted Ubuntu or fork-event execution.
 
 ## Scry
