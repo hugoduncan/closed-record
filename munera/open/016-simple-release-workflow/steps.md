@@ -1,27 +1,65 @@
 # Implementation steps
 
-This is a new acceptance checklist. Start from the pre-015 implementation
-baseline; do not reuse its module hierarchy. Do not resume task 015. No real publication for acceptance.
+Follow [plan.md](plan.md) and the stable [design.md](design.md). No real
+publication for acceptance. Record evidence in implementation.md.
 
-## 1. Simple tooling
+## Completed baseline
 
-- [x] Restore pre-015 code/dependencies and packaging docs (`c9066bd`); remove all task-015 release/deployment source, tests, and changelog. Preserve closed task history and the 016 design.
-- [ ] Add scry-style credential validation and stock deps-deploy deployment in build.clj; return JAR/POM/version details and keep runtime dependencies unchanged.
-- [ ] Implement small local preparation and notes extraction with a maintained changelog; test invalid notes and credential checks without publication.
-- [ ] Run new release and existing build tests, format/lint, and removed-reference checks; record results and commit.
+- [x] Restore pre-015 implementation and packaging docs; remove task-015 release code, tests, aliases, and changelog. Preserve closed task history. Completed in `6e66d98`; baseline comparison recorded in implementation.md.
 
-## 2. Workflow
+## 1. Deployment contract
 
-- [ ] Add one-job manual master-only workflow with default dry run, explicit-false publication, full-history dispatch-SHA checkout, timeout, and non-cancelling concurrency.
-- [ ] Run all required checks before publication; preserve scry failure evidence and add new release tooling to ordinary CI coverage.
-- [ ] Add dry-run build and notes summary with no Clojars secrets or publication writes.
-- [ ] Connect credential validation, ordinary Git tag push, stock build/deploy, and gh Release creation; stop on command failure, with no custom retry/rollback or preflight layer.
-- [ ] Check token scope, non-persistent checkout credentials, explicit repository, existing-tag requirement, and exact post-deploy asset paths. Record gh version at runtime.
-- [ ] Run actionlint and inspect gates/sequence; record local evidence and hosted limits; commit.
+- [ ] Add pinned stock deps-deploy 0.2.2 in a tooling-only `:deploy` alias; confirm base runtime dependencies are unchanged.
+- [ ] Extend `jar` to return its existing POM path alongside version/JAR path; verify both files in the real build fixture.
+- [ ] Add credential validation for absent, empty, and whitespace-only Clojars values; errors name missing variables without values.
+- [ ] Add `deploy` with credential-check → jar → lazy stock deploy → artifact-map return; inspect the single remote installer call and absence of alternate transports.
+- [ ] Add optional GitHub step-output writing from the successful deploy result; test emitted version/JAR/POM fields without publication.
+- [ ] Add isolated subprocess tests for missing credentials; assert build output remains unchanged and diagnostic output contains no supplied secret value.
+- [ ] Extend artifact fixtures with release-tooling exclusion probes; verify source/license content, Maven metadata, runtime dependency isolation, and isolated consumer loading.
+- [ ] Run focused build tests and format/lint for changed code; record exit codes and structured failures in implementation.md.
+- [ ] Commit slice 1 after its checks pass.
 
-## 3. Documentation and acceptance
+## 2. Notes and preparation
 
-- [ ] Document preparation, separate push, preview, publication, credential setup, accepted stock-tool behaviour, and manual partial-failure inspection.
-- [ ] Align architecture and artifact paths with the simplified implementation; remove stale active requirements and commands.
-- [ ] Run Java 21 quality, three runtime suites, build/release tests, and actionlint; inspect scry results and record commands.
-- [ ] Check all six acceptance criteria, runtime artifact isolation, and absence of unused task-015 infrastructure. Commit; do not claim hosted success or publish for acceptance.
+- [ ] Add composable `:release` and `:release-test` aliases for `dev/release` and `test-release`; verify release tests remain outside default runtime discovery.
+- [ ] Create CHANGELOG.md with exact Unreleased heading and factual notes; do not add historical versions.
+- [ ] Implement shared line-based validation for the full design contract; keep body Markdown opaque and notes logic outside build.clj.
+- [ ] Add validator tests for exact headings, canonical positive versions, calendar dates, trailing spaces, unknown headings, duplicate versions across dates, and repeated/missing/misplaced Unreleased.
+- [ ] Add body tests for preamble, zero dated sections, whitespace-only bodies, empty prior sections, subheadings/comments, and section headings inside fences/comments.
+- [ ] Implement pure stamping with explicit UTC date and next version; verify prior entries survive and Unreleased becomes empty.
+- [ ] Implement notes selection; test exact match, preview-only absent-version fallback, empty Unreleased rejection, and no fallback for malformed/empty matching notes.
+- [ ] Implement `prepare` guards for clean master and complete history; reject invalid notes or an existing next version before modification.
+- [ ] Implement the changelog-only `Release vVERSION` commit and resulting version check; leave partial failures for inspection without reset/tag/push.
+- [ ] Add isolated real Git fixtures initialized on master, with fixture identity/configuration and no inherited Git overrides, hooks, or signing.
+- [ ] Test successful preparation: UTC date, one commit, exact message, changelog-only diff, preserved notes, matching count/version, and unchanged tags/local bare remote.
+- [ ] Test preparation rejection for staged/unstaged/untracked changes, wrong branch, detached HEAD, shallow history, invalid notes, and duplicate next version; assert no modification.
+- [ ] Test commit failure with a fixture-owned rejecting hook; assert nonzero exit, unchanged HEAD, and retained changelog changes for inspection.
+- [ ] Add the `notes` CLI with an explicit preview option, supplied notes-file path, and SHA/version/tag/source/preparation outputs; test prepared and preview modes in real Git fixtures.
+- [ ] Run `clojure -M:test:release:release-test -m scry.cli --dir test-release` and changed-code format/lint; record results in implementation.md.
+- [ ] Commit slice 2 after its checks pass.
+
+## 3. Workflow and CI
+
+- [ ] Create release.yml with manual-only dispatch, master guard, typed default-true dry run, one fixed full-history checkout, disabled persisted credentials, timeout, and non-cancelling concurrency.
+- [ ] Add Ubuntu/Temurin 21 setup with CI-consistent pins and a logged gh version.
+- [ ] Add format/lint, three runtime commands, focused build tests, and focused release tests before publication; exclude benchmarks.
+- [ ] Add failure-only uploads of hidden scry results before a later test invocation can erase them.
+- [ ] Add notes selection under RUNNER_TEMP and dry-run build/summary; report preparation required on fallback without exposing publication secrets.
+- [ ] Add explicit-false credential validation before tagging; check Clojars variables and GitHub token without logging values.
+- [ ] Add gated ordinary tag creation/push at HEAD using command-scoped token authentication; do not force or update master.
+- [ ] Add gated build/deploy with result step outputs; provide Clojars secrets only where needed.
+- [ ] Add gated gh Release creation from deploy outputs with file-existence checks, explicit repository/title, --verify-tag, and --notes-file; no intervening build or clobber.
+- [ ] Add a failed-step summary instructing GitHub/Clojars inspection before another attempt; add no retry, rollback, or resume.
+- [ ] Extend ordinary read-only CI quality paths and focused test coverage for release tooling, including scry failure uploads.
+- [ ] Inspect true/false/missing-input gates, secret placement, fixed SHA, and fail-stop sequence against acceptance 3–4; record actionlint results for both workflows.
+- [ ] Commit slice 3 after its checks pass.
+
+## 4. Documentation and acceptance
+
+- [ ] Update README with exact prepare, inspect, separate push, preview, publish, and credential instructions; explain partial failures and independent remote inspection.
+- [ ] Align release architecture and packaging documentation with implemented commands, ownership, and returned artifact paths.
+- [ ] Run Java 21 format/lint across src, test, dev, test-build, test-release, and build.clj; record commands/results.
+- [ ] Run all three runtime suites plus focused build/release suites on Java 21; inspect exit codes and .scry-results after each run.
+- [ ] Run actionlint on both workflows and check documentation links; record results.
+- [ ] Audit all six acceptance criteria, runtime isolation, and absence of task-015 infrastructure; record local evidence and hosted limits in implementation.md.
+- [ ] Commit slice 4 without pushing, configuring secrets, or publishing.

@@ -2,90 +2,118 @@
 
 ## Approach
 
-Follow [design.md](design.md), not task 015's transport contracts. Implement
-three coherent slices. Do not restart dependency-source audits or add a general
-release framework. Tests must prove our logic, not stronger guarantees than
-stock deps-deploy or gh provides.
+[design.md](design.md) owns scope and acceptance. Follow scry's single-artifact
+`deploy`, not `deploy-all` or task 015's abandoned contracts. The pre-015 revert
+is complete (commit `6e66d98`); do not repeat it or restore its module hierarchy.
+Keep runtime source, dependencies, source-only packaging, license, and Git-count
+version unchanged. No real publication is required for acceptance.
 
-## 1. Simplify and add standard deployment
+### Build and deployment
 
-Start from the pre-015 implementation baseline (`c9066bd`). All task-015 source,
-tests, changelog, release/deploy aliases, and packaging-doc additions are removed.
-Keep the closed task history, not its implementation. Do not restore its modules
-wholesale or replace its frameworks with equivalent abstractions.
+Add stock `slipset/deps-deploy` 0.2.2 under `:deploy`, outside runtime dependencies.
+Keep `clojure -T:build jar` usable without deployment dependencies or credentials.
+Extend its result with `:pom-file`, retaining `:jar-file` and `:version`.
+`clojure -T:build:deploy deploy` checks nonblank Clojars credentials before
+building, calls `jar`, lazy-loads stock `deps-deploy.deps-deploy/deploy`, calls it
+with `{:installer :remote :artifact jar-path :pom-file pom-path}`, and returns
+the artifact map. Do not add an injected transport or a second artifact.
 
-Create small notes/preparation helpers under `dev/release` and focused tests under
-`test-release`. Add composable `:release` and `:release-test` aliases as needed,
-without data.json unless actual code requires it. Add `:deploy` with stock
-deps-deploy 0.2.2. Seed factual Unreleased notes, not historical releases.
-Implement `clojure -M:release -m closed-record.release prepare` with the design's
-clean-master, count/version, notes-only commit, and no-remote-write requirements.
-Use scry's small changelog approach rather than the old task's adapter hierarchy.
-Retain existing pre-015 build/runtime test boundaries.
+Pass the successful deploy result paths to subsequent workflow steps, rather
+than reconstructing filenames. A small optional `:github-output` argument to
+`deploy` will append version/JAR/POM step outputs after success when supplied; it must not
+replace the normal return map or print credentials. Test output formatting as
+local data handling. No bundle, manifest protocol, or publication framework.
 
-Extend `build.clj` with scry-style credential validation and `deploy`:
-validate environment, call `jar`, call stock
-`deps-deploy.deps-deploy/deploy` with `{:installer :remote :artifact jar-path
-:pom-file pom-path}`, return artifact details. Have `jar` return its POM path
-as well as version/JAR path. Command: `clojure -T:build:deploy deploy`.
-Lazy-load deployment dependencies. Do not copy scry's second-artifact machinery.
+### Notes and local preparation
 
-Use existing real build fixtures to verify artifact paths, coordinate, version,
-and runtime dependency isolation. Test missing credentials before any build or
-network work. Inspect the short stock-library call; no mock service or real
-Clojars publication is needed. Do not add dependency injection solely to count
-network calls. Use a small notes extraction command if the workflow needs one.
+Use small functions under `dev/release` and focused tests under `test-release`.
+Add composable `:release` and `:release-test` aliases without `:main-opts`.
+Use `clojure -M:release -m closed-record.release prepare` from the repository
+root. Seed `CHANGELOG.md` with factual Unreleased notes, not invented releases.
 
-## 2. Add the manual workflow
+One shared line-based validator implements every changelog rule in the design.
+Keep it separate from build tooling. Pure functions handle validation,
+selection, and stamping with an explicit UTC date. Preparation checks clean
+master and full history, validates before writing, commits only CHANGELOG.md
+as `Release vVERSION`, then checks the resulting commit-count version. Report
+partial failures without reset. Run without concurrent local edits.
 
-Create `.github/workflows/release.yml` with one job, master-only manual dispatch,
-boolean default-true dry run, full-history checkout at `github.sha`, non-persistent
-credentials, finite timeout, and non-cancelling concurrency. No target input.
-Use CI's tool/action pins and Java 21. Use runner-provided gh and record
-`gh --version`; a separately installed CLI pin is not required.
+Add a small `notes` CLI entry point for the workflow. It derives SHA/version/tag
+from HEAD, validates the full changelog, writes the selected body to a supplied
+file, and reports notes source and preparation status as step outputs. Only an
+explicit preview option permits Unreleased fallback. Store notes under
+`RUNNER_TEMP`, not `target/`, because packaging deletes `target/`.
 
-Use GitHub's typed boolean input for the publication condition; missing/invalid
-input must not authorize writes. Pass values through environment variables or
-arguments, not generated Clojure/shell source. Run quality, runtime, build, and
-release tests before writes. Normal fail-fast workflow steps suffice;
-collect failure evidence with `if: failure()` as in CI. Do not require all runtime
-suites to continue after failure. Extend ordinary CI to cover new tooling.
+Use pure state-based tests and real isolated Git fixtures, explicitly initialized
+on master. Disable inherited Git overrides, hooks, and signing in fixtures.
+Use Clojure-1.11-compatible subprocess APIs. Test credential rejection with
+absent/blank environment values before build effects; never exercise a real
+upload. Inspect the short stock deployment call instead of mocking services or
+auditing dependency internals.
 
-Resolve version from the one checkout and select notes. Build a dry-run preview
-with `clojure -T:build jar`. For publication, validate credentials, create the
-local tag and push it without force, call `clojure -T:build:deploy deploy`, then
-create the GitHub Release. Use workflow-token authentication for Git push without
-persisting credentials. A failed step prevents subsequent publication steps.
+### Workflow and operation
 
-The deploy command builds before upload. Derive its conventional output paths
-from the checked version and assert they exist before passing them to gh. No
-build or cleanup may occur between deployment and GitHub upload. Use
-`gh release create` with explicit tag/repository/title, `--verify-tag`,
-`--notes-file`, JAR and POM. Set `GH_TOKEN` only where needed. Do not use `--clobber`.
+Use one Ubuntu/Temurin 21 job in `.github/workflows/release.yml`, only
+`workflow_dispatch`, default-true boolean `dry-run`, and a master-ref guard before
+checkout. One full-history checkout uses `github.sha` with credential persistence
+disabled. Set a finite timeout and one constant release concurrency group with
+cancellation disabled. Use the action/tool pins in CI; record runner `gh --version`.
 
-Do not add service absence checks, gh API publication writes, outer retries, or
-rollback. Accept the tools' internal behaviour. GitHub step logs and a short
-summary identify completed/failed steps; no structured outcome engine is needed.
+Require explicit typed false for every publication step. Guard against missing
+input coercion as well as true; use a serialized typed-value comparison such as
+`toJSON(inputs['dry-run']) == 'false'`. Retain normal success gating. Pass values
+as environment data or arguments, not generated shell/Clojure source.
 
-## 3. Document and verify
+Run format/lint, three runtime suites, focused build tests, and release tests
+before publication. Preserve hidden scry failure files before another invocation
+can clear them; normal fail-fast sequencing suffices. Extend read-only ordinary
+CI to cover release code/tests. No benchmarks.
 
-Document prepare, inspect, separate push, manual dry run, manual publication,
-Clojars credentials, and partial-failure inspection. Explain that deploy rebuilds
-from the same checkout, internal retries/cleanup are allowed, and rerunning a
-partial release is not automatic recovery. Update architecture paths to match
-what remains. No claims of hosted success without evidence.
+Dry run selects notes, builds locally, and reports SHA/version/tag/source and
+preparation status without Clojars secrets or release writes. Publication
+requires matching notes, validates Clojars and GitHub credential presence before
+tagging, creates/pushes `vVERSION` at HEAD without force, deploys, then invokes
+`gh release create --verify-tag --notes-file` with explicit repository/title and
+the deploy step's JAR/POM outputs. Check those files exist; do not rebuild or
+clean between deploy and upload. Authenticate Git with the workflow token only
+for that command, without storing credentials. Scope Clojars secrets to validation
+and deployment; scope `GH_TOKEN` to publication steps that need it.
 
-Run Java 21 quality checks, all three runtime suites, focused build/release
-suites, and actionlint. Use scry exit codes and structured failure files. Check
-that removed namespaces/aliases have no live references and runtime packaging is
-unchanged. Record results in implementation.md and mark steps continuously.
-Commit each completed slice. Do not publish for acceptance.
+Use named steps and a failure summary for manual inspection. Add no remote
+absence checks, outer retries, rollback, clobbering, release edits, or resume.
 
-## Risks and limits
+## Risks
 
-Standard tools can leave partial remote state or return before every remote file
-has been independently checked. Maintainers inspect services after publication
-or failure. Git/service conflicts are handled by ordinary command failure, not
-an atomic preflight. The single job trusts master code and has write permission;
-credentials are limited to publishing steps. These are accepted trade-offs, not
-reasons to reconstruct task 015.
+- The single job has contents-write permission and trusts maintainer-controlled
+  master. Step gates and secret placement are the chosen boundary.
+- Git-count versions change with commits; later master advancement does not
+  retarget a dispatch. A new dispatch checks its own SHA and notes again.
+- Preparation can leave local changes after commit failure. Publication can
+  leave partial remote state. Maintainers must inspect before retrying.
+- Stock tools can retry internally or clean up drafts. Command success is not
+  independent remote-file verification. These are accepted limits.
+- Local tests/actionlint cannot establish hosted permissions, credentials, or
+  publication success. No known blocker requires a design decision.
+
+## Slice order
+
+1. Deployment contract and build tests (acceptance 1, 5).
+2. Shared notes validation, preparation, selection, and Git tests (acceptance 2).
+3. Manual workflow and ordinary CI coverage (acceptance 3, 4).
+4. Maintainer documentation and Java 21 acceptance checks (acceptance 5, 6).
+
+Follow [steps.md](steps.md). Record commands, results, decisions, and hosted limits
+in implementation.md; commit each completed slice. Do not push, configure
+secrets, or publish. The existing README describes the baseline, not a conflict
+with this intended architecture. Task 015 remains historical only.
+
+## Plan and design review
+
+Reviewed plan ambiguities with steps.md as read-only context. The deploy-output
+handoff is now explicit; no blocking plan ambiguity remains. Reviewed design.md
+for internal conflicts and against all three release architecture pages, scry's
+single-artifact deploy, the baseline build/CI, and the historical task-015 link.
+No inconsistency requires a design change. The design leaves CLI/output details
+to implementation; this plan selects them. No unresolved scope question remains.
+Local Markdown links and `git diff --check` pass. This is planning evidence only;
+no runtime tests, hosted checks, or publication ran.
