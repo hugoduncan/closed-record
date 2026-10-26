@@ -30,6 +30,23 @@ Use them when changing packaging, runtime source layout, or build tests.
   overrides. Verify that protected external files and checkout output remain
   unchanged. Do not confuse CLI cache changes with changes to protected files.
 
+## Branch and shallow-history fixtures
+
+- Select the branch explicitly when behavior depends on it. Release fixtures
+  use `git init -b master`; isolated Git configuration does not select a branch.
+- For a real local shallow clone, use `git clone --depth=1 file:///absolute/path`.
+  The `file:/...` form was treated as SSH during release fixture verification.
+  Assert that the resulting repository is shallow and has the expected count.
+- Each entry point that derives a version from Git history needs its own
+  shallow-history rejection test. A preparation test does not cover notes
+  export. Give the shallow fixture otherwise valid notes matching its truncated
+  count, so unrelated validation cannot hide a missing history guard. Exercise
+  both publication and preview modes; assert nonzero exit and unchanged output
+  bytes. Preview must not report a version from incomplete history.
+
+Evidence: task 016 implementation log, slice 2b and shallow-notes review
+follow-up; commits `a55e8ba` and `0c9ec7b`.
+
 ## Test the archive contract, not a fixed inventory
 
 - Derive expected runtime entries from fixture sources and compare packaged
