@@ -36,3 +36,50 @@
   whitespace checks passed. No remote writes or publication.
 - Next: implement the small 016 build/deploy, notes, workflow, and docs from this
   baseline. The revert is complete; the replacement implementation is not.
+
+## 2026-10-23 — Architecture review
+
+- No architectural review feedback. Scope unchanged; no new design steps.
+- `ramora/META.md` and `doc/architecture.md` are absent. Review used `AGENTS.md`,
+  the release architecture linked from `ramora/INDEX.md`, and the library's
+  principles and embodiment. The release architecture is intended; the packaging
+  embodiment describes the pre-release baseline, not a ban on deployment.
+
+## 2026-10-23 — Ambiguity review
+
+- Ambiguity review added 1 new design step: define the changelog contract.
+  Scope unchanged.
+
+## 2026-10-23 — Inconsistency review
+
+- No inconsistency review feedback. Scope unchanged; no new design steps.
+
+## 2026-10-23 — Design follow-up handoff
+
+- `ramora/release-workflow/design.md` assigns notes logic outside build tooling.
+  Keep changelog validation in notes support, not in the packaging/deployment
+  interface.
+- `ramora/release-workflow/contracts-and-flow.md` describes both preparation and
+  note selection. Check it against the resolved contract so both entry points
+  use the same rules; do not restore task-015 parser rules by default.
+
+## 2026-10-23 — Changelog contract follow-up
+
+- Checked the contract against release architecture preparation and selection;
+  no architecture conflict found. No scope-question items were present.
+- Release Git fixtures must select `master` explicitly. Existing
+  `test-build/build_test.clj` uses plain `git init`; its private fixture config
+  disables hooks/signing and isolates Git settings but sets no default branch.
+- Validation: Markdown links and `git diff --check`. Design-only change; no
+  runtime tests, hosted checks, or publication.
+
+## 2026-10-23 — Ambiguity review after changelog contract
+
+- No new ambiguity review feedback. Scope unchanged; no new design steps.
+
+## 2026-10-23 — Review reference check
+
+- In `~/projects/hugoduncan/scry/scry-master/build.clj`, `deploy` is the
+  single-artifact reference: it returns the artifact map from `jar` after
+  deployment. Use that entry point as the reference, not `deploy-all`, which
+  builds and deploys both artifacts.

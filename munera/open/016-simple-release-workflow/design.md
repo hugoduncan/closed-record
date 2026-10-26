@@ -7,11 +7,10 @@ pattern in `~/projects/hugoduncan/scry/scry-master/build.clj`: check credentials
 build the JAR/POM, call stock `deps-deploy/deploy`, and return artifact details.
 Use ordinary `gh release create` for GitHub publication.
 
-The user clarified this intent after task 015 grew into a custom publication
-system. [015](../../closed/015-release-workflow/design.md) is closed without
-completion. Its implementation history is evidence, not inherited requirements.
-The [release architecture](../../../ramora/release-workflow.md) describes this
-replacement. No real release has been published by these tasks.
+[015](../../closed/015-release-workflow/design.md) is closed without completion.
+Its history is evidence, not inherited requirements. The
+[release architecture](../../../ramora/release-workflow.md) describes this
+replacement. No release has been published by these tasks.
 
 ## Scope
 
@@ -28,15 +27,34 @@ as scry does. Use the deploy result paths for GitHub assets.
 
 Create `CHANGELOG.md` and a small local preparation command from the clean
 pre-015 baseline. Do not retain the task-015 implementation.
-Preparation requires clean master, complete history, and nonempty Unreleased
-notes. It stamps the next count-based version and UTC date, preserves prior
-entries, and commits only the changelog as `Release vVERSION`. It does not tag,
-push, dispatch, or publish. Invalid or duplicate notes fail before modification;
-partial local changes remain for inspection, without automatic reset.
+Preparation requires clean master and complete history. It moves nonempty
+Unreleased notes into `0.1.<HEAD count + 1>` with the current UTC date, leaves
+empty Unreleased, preserves prior entries, and commits only the changelog as
+`Release vVERSION`. It does not tag, push, dispatch, or publish. Reject invalid
+or duplicate notes before modification; leave partial local failures for
+inspection without automatic reset.
 
-Publication requires nonempty notes matching the checked-out commit's version.
-A dry run may preview Unreleased if no matching section exists; clearly report
-that preparation is required. An invalid matching section must not fall back.
+The same small, line-based contract governs preparation and note selection:
+
+- A section heading starts in column one with `##`, but not `###`. Only exact
+  `## [Unreleased]` and `## [VERSION] - YYYY-MM-DD` lines are valid. VERSION is
+  `0.1.N`, where N is a positive decimal integer without leading zeros; the date
+  must be a valid calendar date. No trailing spaces or alternate heading forms.
+- Require exactly one Unreleased section, before all version sections. Zero
+  version sections are allowed. Preamble before the first section is ignored.
+  A body extends to the next section heading or end of file. No Markdown parsing
+  is required: fences and comments do not hide section headings.
+- A nonempty body contains a non-whitespace character. Body Markdown is opaque;
+  comments and subheadings count as content. Duplicate means repeated Unreleased
+  or version headings, regardless of date, not repeated body text.
+- Validate all section headings and bodies before preparation or selection. Every dated
+  section, including prior versions, must be nonempty. Unreleased may be empty
+  unless selected for preparation or preview. No date/version ordering is required.
+  Preparation also rejects an existing section for the next version.
+- Publication selects only the section matching the checked-out commit's version.
+  Dry run may select nonempty Unreleased only if that section is absent, and must
+  report preparation required. Invalid or duplicate sections fail validation;
+  an empty or malformed matching section must never cause fallback.
 
 ### Manual workflow
 

@@ -56,6 +56,9 @@ Main form: `defclosedrecord`.
 - Manual master dispatch, default dry run, one full-history dispatch-SHA checkout,
   one job, checks before writes, and step-scoped secrets. Deployment may rebuild
   from that checkout. GitHub assets use the deployment outputs.
+- Intended changelog contract: exact Unreleased/dated version headings, unique
+  versions, nonblank dated bodies, and shared validation before preparation or
+  note selection. Body Markdown is opaque; empty Unreleased is valid unless used.
 - Use ordinary Git tag push and `gh release create --verify-tag --notes-file`.
   Standard tool-internal retries, redirects, checksum handling, and temporary
   draft cleanup are accepted. No custom transport or remote-absence proof.
