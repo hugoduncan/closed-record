@@ -27,14 +27,15 @@ Run the benchmarks against `defrecord` (about 6 minutes):
 ### Continuous integration
 
 [CI](../.github/workflows/ci.yml) runs on pushes to `master` and pull requests
-against any branch, including forks. Jobs use Ubuntu, Temurin Java 21,
-and Clojure CLI `1.12.6.1673`, with read-only repository permissions.
+against any branch, including forks. All jobs use Ubuntu and read-only repository permissions.
+Clojure jobs use Temurin Java 21 and Clojure CLI `1.12.6.1673`.
+The separate Markdown links job uses Babashka and lychee, not Java or Clojure CLI.
 
 The code-quality job uses cljfmt `0.16.4` and clj-kondo `2026.04.15`.
 Run the same non-writing checks locally:
 
-    cljfmt check src test dev test-build test-release build.clj
-    clj-kondo --lint src test dev test-build test-release build.clj --fail-level warning
+    cljfmt check src test dev test-build test-release build.clj bb.edn
+    clj-kondo --lint src test dev test-build test-release build.clj bb.edn --fail-level warning
 
 Formatting differences, lint warnings, and lint errors fail the job.
 The runtime matrix runs the three test commands above; `deps.edn` owns
@@ -79,3 +80,76 @@ deploy the artifact; there is no published Clojars release yet.
 Run the separate release tooling tests (pure notes and real Git fixtures):
 
     clojure -M:test:release:release-test -m scry.cli --dir test-release
+
+### Markdown links
+
+Install Git, Babashka `1.13.225`, and lychee `0.24.2`. These are development
+tools, not library dependencies. The following Bash commands select the pinned
+archives for Linux x86-64 or macOS arm64/x86-64, verify SHA-256 checksums,
+and install the binaries in `$HOME/.local/bin`. They require curl and tar;
+checksum verification uses `shasum` (macOS) or `sha256sum` (Linux).
+
+```bash
+(
+  set -euo pipefail
+  case "$(uname -s)-$(uname -m)" in
+    Linux-x86_64) bb_platform=linux-amd64-static; lychee_platform=x86_64-unknown-linux-gnu ;;
+    Darwin-arm64) bb_platform=macos-aarch64; lychee_platform=aarch64-apple-darwin ;;
+    Darwin-x86_64) bb_platform=macos-amd64; lychee_platform=x86_64-apple-darwin ;;
+    *) echo "Unsupported platform" >&2; exit 1 ;;
+  esac
+  tmp=$(mktemp -d)
+  trap 'rm -rf "$tmp"' EXIT
+  cd "$tmp"
+  bb_archive="babashka-1.13.225-$bb_platform.tar.gz"
+  lychee_archive="lychee-$lychee_platform.tar.gz"
+  bb_base=https://github.com/babashka/babashka/releases/download/v1.13.225
+  lychee_base=https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2
+  for url in "$bb_base/$bb_archive" "$lychee_base/$lychee_archive"; do
+    archive=${url##*/}
+    curl -fsSL "$url" -o "$archive"
+    curl -fsSL "$url.sha256" -o "$archive.sha256"
+    # Babashka supplies only the digest; lychee also supplies the filename.
+    printf '%s  %s\n' "$(awk '{print $1}' "$archive.sha256")" "$archive" > checksum
+    if command -v sha256sum >/dev/null; then
+      sha256sum --check checksum
+    else
+      shasum -a 256 --check checksum
+    fi
+    tar -xzf "$archive"
+  done
+  mkdir -p "$HOME/.local/bin"
+  install -m 755 bb "lychee-$lychee_platform/lychee" "$HOME/.local/bin/"
+) || exit $?
+export PATH="$HOME/.local/bin:$PATH"
+bb --version       # babashka v1.13.225
+lychee --version   # lychee 0.24.2
+```
+
+From the repository root, run:
+
+```bash
+bb dev/link_check_test.clj
+bb lychee:check
+```
+
+The fixture suite uses temporary Git repositories, real tools, and a loopback
+HTTP server. The default check needs network access. It checks all Git-tracked
+`*.md` files, including hidden directories and historical tasks. Untracked files
+and generated output are not input documents. Relative links use their source
+document; root-relative links use the checkout root. Local files, directories,
+and Markdown heading fragments are checked. HTTP and HTTPS checks follow
+redirects and verify TLS; external fragments, email, and other protocols are
+outside scope.
+
+The command runs a local fragment pass and an online pass. Missing tools,
+invalid configuration, missing targets or headings, and failed web requests
+produce a nonzero exit. Request timeouts and retries are bounded. Diagnostics
+identify the source and failed link. Neither pass rewrites documents or writes
+reports or caches. CI runs the fixtures and the same task once, outside the
+runtime matrix.
+
+Shared policy is in `lychee.toml` and `dev/link_check.clj`. No URL exceptions
+are currently needed. If a legitimate URL cannot be checked, add only an exact,
+anchored URL exclusion in `lychee.toml`, with a comment that explains why.
+Do not exclude document trees or accept error status codes to make checks pass.

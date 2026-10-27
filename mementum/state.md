@@ -40,6 +40,20 @@ Main form: `defclosedrecord`.
   in the suite (`bench_report_test.clj`, `bench_fork_test.clj`).
 - REPL: `clojure -M:test:nrepl`. In the REPL: `(require '[scry.core :as scry]) (scry/run)`.
 
+## Markdown link tooling
+
+- `bb lychee:check` selects Git-tracked Markdown from the repository root.
+  `dev/link_check.clj` runs local fragment validation then online validation
+  with shared `lychee.toml` policy. Supported tools: Babashka 1.13.225 and
+  lychee 0.24.2. `bb dev/link_check_test.clj` runs isolated real-tool
+  contract tests (seven tests, 131 assertions), with a loopback HTTP server.
+  The live repository check passes for 133 tracked Markdown files, with no
+  URL exceptions or link repairs. Tracked bytes and Git status remain unchanged.
+  CI runs fixtures and the shared task in one separate read-only job.
+  Pinned installation commands are in README/development.md; macOS arm64
+  installation and actionlint pass. Final local acceptance also passes: full-path
+  format/lint, contract fixtures, and both live passes. Hosted CI remains unverified.
+
 ## Continuous integration
 
 - `.github/workflows/ci.yml` defines read-only checks for pushes to `master`

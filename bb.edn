@@ -1,0 +1,5 @@
+{:paths ["dev"]
+ :tasks
+ {lychee:check {:doc "Check tracked Markdown links and local heading fragments."
+                :requires ([link-check :as links])
+                :task (System/exit (links/check!))}}}

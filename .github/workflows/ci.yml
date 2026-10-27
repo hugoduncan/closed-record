@@ -27,9 +27,40 @@ jobs:
           clj-kondo: '2026.04.15'
           cljfmt: '0.16.4'
       - name: Check formatting
-        run: cljfmt check src test dev test-build test-release build.clj
+        run: cljfmt check src test dev test-build test-release build.clj bb.edn
       - name: Lint
-        run: clj-kondo --lint src test dev test-build test-release build.clj --fail-level warning
+        run: clj-kondo --lint src test dev test-build test-release build.clj bb.edn --fail-level warning
+
+  links:
+    name: Markdown links
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+      - uses: DeLaGuardo/setup-clojure@13.4
+        with:
+          bb: '1.13.225'
+      - name: Install lychee 0.24.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          install_dir="$RUNNER_TEMP/lychee"
+          mkdir -p "$install_dir"
+          cd "$install_dir"
+          archive=lychee-x86_64-unknown-linux-gnu.tar.gz
+          base=https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2
+          curl --fail --location --show-error --silent "$base/$archive" -o "$archive"
+          curl --fail --location --show-error --silent "$base/$archive.sha256" -o "$archive.sha256"
+          sha256sum --check "$archive.sha256"
+          tar -xzf "$archive" --strip-components=1
+          ./lychee --version
+          echo "$install_dir" >> "$GITHUB_PATH"
+      - name: Test link-check contracts
+        run: bb dev/link_check_test.clj
+      - name: Check Markdown links
+        run: bb lychee:check
 
   test:
     name: Runtime tests (Clojure ${{ matrix.version }})

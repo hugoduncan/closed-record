@@ -1,0 +1,21 @@
+# Shared local and CI policy. Fragment modes are set by bb lychee:check.
+scheme = ["http", "https", "file"]
+hidden = true
+no_ignore = true
+skip_missing = false
+insecure = false
+method = "get"
+cache = false
+include_mail = false
+include_verbatim = false
+format = "detailed"
+mode = "plain"
+no_progress = true
+timeout = 20
+max_retries = 2
+retry_wait_time = 1
+max_redirects = 10
+max_concurrency = 8
+accept = ["200..=299"]
+accept_timeouts = false
+# No cookie jar, output file, or URL exceptions.

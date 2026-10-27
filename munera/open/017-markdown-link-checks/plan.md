@@ -105,8 +105,14 @@ unverified unless existing evidence is available; do not push to obtain it.
 
 ## Slice order
 
-1. Implement the pinned local task and shared policy.
-2. Add and run isolated contract fixtures.
-3. Check the complete repository and repair clear broken links.
-4. Add the single CI job and development documentation.
-5. Run final acceptance checks and record evidence.
+1. Implement the pinned local task and shared policy. Done; temporary real-process
+   probes passed.
+2. Add and run isolated contract fixtures. Done: seven tests, 131 assertions.
+   The complete repository check also passes; no repairs are needed.
+3. Check the complete repository and repair clear broken links. Done: 133
+   tracked documents, both passes successful, no repairs or exceptions.
+4. Add the single CI job and development documentation. Done; actionlint and
+   macOS arm64 archive installation pass.
+5. Run final acceptance checks and record evidence. Done: quality checks,
+   seven fixture tests (131 assertions), actionlint, and both live passes succeed.
+   Hosted CI remains unverified; no push was made.
