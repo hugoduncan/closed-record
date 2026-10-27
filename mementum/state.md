@@ -50,8 +50,21 @@ This is local Linux evidence, not hosted Actions evidence.
 
 ## Indexed quality scope
 
+Independent contract tests in `quality_scope_test.clj` cover required roots and
+files in project and real Git index selection, plus each missing-input diagnostic.
+Expectations permit additional scope and do not depend on production path lists.
+
+Maintained format/lint scope excludes source symlinks and does not descend
+through linked directories. Required paths reject linked components, including
+configuration parents. Indexed hooks select regular-file Git modes and exclude
+linked working paths. Explicit-path formatting retains tool link handling.
+Real commands and installed-hook tests cover external-byte and index preservation.
+
 `closed-record.index-scope/paths!` validates required indexed paths and selects
-owned Clojure/EDN files. It does not isolate working-tree content. Hook callers
+owned Clojure/EDN files. Required roots need indexed descendants; required
+files need regular-file Git modes. Working-tree scope validates required
+directory/file types before tool setup. Explicit format inputs still accept
+files and directories. It does not isolate working-tree content. Hook callers
 must supply staged-content isolation before invoking tools. `closed-record.lint/lint-index!`
 uses these paths with shared lint setup and warning-level failure. It excludes
 untracked files but still reads working-tree bytes.
@@ -127,21 +140,47 @@ untracked files but still reads working-tree bytes.
   fail-fast ordering. Internal `quality:format-staged` and `quality:lint-staged`
   tasks rely on pre-commit staged-content isolation; do not invoke them as
   independent staged-byte checks. Installed-hook tests use pre-commit 4.6.0.
+  Selected-formatting tests also preserve an unchanged committed format defect
+  during prose-only commits and separate staged-file repairs. Only the selected
+  file is repaired; rejected commits preserve HEAD, index tree, and other bytes.
+  Child hook probes return through fixture cleanup before process exit; both
+  successful and rejected commits remove their temporary roots and caches.
+  Installed-hook cases also check untracked source presence, exact bytes, and
+  absence from the index after every commit attempt.
   Clean commits, staged defects hidden by unstaged corrections, repair rejection,
-  and manual restaging pass. Partial-stage tests also verify nonconflicting edit restoration and conflicting
+  and manual restaging pass. Staged-defect checks require the indexed source path,
+  expected lint finding, and unchanged HEAD as well as byte/index preservation. Prose-only commit tests also verify whole-index lint:
+  warnings and errors in unchanged committed source block commits without changes
+  to HEAD, index tree, or working bytes. Partial-stage tests also verify nonconflicting edit restoration and conflicting
   repair rollback, with unchanged index, HEAD, and unrelated tracked bytes.
+  Partial-stage probes require the modified-files diagnostic; the conflict case
+  also requires pre-commit's conflict-and-rollback diagnostic, so an earlier
+  setup failure cannot satisfy the rollback check. The successful-repair probe
+  requires modified-files diagnostics and no lint-hook diagnostic, preserves
+  HEAD and the index, and verifies that manual restaging permits the commit.
 
 - `bb clj-fmt check|fix [PATHS...]` and `clj-fmt:check`/`clj-fmt:fix`
   share the required scope and explicit `.cljfmt.edn`. The CLI file pattern
   includes EDN, including files found recursively. Check returns the tool exit
-  without writing; fix is explicit.
+  without writing; fix is explicit. Explicit files and directories accept absolute
+  paths, including paths outside the repository; relative paths resolve from root.
 
+- Project format and lint enumerate owned working-tree files with the same
+  predicate as indexed hooks, including `.bb`. Nested `.cache`, `.cpcache`,
+  `imports`, and `target` paths are excluded even from project format repair.
+  Explicit formatting still checks the supplied paths without this filter.
 - `dev/quality/closed_record/quality_scope.clj` owns required format/lint paths
   and Git-path selection. Validate required inputs before invoking tools.
   Dependency imports and caches are not owned inputs.
 - `bb clj-kondo:copy-config` resolves independent reproducible dependency bases,
   then imports their union. Dependency imports are ignored and regenerated;
-  required scope is checked before setup.
+  required scope is checked before setup. A cold local-dependency regression checks
+  usable exported rules from both additive and dependency-replacing alias bases,
+  with tracked-byte and index preservation.
+- Shared lint and dependency imports use clj-kondo `--repro` to ignore user-global
+  configuration. Real-process fixtures disable warning/error rules globally;
+  project lint and installed hooks still reject defects and preserve tracked bytes
+  and index trees. Imports also pass with malformed isolated global configuration.
 - `bb clj-kondo:lint` prepares imports automatically, checks shared scope, and
   emits EDN findings. Warnings fail. Real-tool probes cover the defrecord mapping
   and setup failure propagation; no extra suppressions were needed.
@@ -156,14 +195,38 @@ untracked files but still reads working-tree bytes.
 - `closed-record.api-docs/generate` produces in-memory Quickdoc Markdown with
   internal-var exclusions and source links. `bb api-docs` writes UTF-8 output;
   `bb api-docs --check` compares exact bytes without writing and reports the
-  repair command for absent or stale output. Invalid arguments fail without writes.
+  repair command for absent or stale output. Real CLI coverage rejects line-ending-only
+  LF-to-CRLF changes without changing tracked bytes or the index tree; regeneration
+  restores the original bytes and passes freshness. Invalid arguments fail without writes.
+  Both commands validate the required source as a regular file before analysis;
+  missing source and analysis error findings cannot create or overwrite the reference.
+  Analysis errors report source diagnostics before rendering. Real CLI tests cover
+  malformed input with and without output for generation and freshness, preserving
+  tracked bytes and the index. Missing-source tests cover
+  both output states and preserve tracked bytes and index trees.
+  API analysis uses embedded clj-kondo with `:repro true` and owned configuration,
+  then the pinned Quickdoc renderer; the public Quickdoc entry point does not
+  expose reproducible analysis. Global settings cannot change generated bytes.
   Quickdoc uses the owned clj-kondo `:cljc {:features #{:clj}}` setting.
   Real-process divergent-branch tests verify JVM docstrings and arguments and
   exclude browser-only vars; without that setting Quickdoc selects browser content.
   `doc/API.md` is generated and linked from README. A real-process negative
-  control proves freshness can pass while independent content tests fail. API docstrings describe
+  control proves freshness can pass while independent content tests fail. Run it separately
+  with `clojure -Srepro -M:quickdoc:tooling-test dev/acceptance/api_content_defect.clj`;
+  the normal suite does not run tests of tests. The probe validates an explicit
+  EDN-safe result artifact and accepts only the missing-support-notice failure,
+  with zero errors; unrelated failures and load errors are rejected. API docstrings describe
   constructor arguments, compiler option forwarding, error data, and literal-key
   loss through compilation and print/read round trips; content tests check these.
+
+- Independent real-command prose tests cover warnings in each maintained document
+  and nested README Markdown, plus clean and excluded historical task/Ramora
+  controls. All cases preserve tracked bytes and index trees.
+
+- Prose scope uses the shared path validator before Vale synchronization.
+  Required documents, configuration, and vocabulary must be regular files;
+  `README/` must be a directory. Real-command wrong-type tests cover all six
+  requirements and verify unchanged tracked bytes and index trees.
 
 - `closed-record.vale-results/outcome` validates decoded Vale JSON with string
   keys. Suggestions pass and remain visible; warnings/errors fail; malformed
@@ -179,6 +242,8 @@ untracked files but still reads working-tree bytes.
   vocabulary. Downloaded `styles/proselint/` is ignored. Before focused tooling
   tests, run `vale sync --config=.vale.ini`. Real Vale tests cover narrow code
   and lambda exclusions plus ordinary prose and spelling failures.
+  Policy tests use `--no-global` with temporary malformed global configuration
+  at macOS and Linux configuration paths; contributor settings remain unchanged.
 
 ## Local verification environment
 
@@ -249,3 +314,65 @@ documentation changes. Fresh Linux setup now passes under QEMU/Podman.
 Java 21 full-path format/lint, all three runtime suites, focused build/release
 suites, JAR packaging, and actionlint 1.7.12 pass locally. Maintainer commands
 and manual recovery are in `README/releases.md`. No hosted publication is verified.
+
+## Task 018 API encoding review
+
+The API CLI lifecycle fixture now generates non-ASCII source documentation and
+checks exact UTF-8 bytes, freshness, repeatability, and check-only preservation.
+All 4 API CLI tests (63 assertions), explicit formatting, and shared lint pass.
+The review follow-up is complete; library docstrings and design are unchanged.
+
+## 2026-10-27 — API configuration presence follow-up
+
+- 2026-10-27: addressed 1 review step. API generation now validates owned
+  analysis configuration as a regular file before analysis. Real CLI missing-config
+  probes preserve tracked bytes and the index, with and without output, for both
+  commands. API CLI suite: 7 tests, 122 assertions pass, including JVM reader and
+  global configuration isolation. Independent content suite: 1 test, 42 assertions
+  pass. Both Scry runs exit 0 with no failure artifacts. Shared format, lint,
+  Vale, and API freshness pass. Updated plan and guide; design is unchanged.
+
+## API output boundary
+
+Both API commands now reject symbolic links in `doc/API.md` or its parent before
+analysis or writes, using the shared link check. Missing ordinary output remains
+supported. Real CLI tests preserve external bytes, link targets, and index trees.
+API CLI tests pass (8 tests, 146 assertions); independent content tests pass
+(1 test, 42 assertions). Shared format, lint, Vale, and freshness pass.
+The review follow-up is complete; design is unchanged.
+
+## Public quality task coverage
+
+Disposable projects use the owned `bb.edn` for tracked format/lint checks and
+prose selection. These tests verify public exits and diagnostics, not custom
+helper exit handling. Explicit formatting tests use a path with spaces outside
+maintained scope, retain a separate maintained defect, and check selected-file
+repair plus byte/index preservation.
+
+## Shared tooling fixtures
+
+Task 018 review follow-up is complete. Reusable fixtures are in
+`test-tooling/closed_record/test_support/`: `code_project`, `hooks`, and
+`api_project`. Child isolation and API defect probes load these helpers, not test
+namespaces. Distinct project setups and cleanup remain unchanged. All affected
+namespaces pass separately; full tooling suite passes 50 tests and 838 assertions.
+The separate API defect probe and shared format/lint checks pass on Java 25.
+
+## Task 018 documentation review
+
+The Unreleased changelog now summarizes shared quality commands, the generated
+API reference, staged-content hooks, and CI checks. Command names and local link
+targets are verified. Both documentation review follow-ups are complete. The
+artifact map now covers quality tasks, CI checks, and development aliases, with
+a link to the quality architecture. It moved to
+`ramora/defclosedrecord/embodiment/artifacts.md` to keep Ramora pages below
+1000 words. Both link-check passes succeed; design and runtime are unchanged.
+
+## Prose traversal review
+
+Task 018 prose traversal follow-up is complete. Code and prose share link-safe
+file traversal, with separate ownership predicates. Nested Markdown links and
+directory cycles are excluded. Public-command tests enforce a 30-second bound,
+ordinary nested warning detection, and external-byte, link-target, tracked-byte,
+and index preservation. Full tooling suite: 51 tests, 852 assertions pass;
+shared format, lint, Vale, and API freshness pass. Design is unchanged.

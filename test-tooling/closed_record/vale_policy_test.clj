@@ -14,8 +14,19 @@
           (io/delete-file file))))))
 
 (defn- check-prose [file]
-  (shell/sh "vale" (str "--config=" (.getCanonicalPath (io/file ".vale.ini")))
-            "--minAlertLevel=warning" "--output=JSON" (.getPath file)))
+  (with-directory
+    (fn [home]
+      ;; A malformed global config must not affect the owned policy.
+      (doseq [path ["Library/Application Support/vale/.vale.ini"
+                    ".config/vale/.vale.ini"]]
+        (let [config (io/file home path)]
+          (io/make-parents config)
+          (spit config "[invalid\n")))
+      (shell/sh "vale" (str "--config=" (.getCanonicalPath (io/file ".vale.ini")))
+                "--no-global" "--minAlertLevel=warning" "--output=JSON" (.getPath file)
+                :env (assoc (into {} (System/getenv))
+                            "HOME" (.getPath home)
+                            "XDG_CONFIG_HOME" (.getPath (io/file home ".config")))))))
 
 (deftest owned-vale-exclusions-test
   ;; Real Markdown parsing must exclude instructions and code, not nearby prose.

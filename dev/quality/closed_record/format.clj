@@ -14,8 +14,8 @@
       (throw (ex-info "Usage: bb clj-fmt check|fix [PATHS...]" {:args args})))
     (let [inputs (if (seq paths)
                    (scope/validate-paths! root (vec paths))
-                   (scope/project-paths! root))
-          _ (scope/validate-paths! root [".cljfmt.edn"])
+                   (scope/project-source-paths! root))
+          _ (scope/validate-paths! root [".cljfmt.edn"] scope/required-types)
           {:keys [exit out err]}
           (apply shell/sh
                  (into ["cljfmt" operation "--config" ".cljfmt.edn"

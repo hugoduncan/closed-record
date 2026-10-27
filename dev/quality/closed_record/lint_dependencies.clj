@@ -37,7 +37,7 @@
                                                   alias (conj (str "-A" alias))
                                                   true (conj "-Spath")))))
                          dependency-bases)
-        result (execute! root ["clj-kondo" "--config-dir" ".clj-kondo"
+        result (execute! root ["clj-kondo" "--repro" "--config-dir" ".clj-kondo"
                                "--lint" (merge-classpaths classpaths)
                                "--dependencies" "--copy-configs" "--skip-lint"])]
     (print (:out result))

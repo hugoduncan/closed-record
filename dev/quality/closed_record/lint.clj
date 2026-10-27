@@ -8,7 +8,7 @@
 (defn- lint-paths! [root paths]
   (dependencies/copy-config! root)
   (apply shell/sh
-         (into ["clj-kondo" "--config-dir" ".clj-kondo"
+         (into ["clj-kondo" "--repro" "--config-dir" ".clj-kondo"
                 "--fail-level" "warning" "--config" "{:output {:format :edn}}"
                 "--lint"]
                (concat paths [:dir (str root)]))))
@@ -17,7 +17,7 @@
   "Prepare dependency configuration and lint the required scope. Return tool output
   and exit status. Warnings and errors both fail; setup failures throw."
   [root]
-  (lint-paths! root (scope/project-paths! root)))
+  (lint-paths! root (scope/project-source-paths! root)))
 
 (defn lint-index!
   "Lint owned indexed paths, excluding untracked files. Return tool output and exit.

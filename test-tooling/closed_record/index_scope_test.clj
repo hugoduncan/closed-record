@@ -66,3 +66,17 @@
       (finally
         (doseq [file (reverse (file-seq root))]
           (io/delete-file file))))))
+
+(deftest required-index-types-test
+  ;; Every requirement uses its declared type, including Git regular-file modes.
+  (let [paths (mapv (fn [[path type]]
+                      (if (= :directory type) (str path "/sample.clj") path))
+                    scope/required-types)]
+    (doseq [[path type] scope/required-types]
+      (let [valid-path (if (= :directory type) (str path "/sample.clj") path)
+            wrong-path (if (= :directory type) path (str path "/sample.clj"))]
+        (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Invalid indexed quality path types"
+                              (index/select-paths! (conj (filterv #(not= valid-path %) paths) wrong-path))))))
+    (doseq [mode ["120000" "160000"]]
+      (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Invalid indexed quality path types"
+                            (index/select-paths! paths {"build.clj" mode}))))))

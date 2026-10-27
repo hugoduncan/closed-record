@@ -21,7 +21,16 @@ Format and lint share the required scope in
 `test/`, `dev/`, `test-build/`, `test-release/`, `test-tooling/`, `build.clj`,
 `bb.edn`, `deps.edn`, `.cljfmt.edn`, and `.clj-kondo/config.edn`.
 Generated output, dependency imports, and caches are excluded. Missing required
-paths fail; they do not reduce coverage.
+paths fail; they do not reduce coverage. Source roots must be directories;
+required root files and configuration must be regular files. Project commands
+and hooks reject wrong types before tool setup. Project commands and hooks select
+`.clj`, `.cljc`, `.cljs`, `.bb`, and `.edn` files with the same policy.
+Paths with `.cache`, `.cpcache`, `imports`, or `target` components are excluded,
+including nested paths. Project commands include untracked owned files; hooks
+select only indexed files. Maintained scope excludes symbolic links to source
+files and does not descend through linked directories. Required paths must not
+contain symbolic links, including configuration parent directories. Hooks select
+only regular-file Git modes and exclude working paths with linked components.
 
 Lint prepares dependency configuration before analysis. To prepare it separately:
 
@@ -31,7 +40,9 @@ bb clj-kondo:copy-config
 
 Preparation resolves dependency aliases separately, including aliases that
 replace dependencies. Do not copy imports from another checkout. Lint fails on
-warnings and errors. Keep exceptions local and explain why they are needed.
+warnings and errors. Lint and dependency imports use `--repro` to ignore
+user-global clj-kondo configuration. Keep exceptions local and explain why they
+are needed.
 
 Review formatting repairs before staging them:
 
@@ -43,13 +54,21 @@ bb clj-fmt fix src/closed_record/core.cljc
 
 `bb clj-fmt check|fix` without paths uses project scope. Explicit paths require
 only those paths and the owned formatter configuration, not the full scope.
+Explicit files and directories can use relative or absolute paths. Relative paths
+start at the repository root; absolute paths can be outside the repository.
+Explicit source paths retain link handling by the formatter; use them only when
+you intend to check or repair their targets.
 
 Vale synchronizes the pinned proselint styles before checking `README.md`,
-recursive Markdown under `README/`, `AGENTS.md`, and `doc/API.md`. Suggestions
+recursive Markdown under `README/`, `AGENTS.md`, and `doc/API.md`. Before
+synchronization, required documents, `.vale.ini`, and the vocabulary must be
+regular files; `README/` must be a directory. Suggestions
 are reported but pass. Warnings, errors, invalid results, and setup failures
 fail. Fenced and inline code and lambda instruction lines are excluded; adjacent
 ordinary prose is checked. Historical tasks and Ramora files are outside this
 prose scope, but remain subject to Markdown link checks.
+Recursive prose selection excludes symbolic Markdown files and does not descend
+through linked directories. Ordinary nested Markdown files remain in scope.
 
 ## Generated API
 
@@ -63,8 +82,14 @@ bb api-docs --check
 ```
 
 The check compares UTF-8 bytes and does not write missing or stale output.
+Both commands reject symbolic links in `doc/API.md`, including the `doc/`
+parent directory. Regeneration can create a missing ordinary directory or file.
+Both commands require `src/closed_record/core.cljc` and `.clj-kondo/config.edn`
+to be regular files. Missing inputs or analysis errors fail with path diagnostics
+before rendering. These failures do not create or change the reference.
 Quickdoc is pinned in `deps.edn`. It documents the two user API vars with JVM
-reader features. Independent content tests check the API contract; freshness
+reader features. API analysis uses owned configuration and ignores user-global
+clj-kondo settings. Independent content tests check the API contract; freshness
 alone does not prove that the content is correct.
 
 ## Commit hooks

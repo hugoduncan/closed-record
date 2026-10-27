@@ -38,8 +38,15 @@ configuration and hooks. Enumerate owned lint files separately from imports. The
 configuration or owned hooks are added.
 The formatter now uses required `.cljfmt.edn` and an explicit CLI file pattern
 that includes EDN. Explicit paths still require the owned formatter configuration.
-Validate required paths before setup or execution; never filter missing paths
-away. Explicit formatting validates only its supplied paths. Both project
+Validate required paths and their declared types before setup or execution.
+Source roots must be directories; required root files and configuration must
+be regular files. Indexed roots require descendants, and indexed files require
+regular-file Git modes. Explicit formatting accepts relative and absolute files and directories. Resolve
+relative inputs against the root and retain absolute inputs; never filter missing paths
+away. Explicit formatting validates only its supplied paths. Project commands enumerate working-tree files with the same ownership predicate
+as indexed hooks, including `.bb` files and excluding nested caches, imports,
+and target output. Explicit formatting retains its supplied-path semantics.
+Both project
 format aliases and argument-free `bb clj-fmt check|fix` use this policy.
 
 Prepare dependency imports from separately resolved base and alias bases:
@@ -53,7 +60,10 @@ Malli import is removed;
 ignore generated imports and caches, but retain owned configuration.
 
 The shared lint command now prepares dependencies automatically and returns structured
-EDN findings with warning-level failure. Real-tool probes verify setup failures
+EDN findings with warning-level failure. Both lint and dependency imports use
+`--repro` so user-global clj-kondo configuration cannot change project checks.
+Real-process fixtures supply isolated global settings that disable warning and
+error rules; project lint and installed hooks must still reject these defects. Real-tool probes verify setup failures
 and the existing mapping. Git fixtures now verify clean checks, formatting defects,
 warning-only lint, and lint errors with unchanged tracked bytes and index trees.
 No baseline fixes or new suppressions were needed.
@@ -81,17 +91,30 @@ content assertions now cover constructors, option forwarding, error data, and
 the loss of extra literal keys through compilation and print/read round trips.
 
 `closed-record.api-docs-cli` now separates generation from UTF-8 writing and
-byte comparison behind `bb api-docs`. Only regeneration writes `doc/API.md`;
-freshness and invalid-argument failures never write. Real task processes in
+byte comparison behind `bb api-docs`. Both commands reject symbolic links in the output file or its parent using the
+shared link check before generation. Missing ordinary output paths remain valid
+for regeneration. Real CLI tests preserve external bytes, link targets, and index
+trees for file and parent links. Only regeneration writes `doc/API.md`;
+freshness and invalid-argument failures never write. The generator validates
+`src/closed_record/core.cljc` and `.clj-kondo/config.edn` as required regular
+files before analysis; missing source or owned configuration cannot create or
+overwrite the reference. Real CLI tests cover missing configuration with and
+without existing output, preserving tracked bytes and the index. Error findings from source analysis
+also stop rendering and writing, with source diagnostics. Real CLI tests cover
+malformed source with and without existing output for both commands, preserving
+tracked bytes and the index. Real task processes in
 temporary projects verify these operations.
 Independent content tests reject a controlled generator defect even
 after regenerating a fresh reference. A disposable real-process probe removes
-the unsupported-host notice, verifies freshness passes, and checks the Scry
-failure artifact from the unchanged content tests. `doc/API.md` is committed
+the unsupported-host notice, verifies freshness passes, and checks the structured Scry outcome from the unchanged content tests. Run this
+separate acceptance probe with `clojure -Srepro -M:quickdoc:tooling-test
+dev/acceptance/api_content_defect.clj`; it is not part of the normal suite. `doc/API.md` is committed
 and linked from README; later prose fixes must regenerate it.
 
 Vale selects `README.md`, recursive `README/**/*.md`, `AGENTS.md`, and
-`doc/API.md`; validate required roots/files. Use owned Vale/proselint
+`doc/API.md`; validate required types before style synchronization. Require
+regular files for these documents, `.vale.ini`, and the vocabulary file, and
+a directory for `README/`, using the shared path validator. Use owned Vale/proselint
 configuration and ClosedRecord vocabulary. Protect fenced code and lambda
 lines narrowly. The owned `.vale.ini` and ClosedRecord vocabulary are in place; downloaded
 `styles/proselint/` is ignored. Real Vale fixtures prove fenced/inline code and
@@ -216,3 +239,36 @@ Fresh Linux verification is complete on Ubuntu 24.04 x86-64 under QEMU/Podman.
 Documented installation, cold shared checks, and focused tests pass with no
 tracked-byte or index changes. See [acceptance.md](acceptance.md) for all seven
 criteria. No design change was needed; hosted Actions remains unverified.
+
+API analysis now calls embedded clj-kondo with `:repro true` and the owned
+configuration, then uses the pinned Quickdoc renderer. Quickdoc v0.2.6 does
+not expose this analysis option. Keep this small adapter covered by exact
+content and byte tests when changing the pin. No process globals or contributor
+configuration are changed; JVM reader selection is retained. Real-process
+tests cover empty, suppressing, and malformed global settings, plus tracked
+byte and index preservation on successful and stale freshness checks.
+
+Maintained source scope excludes symbolic links and never descends through linked
+directories. Required paths reject linked components, including configuration
+parents. Indexed selection accepts only regular-file modes and excludes linked
+working paths before tool execution. Explicit-path formatting retains its existing
+source-path semantics. Real project-command and installed-hook tests verify this
+policy without changing external bytes, link targets, or index trees.
+
+The API defect probe writes a small, EDN-safe Scry result artifact. It requires
+exactly the missing-support-notice failure and zero errors, without a fixed
+passing assertion count or dependence on Scry failure files. Child hook fixtures
+return before exit; both accepted and rejected commits must remove their roots.
+
+Public-task regression tests use the owned `bb.edn` in disposable projects.
+The existing tracked-code matrix now runs `clj-fmt:check` and `clj-kondo:lint`;
+prose selection runs `vale`. Explicit `clj-fmt` check/fix coverage verifies
+path forwarding, selected-file repair, and check-only byte/index preservation.
+
+Shared tooling fixtures live in three small test-support namespaces: code project,
+installed hooks, and API project. Their public helpers preserve the distinct
+setups and cleanup. Tests retain assertions and case data. The child isolation
+probe and API defect script load support code, not test namespaces.
+
+Recursive prose selection excludes symbolic Markdown files and does not descend
+through linked directories. Ordinary nested Markdown files remain in scope.

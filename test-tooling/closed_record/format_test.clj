@@ -51,3 +51,34 @@
         (is (thrown-with-msg? clojure.lang.ExceptionInfo #".cljfmt.edn"
                               (format/format! root ["fix" "example.clj"])))
         (is (= original (slurp file)))))))
+
+(deftest absolute-format-test
+  ;; Explicit absolute files and directories can be outside the project root.
+  (with-project
+    (fn [root]
+      (with-project
+        (fn [external]
+          (let [file (io/file external "nested/probe.clj")
+                original "(def x 1 )\n"]
+            (io/make-parents file)
+            (doseq [path [(.getAbsolutePath file)
+                          (.getAbsolutePath (.getParentFile file))]]
+              (testing (str "absolute input " path)
+                (spit file original)
+                (is (pos? (format/format! root ["check" path])))
+                (is (= original (slurp file)))
+                (is (zero? (format/format! root ["fix" path])))
+                (is (= "(def x 1)\n" (slurp file)))
+                (is (zero? (format/format! root ["check" path])))
+                (is (= "(def x 1)\n" (slurp file)))))
+            (let [missing (.getAbsolutePath (io/file external "absent.clj"))]
+              (doseq [operation ["check" "fix"]]
+                (is (= [missing]
+                       (try
+                         (format/format! root [operation missing])
+                         (catch clojure.lang.ExceptionInfo error
+                           (:missing-paths (ex-data error)))))))))
+          (testing "absolute inputs still require owned configuration"
+            (io/delete-file (io/file root ".cljfmt.edn"))
+            (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Missing required quality paths: .cljfmt.edn"
+                                  (format/format! root ["fix" (.getAbsolutePath external)])))))))))

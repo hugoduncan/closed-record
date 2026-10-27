@@ -1,75 +1,84 @@
 (ns closed-record.hooks-test
-  (:require [clojure.java.io :as io]
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.java.shell :as shell]
             [clojure.test :refer [deftest is testing]]
-            [closed-record.code-preservation-test :as preservation]))
-
-(defn- with-hooks [f]
-  (#'preservation/with-project
-   (fn [root environment]
-     (doseq [source (filterv #(.isFile %) (vec (file-seq (io/file "dev/quality"))))]
-       (let [target (io/file root (str source))]
-         (io/make-parents target)
-         (io/copy source target)))
-     (doseq [path ["bb.edn" ".pre-commit-config.yaml"]]
-       (io/copy (io/file path) (io/file root path)))
-     (let [env (assoc environment "PRE_COMMIT_HOME" (str (io/file root ".pre-commit-cache")))
-           run (fn [& args]
-                 (apply shell/sh (concat args [:dir (str root) :env env])))
-           git! (fn [& args] (apply #'preservation/git! root env args))]
-       (git! "config" "user.name" "Hook Test")
-       (git! "config" "user.email" "hook@example.invalid")
-       (git! "config" "commit.gpgsign" "false")
-       (git! "add" "bb.edn" "dev" ".pre-commit-config.yaml")
-       (git! "commit" "-m" "Fixture baseline")
-       (let [installed (run "pre-commit" "install")]
-         (is (zero? (:exit installed)) (pr-str installed)))
-       (f root env run git!)))))
+            [closed-record.test-support.hooks :as hooks]
+            [closed-record.test-support.code-project :as preservation]))
 
 (deftest installed-hooks-test
-  ;; Actual Git commits exercise pre-commit isolation, repair detection and restore.
-  (with-hooks
+  ;; Commits reject defects despite global rule suppression and unstaged corrections.
+  (hooks/with-hooks
     (fn [root environment run git!]
       (let [probe (io/file root "src/probe.clj")
             clean "(ns probe)\n(def x 1)\n"
-            state #(dissoc (#'preservation/tracked-state root environment) :index)
+            untracked (doto (io/file root "src/untracked.clj")
+                        (spit "(missing-symbol)\n"))
+            untracked-bytes (vec (java.nio.file.Files/readAllBytes (.toPath untracked)))
+            assert-untracked! (fn []
+                                (is (.isFile untracked) "Untracked source must remain present")
+                                (when (.isFile untracked)
+                                  (is (= untracked-bytes
+                                         (vec (java.nio.file.Files/readAllBytes (.toPath untracked))))
+                                      "Untracked source bytes must not change"))
+                                (is (= "" (git! "ls-files" "--" "src/untracked.clj"))
+                                    "Untracked source must remain outside the index"))
+            state #(dissoc (preservation/tracked-state root environment) :index)
             tree #(git! "write-tree")
             commit #(run "git" "commit" "--allow-empty" "-m" "Hook probe")]
-        (spit (io/file root "src/untracked.clj") "(missing-symbol)\n")
         (spit (io/file root "unrelated.md") "Unstaged prose.\r\n")
         (testing "clean indexed files pass despite unrelated and untracked defects"
           (let [before (state) index (tree) result (commit)]
+            (assert-untracked!)
             (is (zero? (:exit result)) (pr-str result))
             (is (= index (tree)))
             (is (= before (state)))))
-        (doseq [[label staged] [["warning" "(ns probe)\n(let [unused 1] 2)\n"]
-                                ["error" "(ns probe)\n(missing)\n"]]]
+        (doseq [[label staged diagnostic]
+                [["warning" "(ns probe)\n(let [unused 1] 2)\n" ":unused-binding"]
+                 ["error" "(ns probe)\n(missing)\n" ":unresolved-symbol"]]]
           (testing (str "staged " label " cannot be hidden by an unstaged correction")
             (spit probe staged)
             (git! "add" "src/probe.clj")
             (spit probe clean)
-            (let [before (state) index (tree) result (commit)]
+            (let [before (state)
+                  index (tree)
+                  head (git! "rev-parse" "HEAD")
+                  result (commit)]
+              (assert-untracked!)
               (is (not (zero? (:exit result))) (pr-str result))
+              (is (.contains (:err result) "src/probe.clj") (pr-str result))
+              (is (.contains (:err result) diagnostic) (pr-str result))
+              (is (= head (git! "rev-parse" "HEAD")))
               (is (= index (tree)))
               (is (= before (state))))))
         (testing "repair stops the commit without staging; manual staging permits commit"
           (spit probe "(ns probe)\n(def x 1 )\n")
           (git! "add" "src/probe.clj")
-          (let [index (tree) before (state) result (commit)]
+          (let [index (tree)
+                before (state)
+                head (git! "rev-parse" "HEAD")
+                result (commit)]
+            (assert-untracked!)
             (is (not (zero? (:exit result))) (pr-str result))
+            (is (.contains (:err result) "files were modified by this hook")
+                (pr-str result))
+            (is (not (.contains (:err result) "Lint indexed project"))
+                (pr-str result))
+            (is (= head (git! "rev-parse" "HEAD")))
             (is (= index (tree)))
             (is (= clean (slurp probe)))
             (is (= (dissoc (:files before) "src/probe.clj")
                    (dissoc (:files (state)) "src/probe.clj"))))
           (git! "add" "src/probe.clj")
           (let [index (tree) before (state) result (commit)]
+            (assert-untracked!)
             (is (zero? (:exit result)) (pr-str result))
             (is (= index (tree)))
             (is (= before (state)))))))))
 
 (deftest partial-staging-test
   ;; Real commits must preserve unstaged edits, including formatter conflicts.
-  (doseq [[label staged working expected]
+  (doseq [[label staged working expected rollback?]
           [["separate hunks"
             "(ns probe)\n(def x 1 )\n;; a\n;; b\n;; c\n;; d\n;; e\n;; f\n;; g\n;; h\n(def y 2)\n"
             "(ns probe)\n(def x 1 )\n;; a\n;; b\n;; c\n;; d\n;; e\n;; f\n;; g\n;; h\n(def y 3)\n"
@@ -77,20 +86,26 @@
            ["conflicting hunk"
             "(ns probe)\n(def x 1 )\n"
             "(ns probe)\n(def x 2 )\n"
-            "(ns probe)\n(def x 2 )\n"]]]
+            "(ns probe)\n(def x 2 )\n" true]]]
     (testing label
-      (with-hooks
+      (hooks/with-hooks
         (fn [root environment run git!]
           (let [probe (io/file root "src/probe.clj")]
             (spit probe staged)
             (git! "add" "src/probe.clj")
             (spit probe working)
             (spit (io/file root "unrelated.md") "Unstaged prose.\r\n")
-            (let [before (#'preservation/tracked-state root environment)
+            (let [before (preservation/tracked-state root environment)
                   head (git! "rev-parse" "HEAD")
                   result (run "git" "commit" "-m" "Partial staging probe")
-                  after (#'preservation/tracked-state root environment)]
+                  after (preservation/tracked-state root environment)]
               (is (not (zero? (:exit result))) (pr-str result))
+              (is (.contains (:err result) "files were modified by this hook")
+                  (pr-str result))
+              (when rollback?
+                (is (.contains (:err result)
+                               "Stashed changes conflicted with hook auto-fixes... Rolling back fixes...")
+                    (pr-str result)))
               (is (= head (git! "rev-parse" "HEAD")))
               (is (= (:index before) (:index after)))
               (is (= expected (slurp probe)))
@@ -99,7 +114,7 @@
 
 (deftest staged-path-changes-test
   ;; Index mutations must retain full lint coverage without checking excluded files.
-  (with-hooks
+  (hooks/with-hooks
     (fn [root environment run git!]
       (doseq [[label change expected-exit]
               [["addition"
@@ -117,11 +132,11 @@
                 #(git! "rm" "--cached" ".cljfmt.edn") 1]]]
         (testing label
           (change)
-          (let [before (#'preservation/tracked-state root environment)
+          (let [before (preservation/tracked-state root environment)
                 head (git! "rev-parse" "HEAD")
                 result (run "git" "commit" "-m" label)]
             (is (= expected-exit (:exit result)) (pr-str result))
-            (is (= before (#'preservation/tracked-state root environment)))
+            (is (= before (preservation/tracked-state root environment)))
             (when (pos? expected-exit)
               (is (= head (git! "rev-parse" "HEAD")))
               (is (.exists (io/file root ".cljfmt.edn"))))))))))
@@ -130,7 +145,7 @@
   ;; Missing indexed scope and invalid tool configuration must fail without writes.
   (doseq [failure [:missing-directory :formatter-configuration]]
     (testing (name failure)
-      (with-hooks
+      (hooks/with-hooks
         (fn [root environment run git!]
           (case failure
             :missing-directory (git! "rm" "--cached" "test/placeholder.edn")
@@ -139,12 +154,12 @@
               (spit (io/file root ".cljfmt.edn") "{:indents {broken :invalid}}\n")
               (spit (io/file root "src/probe.clj") "(ns probe)\n(broken 1)\n")
               (git! "add" ".cljfmt.edn" "src/probe.clj")))
-          (let [before (#'preservation/tracked-state root environment)
+          (let [before (preservation/tracked-state root environment)
                 head (git! "rev-parse" "HEAD")
                 result (run "git" "commit" "-m" "Setup failure probe")]
             (is (not (zero? (:exit result))) (pr-str result))
             (is (= head (git! "rev-parse" "HEAD")))
-            (is (= before (#'preservation/tracked-state root environment)))
+            (is (= before (preservation/tracked-state root environment)))
             (case failure
               :missing-directory
               (do
@@ -157,46 +172,152 @@
 
 (deftest hook-lint-setup-failure-test
   ;; Valid EDN reaches lint setup; a missing local dependency stops the commit.
-  (with-hooks
+  (hooks/with-hooks
     (fn [root environment run git!]
       (spit (io/file root "deps.edn")
             "{:deps {fixture/missing {:local/root \"missing-dependency\"}}}\n")
       (git! "add" "deps.edn")
-      (let [before (#'preservation/tracked-state root environment)
+      (let [before (preservation/tracked-state root environment)
             head (git! "rev-parse" "HEAD")
             result (run "git" "commit" "-m" "Lint setup failure probe")]
         (is (= 1 (:exit result)) (pr-str result))
         (is (re-find #"Lint indexed project" (:err result)) (pr-str result))
         (is (re-find #"Dependency lint setup failed" (:err result)) (pr-str result))
         (is (= head (git! "rev-parse" "HEAD")))
-        (is (= before (#'preservation/tracked-state root environment)))))))
+        (is (= before (preservation/tracked-state root environment)))))))
 
 (deftest external-repository-preservation-test
   ;; Inherited Git overrides must not redirect fixture commits to another repository.
-  (#'preservation/with-project
-   (fn [root environment]
-     (let [git! (fn [& args] (apply #'preservation/git! root environment args))]
-       (git! "config" "user.name" "External Test")
-       (git! "config" "user.email" "external@example.invalid")
-       (git! "-c" "commit.gpgsign=false" "commit" "-m" "External baseline")
-       (spit (io/file root "src/probe.clj") "(ns probe)\n(def x 2)\n")
-       (git! "add" "src/probe.clj")
-       (spit (io/file root "src/probe.clj") "(ns probe)\n(def x 3)\n")
-       (let [before (#'preservation/tracked-state root environment)
-             head (git! "rev-parse" "HEAD")
-             index-bytes (vec (java.nio.file.Files/readAllBytes
-                               (.toPath (io/file root ".git/index"))))
-             result (shell/sh
-                     (str (io/file (System/getProperty "java.home") "bin/java"))
-                     "-cp" (System/getProperty "java.class.path")
-                     "clojure.main" "-m" "scry.cli" "--var"
-                     "closed-record.hooks-test/hook-lint-setup-failure-test"
-                     :env (assoc environment
-                                 "GIT_DIR" (str (io/file root ".git"))
-                                 "GIT_WORK_TREE" (str root)
-                                 "GIT_INDEX_FILE" (str (io/file root ".git/index"))))]
-         (is (zero? (:exit result)) (pr-str result))
-         (is (= index-bytes (vec (java.nio.file.Files/readAllBytes
-                                  (.toPath (io/file root ".git/index"))))))
-         (is (= head (git! "rev-parse" "HEAD")))
-         (is (= before (#'preservation/tracked-state root environment))))))))
+  (preservation/with-project
+    (fn [root environment]
+      (let [git! (fn [& args] (apply preservation/git! root environment args))]
+        (git! "config" "user.name" "External Test")
+        (git! "config" "user.email" "external@example.invalid")
+        (git! "-c" "commit.gpgsign=false" "commit" "-m" "External baseline")
+        (spit (io/file root "src/probe.clj") "(ns probe)\n(def x 2)\n")
+        (git! "add" "src/probe.clj")
+        (spit (io/file root "src/probe.clj") "(ns probe)\n(def x 3)\n")
+        (let [before (preservation/tracked-state root environment)
+              head (git! "rev-parse" "HEAD")
+              index-bytes (vec (java.nio.file.Files/readAllBytes
+                                (.toPath (io/file root ".git/index"))))
+              result (shell/sh
+                      (str (io/file (System/getProperty "java.home") "bin/java"))
+                      "-cp" (System/getProperty "java.class.path")
+                      "clojure.main" "-e"
+                      (pr-str
+                       '(do
+                          (require 'closed-record.test-support.hooks)
+                          (prn
+                           (mapv
+                            (fn [fail?]
+                              (closed-record.test-support.hooks/with-hooks
+                                (fn [child-root _ run child-git!]
+                                  (when fail?
+                                    (spit (clojure.java.io/file child-root "src/probe.clj")
+                                          "(ns probe)\n(missing)\n")
+                                    (child-git! "add" "src/probe.clj"))
+                                  {:root (str child-root)
+                                   :commit (run "git" "commit" "--allow-empty"
+                                                "-m" "Isolation probe")})))
+                            [false true]))
+                          (System/exit 0)))
+                      :env (assoc environment
+                                  "GIT_DIR" (str (io/file root ".git"))
+                                  "GIT_WORK_TREE" (str root)
+                                  "GIT_INDEX_FILE" (str (io/file root ".git/index"))))]
+          (is (zero? (:exit result)) (pr-str result))
+          (let [outcomes (edn/read-string (:out result))]
+            (is (= [0 1] (mapv #(get-in % [:commit :exit]) outcomes))
+                (pr-str outcomes))
+            (doseq [outcome outcomes]
+              (is (not (.exists (io/file (:root outcome))))
+                  (str "Child fixture must remove " (:root outcome)))))
+          (is (= index-bytes (vec (java.nio.file.Files/readAllBytes
+                                   (.toPath (io/file root ".git/index"))))))
+          (is (= head (git! "rev-parse" "HEAD")))
+          (is (= before (preservation/tracked-state root environment))))))))
+
+(deftest wrong-indexed-types-test
+  ;; Installed hooks reject wrong root/configuration types before any tool writes.
+  (doseq [path ["src" ".cljfmt.edn" ".clj-kondo/config.edn" "build.clj"]]
+    (testing path
+      (hooks/with-hooks
+        (fn [root environment run git!]
+          (preservation/wrong-type! root path)
+          (git! "add" "-A")
+          (let [before (preservation/tracked-state root environment)
+                head (git! "rev-parse" "HEAD")
+                result (run "git" "commit" "-m" "Wrong type probe")]
+            (is (pos? (:exit result)) (pr-str result))
+            (is (.contains (:err result) "Invalid indexed quality path types:") (pr-str result))
+            (is (.contains (:err result) path) (pr-str result))
+            (is (= head (git! "rev-parse" "HEAD")))
+            (is (= before (preservation/tracked-state root environment)))))))))
+
+(deftest prose-only-commit-lints-whole-index-test
+  ;; A prose-only commit must check unchanged indexed source, including warnings.
+  (doseq [[label source diagnostic]
+          [["clean" "(ns probe)\n(def x 1)\n" nil]
+           ["warning" "(ns probe)\n(let [unused 1] 2)\n" ":unused-binding"]
+           ["error" "(ns probe)\n(missing)\n" ":unresolved-symbol"]]]
+    (testing label
+      (hooks/with-hooks
+        (fn [root environment run git!]
+          (let [uninstalled (run "pre-commit" "uninstall")]
+            (is (zero? (:exit uninstalled)) (pr-str uninstalled)))
+          (spit (io/file root "src/probe.clj") source)
+          (git! "add" "src/probe.clj")
+          (git! "commit" "--allow-empty" "-m" "Source baseline before hook installation")
+          (let [installed (run "pre-commit" "install")]
+            (is (zero? (:exit installed)) (pr-str installed)))
+          (spit (io/file root "unrelated.md") "Prose-only change.\n")
+          (git! "add" "unrelated.md")
+          (is (= "unrelated.md\n" (git! "diff" "--cached" "--name-only")))
+          (let [before (preservation/tracked-state root environment)
+                head (git! "rev-parse" "HEAD")
+                result (run "git" "commit" "-m" "Prose-only probe")]
+            (is (= (nil? diagnostic) (zero? (:exit result))) (pr-str result))
+            (is (= before (preservation/tracked-state root environment)))
+            (when diagnostic
+              (is (.contains (:err result) diagnostic) (pr-str result))
+              (is (.contains (:err result) "src/probe.clj") (pr-str result))
+              (is (= head (git! "rev-parse" "HEAD"))))))))))
+
+(deftest formatting-repairs-only-selected-staged-files-test
+  ;; Unchanged indexed format defects must survive prose commits and selected repairs.
+  (hooks/with-hooks
+    (fn [root environment run git!]
+      (let [uninstalled (run "pre-commit" "uninstall")]
+        (is (zero? (:exit uninstalled)) (pr-str uninstalled)))
+      (spit (io/file root "src/probe.clj") "(ns probe)\n(def x 1 )\n")
+      (git! "add" "src/probe.clj")
+      (git! "commit" "-m" "Format defect before hook installation")
+      (let [installed (run "pre-commit" "install")]
+        (is (zero? (:exit installed)) (pr-str installed)))
+      (testing "a prose-only commit leaves unchanged source defects intact"
+        (spit (io/file root "unrelated.md") "Prose-only change.\n")
+        (git! "add" "unrelated.md")
+        (is (= "unrelated.md\n" (git! "diff" "--cached" "--name-only")))
+        (let [before (preservation/tracked-state root environment)
+              head (git! "rev-parse" "HEAD")
+              result (run "git" "commit" "-m" "Prose-only format probe")]
+          (is (zero? (:exit result)) (pr-str result))
+          (is (not= head (git! "rev-parse" "HEAD")))
+          (is (= before (preservation/tracked-state root environment)))))
+      (testing "a selected repair stops the commit and preserves every other file"
+        (spit (io/file root "src/selected.clj") "(ns selected)\n(def x 2 )\n")
+        (git! "add" "src/selected.clj")
+        (spit (io/file root "unrelated.md") "Unstaged prose.\r\n")
+        (is (= "src/selected.clj\n" (git! "diff" "--cached" "--name-only")))
+        (let [before (preservation/tracked-state root environment)
+              head (git! "rev-parse" "HEAD")
+              result (run "git" "commit" "-m" "Selected format repair probe")
+              after (preservation/tracked-state root environment)]
+          (is (pos? (:exit result)) (pr-str result))
+          (is (= head (git! "rev-parse" "HEAD")))
+          (is (= (:index before) (:index after)))
+          (is (= "(ns selected)\n(def x 2)\n"
+                 (slurp (io/file root "src/selected.clj"))))
+          (is (= (dissoc (:files before) "src/selected.clj")
+                 (dissoc (:files after) "src/selected.clj"))))))))
