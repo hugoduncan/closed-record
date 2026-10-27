@@ -1,7 +1,13 @@
 {:paths ["src"]
  :deps {org.clojure/clojure {:mvn/version "1.11.4"}}
  :aliases
- {:build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.10"}}
+ {:quickdoc {:extra-paths ["dev/quality"]
+             :extra-deps {io.github.borkdude/quickdoc
+                          {:git/tag "v0.2.6"
+                           :git/sha "ce8678000afa5f835639dd7267dc191fd90495a2"}}}
+  :tooling-test {:extra-paths ["dev/quality" "test-tooling"]
+                 :extra-deps {org.hugoduncan/scry {:mvn/version "0.1.61"}}}
+  :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.10"}}
           :ns-default build}
   :release {:extra-paths ["dev/release"]}
   :release-test {:extra-paths ["test-release"]}

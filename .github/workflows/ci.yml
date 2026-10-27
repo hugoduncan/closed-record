@@ -10,9 +10,9 @@ permissions:
 
 jobs:
   quality:
-    name: Code quality
+    name: Development quality
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4.2.2
         with:
@@ -24,12 +24,55 @@ jobs:
       - uses: DeLaGuardo/setup-clojure@13.4
         with:
           cli: '1.12.6.1673'
+          bb: '1.13.225'
           clj-kondo: '2026.04.15'
           cljfmt: '0.16.4'
+      - uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Install pre-commit 4.6.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv "$RUNNER_TEMP/pre-commit"
+          "$RUNNER_TEMP/pre-commit/bin/python" -m pip install pre-commit==4.6.0
+          "$RUNNER_TEMP/pre-commit/bin/pre-commit" --version
+          echo "$RUNNER_TEMP/pre-commit/bin" >> "$GITHUB_PATH"
+      - name: Install Vale 3.17.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          install_dir="$RUNNER_TEMP/vale"
+          mkdir -p "$install_dir"
+          cd "$install_dir"
+          archive=vale_3.17.1_Linux_64-bit.tar.gz
+          base=https://github.com/errata-ai/vale/releases/download/v3.17.1
+          curl --fail --location --show-error --silent "$base/$archive" -o "$archive"
+          echo "db947f89f2292e6a0381a61de155f6a5f5cb4cb460ca178ea412ef605559cefd  $archive" | sha256sum --check
+          tar -xzf "$archive"
+          ./vale --version
+          echo "$install_dir" >> "$GITHUB_PATH"
       - name: Check formatting
-        run: cljfmt check src test dev test-build test-release build.clj bb.edn
+        run: bb clj-fmt:check
       - name: Lint
-        run: clj-kondo --lint src test dev test-build test-release build.clj bb.edn --fail-level warning
+        run: bb clj-kondo:lint
+      - name: Check prose
+        run: bb vale
+      - name: Check API freshness
+        run: bb api-docs --check
+      - name: Run tooling tests
+        id: tests
+        env:
+          JAVA_TOOL_OPTIONS: -Xmx768m
+        run: clojure -Srepro -M:quickdoc:tooling-test -m scry.cli --dir test-tooling
+      - name: Upload tooling test failures
+        if: ${{ failure() && steps.tests.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: scry-tooling
+          path: .scry-results/
+          include-hidden-files: true
+          if-no-files-found: warn
 
   links:
     name: Markdown links

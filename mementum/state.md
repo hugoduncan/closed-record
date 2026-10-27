@@ -40,6 +40,22 @@ Main form: `defclosedrecord`.
   in the suite (`bench_report_test.clj`, `bench_fork_test.clj`).
 - REPL: `clojure -M:test:nrepl`. In the REPL: `(require '[scry.core :as scry]) (scry/run)`.
 
+## Fresh Linux quality verification
+
+Documented pinned installation and shared format/lint, Vale, API freshness, and
+focused tooling tests pass on Ubuntu 24.04 x86-64 under QEMU/Podman on macOS
+arm64. The fresh environment used no host caches or user configuration.
+All 28 tests and 316 assertions pass; tracked bytes and index trees are unchanged.
+This is local Linux evidence, not hosted Actions evidence.
+
+## Indexed quality scope
+
+`closed-record.index-scope/paths!` validates required indexed paths and selects
+owned Clojure/EDN files. It does not isolate working-tree content. Hook callers
+must supply staged-content isolation before invoking tools. `closed-record.lint/lint-index!`
+uses these paths with shared lint setup and warning-level failure. It excludes
+untracked files but still reads working-tree bytes.
+
 ## Markdown link tooling
 
 - `bb lychee:check` selects Git-tracked Markdown from the repository root.
@@ -105,6 +121,65 @@ Main form: `defclosedrecord`.
   work, follow `munera/plan.md`. Release acceptance evidence is in
   `munera/closed/016-simple-release-workflow/implementation.md`.
 
+## Development quality tooling
+
+- `.pre-commit-config.yaml` runs serial formatting before whole-index lint with
+  fail-fast ordering. Internal `quality:format-staged` and `quality:lint-staged`
+  tasks rely on pre-commit staged-content isolation; do not invoke them as
+  independent staged-byte checks. Installed-hook tests use pre-commit 4.6.0.
+  Clean commits, staged defects hidden by unstaged corrections, repair rejection,
+  and manual restaging pass. Partial-stage tests also verify nonconflicting edit restoration and conflicting
+  repair rollback, with unchanged index, HEAD, and unrelated tracked bytes.
+
+- `bb clj-fmt check|fix [PATHS...]` and `clj-fmt:check`/`clj-fmt:fix`
+  share the required scope and explicit `.cljfmt.edn`. The CLI file pattern
+  includes EDN, including files found recursively. Check returns the tool exit
+  without writing; fix is explicit.
+
+- `dev/quality/closed_record/quality_scope.clj` owns required format/lint paths
+  and Git-path selection. Validate required inputs before invoking tools.
+  Dependency imports and caches are not owned inputs.
+- `bb clj-kondo:copy-config` resolves independent reproducible dependency bases,
+  then imports their union. Dependency imports are ignored and regenerated;
+  required scope is checked before setup.
+- `bb clj-kondo:lint` prepares imports automatically, checks shared scope, and
+  emits EDN findings. Warnings fail. Real-tool probes cover the defrecord mapping
+  and setup failure propagation; no extra suppressions were needed.
+  Real Git fixtures also verify format/lint success and defect failures preserve
+  all tracked bytes and index trees, including binary and unstaged CRLF files.
+- Focused scope tests: `clojure -Srepro -M:tooling-test -m scry.cli --dir test-tooling`.
+  The tooling alias adds no base runtime dependencies.
+- `:quickdoc` pins Quickdoc v0.2.6 and adds `dev/quality`; its dependency
+  resolution leaves the base runtime classpath unchanged. The combined
+  `:quickdoc:tooling-test` aliases support the same focused test command.
+
+- `closed-record.api-docs/generate` produces in-memory Quickdoc Markdown with
+  internal-var exclusions and source links. `bb api-docs` writes UTF-8 output;
+  `bb api-docs --check` compares exact bytes without writing and reports the
+  repair command for absent or stale output. Invalid arguments fail without writes.
+  Quickdoc uses the owned clj-kondo `:cljc {:features #{:clj}}` setting.
+  Real-process divergent-branch tests verify JVM docstrings and arguments and
+  exclude browser-only vars; without that setting Quickdoc selects browser content.
+  `doc/API.md` is generated and linked from README. A real-process negative
+  control proves freshness can pass while independent content tests fail. API docstrings describe
+  constructor arguments, compiler option forwarding, error data, and literal-key
+  loss through compilation and print/read round trips; content tests check these.
+
+- `closed-record.vale-results/outcome` validates decoded Vale JSON with string
+  keys. Suggestions pass and remain visible; warnings/errors fail; malformed
+  findings and unknown severities throw. `bb vale` validates required prose paths,
+  syncs styles with explicit configuration and no global configuration, and reports
+  JSON findings. Real-process fixtures cover severity and setup failures without
+  file changes. Git-tracked probes also compare exact bytes and index trees,
+  including unrelated binary files and unstaged CRLF prose. Invalid arguments
+  and missing executables have the same Git-tracked preservation coverage. The scoped prose baseline passes with explicit technical vocabulary and inline
+  code for API literal syntax. No prose rule is disabled.
+
+- Vale 3.17.1 uses `.vale.ini`, proselint v0.1.0, and owned ClosedRecord
+  vocabulary. Downloaded `styles/proselint/` is ignored. Before focused tooling
+  tests, run `vale sync --config=.vale.ini`. Real Vale tests cover narrow code
+  and lambda exclusions plus ordinary prose and spelling failures.
+
 ## Local verification environment
 
 - Pinned quality tools are available: cljfmt 0.16.4 and clj-kondo 2026.04.15.
@@ -160,6 +235,14 @@ Munera tracks the tasks. Do not record tasks or task progress in this file.
 - `README.md`
 - `munera/plan.md`
 - `ramora/INDEX.md`
+
+## Local acceptance evidence
+
+Java 21 verification on 2026-10-27 passed all three runtime versions, focused
+build/release suites, link fixtures, and online links. Source-only packaging
+and unchanged base dependencies were checked. Temporary actionlint 1.7.7 now
+accepts both workflows. Final shared checks and tooling tests pass after the
+documentation changes. Fresh Linux setup now passes under QEMU/Podman.
 
 ## Release verification
 

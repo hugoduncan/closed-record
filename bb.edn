@@ -1,5 +1,42 @@
-{:paths ["dev"]
+{:paths ["dev" "dev/quality"]
  :tasks
- {lychee:check {:doc "Check tracked Markdown links and local heading fragments."
-                :requires ([link-check :as links])
-                :task (System/exit (links/check!))}}}
+ {quality:format-staged
+  {:doc "Internal pre-commit formatter; requires staged-content isolation."
+   :requires ([closed-record.hooks :as hooks])
+   :task (System/exit (hooks/format-staged! "." *command-line-args*))}
+  quality:lint-staged
+  {:doc "Internal pre-commit lint; requires staged-content isolation."
+   :requires ([closed-record.hooks :as hooks])
+   :task (System/exit (hooks/lint-staged! "."))}
+  vale {:doc "Sync styles and check maintained prose; warnings fail."
+        :requires ([closed-record.prose :as prose])
+        :task (let [{:keys [exit out err]} (prose/check! "." *command-line-args*)]
+                (print out)
+                (flush)
+                (binding [*out* *err*] (print err) (flush))
+                (System/exit exit))}
+  api-docs {:doc "Generate the API reference; --check checks without writing."
+            :task (apply clojure "-Srepro -M:quickdoc -m closed-record.api-docs-cli"
+                         *command-line-args*)}
+  clj-fmt {:doc "Check or fix formatting: check|fix [PATHS...]."
+           :requires ([closed-record.format :as format])
+           :task (System/exit (format/format! "." *command-line-args*))}
+  clj-fmt:check {:doc "Check formatting in the maintained scope."
+                 :requires ([closed-record.format :as format])
+                 :task (System/exit (format/format! "." ["check"]))}
+  clj-fmt:fix {:doc "Fix formatting in the maintained scope."
+               :requires ([closed-record.format :as format])
+               :task (System/exit (format/format! "." ["fix"]))}
+  clj-kondo:copy-config
+  {:doc "Prepare dependency lint configuration from independent bases."
+   :requires ([closed-record.lint-dependencies :as lint-deps])
+   :task (lint-deps/copy-config! ".")}
+  clj-kondo:lint
+  {:doc "Prepare dependency configuration and lint; warnings fail."
+   :requires ([closed-record.lint :as lint])
+   :task (let [{:keys [exit out err]} (lint/lint! ".")]
+           (print out)
+           (flush)
+           (binding [*out* *err*] (print err) (flush))
+           (System/exit exit))}
+  lychee:check {:doc "Check tracked Markdown links and local heading fragments." :requires ([link-check :as links]) :task (System/exit (links/check!))}}}

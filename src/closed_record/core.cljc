@@ -48,9 +48,27 @@
   - map->Name with an undeclared key throws :closed-record/extra-keys.
 
   Lookup of an undeclared key gives the not-found value. Extra keys of a
-  map literal #ns.Name{...} are hidden; use check to find them.
+  map literal `#ns.Name{...}` are hidden; use check to find them.
 
-  Supported options: :no-print and :load-ns. Defines ->Name and map->Name."
+  Name is the type name symbol. fields is a vector of field symbols;
+  each field declares its corresponding keyword key. specs supplies protocol
+  or interface names and method implementations, as in defrecord.
+  Options are keyword/value pairs before specs. Supported options are
+  :no-print and :load-ns, passed to the JVM type compiler as in defrecord.
+
+  Defines ->Name, which takes one value per field in declaration order,
+  and map->Name, which takes a map of keyword keys to field values.
+  Missing declared keys in map->Name have nil values.
+
+  Rejected operations throw ex-info. Its ex-data contains :type and
+  :record (the record class). Rejected assoc and dissoc also include :key;
+  map->Name includes :keys (the set of undeclared keys).
+  dissoc of an undeclared key returns the same record.
+
+  Extra literal keys do not affect lookup, entries, equality, hash, or print.
+  Compilation of a literal as a code constant and print/read round trips
+  discard extra keys. Call check on a runtime-read literal before those
+  operations; check cannot find keys that have already been discarded."
      {:arglists '([name [& fields] & opts+specs])}
      [name fields & opts+specs]
      (validate-fields fields)

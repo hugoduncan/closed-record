@@ -1,0 +1,18 @@
+# Supported runner: pre-commit 4.6.0 (install the pinned version).
+minimum_pre_commit_version: '4.6.0'
+fail_fast: true
+repos:
+  - repo: local
+    hooks:
+      - id: closed-record-format
+        name: Format staged owned files
+        entry: bb quality:format-staged
+        language: system
+        always_run: true
+        require_serial: true
+      - id: closed-record-lint
+        name: Lint indexed project
+        entry: bb quality:lint-staged
+        language: system
+        always_run: true
+        pass_filenames: false

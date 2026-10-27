@@ -5,3 +5,7 @@
 /.nrepl-port
 /.clj-kondo/.cache/
 /target/
+
+/.clj-kondo/imports/
+
+/styles/proselint/

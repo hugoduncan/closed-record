@@ -1,6 +1,8 @@
 # Development
 
 Use the Clojure CLI. Run all commands from the repository root.
+See [tool installation](tool-installation.md) for pinned Java, Clojure CLI,
+format, lint, and prose tools.
 
 Run the tests on Clojure 1.11:
 
@@ -34,16 +36,23 @@ The separate Markdown links job uses Babashka and lychee, not Java or Clojure CL
 The code-quality job uses cljfmt `0.16.4` and clj-kondo `2026.04.15`.
 Run the same non-writing checks locally:
 
-    cljfmt check src test dev test-build test-release build.clj bb.edn
-    clj-kondo --lint src test dev test-build test-release build.clj bb.edn --fail-level warning
+    bb clj-fmt:check
+    bb clj-kondo:lint
+    bb vale
+    bb api-docs --check
 
-Formatting differences, lint warnings, and lint errors fail the job.
+See [quality checks](quality-checks.md) for scopes, generated files, focused
+tests, and hook installation. The quality job also uses Vale `3.17.1` and
+pre-commit `4.6.0`, and runs the focused tooling tests.
+
+Formatting differences, lint warnings, lint errors, prose warnings and errors,
+and stale API output fail the job.
 The runtime matrix runs the three test commands above; `deps.edn` owns
 the Clojure versions. A separate job runs the build tests and JAR command
 below once, with full Git history. A separate job runs the release tests. Performance benchmarks remain manual.
 
 Failed tests upload `.scry-results/` as `scry-runtime-1.11`,
-`scry-runtime-1.12`, `scry-runtime-1.13`, `scry-build`, or `scry-release`. These artifacts
+`scry-runtime-1.12`, `scry-runtime-1.13`, `scry-build`, `scry-release`, or `scry-tooling`. These artifacts
 contain structured failure data. Missing result files produce a warning;
 the test failure still fails the job. CI does not publish releases or
 configure branch protection.

@@ -40,14 +40,15 @@ jobs:
       - uses: DeLaGuardo/setup-clojure@13.4
         with:
           cli: '1.12.6.1673'
+          bb: '1.13.225'
           clj-kondo: '2026.04.15'
           cljfmt: '0.16.4'
       - name: GitHub CLI version
         run: gh --version
       - name: Check formatting
-        run: cljfmt check src test dev test-build test-release build.clj
+        run: bb clj-fmt:check
       - name: Lint
-        run: clj-kondo --lint src test dev test-build test-release build.clj --fail-level warning
+        run: bb clj-kondo:lint
       - name: Test runtime-111
         id: runtime-111
         run: clojure -M:test -m scry.cli

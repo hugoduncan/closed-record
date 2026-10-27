@@ -1,1 +1,2 @@
-{:lint-as {closed-record.core/defclosedrecord clojure.core/defrecord}}
+{:lint-as {closed-record.core/defclosedrecord clojure.core/defrecord}
+ :cljc {:features #{:clj}}}

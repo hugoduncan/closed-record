@@ -97,7 +97,7 @@ A failed commit can leave local changes. There is no automatic reset.
 For workflow failure, preserve the run URL, SHA/version, logs, and available
 failure artifacts. Inspect both GitHub and Clojars before another attempt.
 The tag or some files can already exist. Stock tools can retry internally;
-gh can remove its temporary draft. Publication is not atomic.
+`gh` can remove its temporary draft. Publication is not atomic.
 
 Later steps stop on failure. There is no outer retry, rollback, or partial
 resume. Do not blindly rerun, force tags, or overwrite assets. Manual repair

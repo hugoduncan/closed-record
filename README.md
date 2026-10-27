@@ -48,7 +48,7 @@ Pre-release. There is no release on Clojars yet. The API is small:
 `defclosedrecord` and `check`. After the first release, the API will
 change only by addition.
 
-- Host: Clojure on the JVM. ClojureScript and babashka are not
+- Host: Clojure on the JVM. ClojureScript and Babashka are not
   supported.
 - Clojure versions: 1.11 and later. The tests run on 1.11, 1.12 and
   1.13.
@@ -110,7 +110,8 @@ hash. Use `check` to find it:
 `check` also throws (`:closed-record/not-closed-record`) for a value
 that is not a closed record.
 
-See the docstrings of `defclosedrecord` and `check` for details.
+See the [API reference](doc/API.md) for arguments, options, constructors,
+and error contracts.
 
 ### Use with malli
 
