@@ -50,3 +50,13 @@
   against current CI, development docs, scry's task/CI reference, and task
   014. Task 017 explicitly permits Babashka; scry supplies a named-task
   pattern, not its permissions or mise setup. The stable design is unchanged.
+
+- Plan inconsistency review: no actionable findings across the task files.
+
+## 2026-10-27 — Plan review handoff
+
+- Fixture reference: `test-build/build_test.clj`, `prepare-config` and
+  `fixture-env`, shows Git isolation with inherited `GIT_*` overrides removed,
+  system configuration disabled, fixture-owned global configuration, and
+  empty hooks. Adapt this pattern for Babashka; do not add a tools.build
+  dependency to the link-check fixtures.
