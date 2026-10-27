@@ -1,0 +1,12 @@
+{:kind :capability-not-performance
+ :date "2026-10-27"
+ :source-base "2a71674218e03b4f3d3b8ce5152b0086865f33c1"
+ :dirty true
+ :probe-sha256 "dd3660643c0ff49c195b783ef90eb9034cdbc424b910205d6868d9399475053c"
+ :script-sha256 "97a387f5c0a9a460cab33480d3faabe73baf1c92de32e7f402f20216959fadee"
+ :runtime-manifest "../runtime-gate/manifest.edn"
+ :jdk "27-jep401ea3+1-1"
+ :layout-flags :defaults
+ :command "JAVA_HOME=$PWD/target/valhalla/jdk-27.jdk/Contents/Home bash dev/bench/valhalla/probe.sh"
+ :exit 0
+ :limits ["External Java fixtures only" "No performance measurement"]}

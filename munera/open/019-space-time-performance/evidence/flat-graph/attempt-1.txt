@@ -1,0 +1,10 @@
+dev/bench/valhalla/FlatGraphProbe.java:45: error: incompatible types: Object cannot be converted to Class<?>
+            long layout = unsafe.arrayBaseOffset(source)
+                                                 ^
+dev/bench/valhalla/FlatGraphProbe.java:46: error: incompatible types: Object cannot be converted to Class<?>
+                + (long) length * unsafe.arrayIndexScale(source);
+                                                         ^
+Note: dev/bench/valhalla/CapabilityProbe.java uses preview features of Java SE 27.
+Note: Recompile with -Xlint:preview for details.
+Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+2 errors

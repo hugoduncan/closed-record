@@ -1,0 +1,39 @@
+--- a/criterium/collect.clj
++++ b/criterium/collect.clj
+@@ -134,6 +134,11 @@
+ 
+ ;;; Timing
+ 
++(defn planning-time-estimate
++  "Return a positive per-operation ns estimate for batch planning only."
++  ^long [^long elapsed-ns ^long evaluations]
++  (max 1 (long (/ elapsed-ns evaluations))))
++
+ (def ^:private throw-away-collector
+   (collector/collector
+    {:stages     []
+@@ -204,11 +209,12 @@
+ (defn elapsed-time-point-estimate
+   "Run measured for an initial estimate of the elapsed-time.
+ 
+-  Returns an estimated execution elapsed-time in ns."
++  Returns an estimated execution elapsed-time in ns, with a one-ns floor
++  for batch planning. Raw collected durations are not changed."
+   ^long [measured]
+   (let [args (measured/args measured)
+-        s0   (collector/collect elapsed-time-collector measured args 1)]
+-    (metric/elapsed-time s0)))
++        s0 (collector/collect elapsed-time-collector measured args 1)]
++    (planning-time-estimate (metric/elapsed-time s0) 1)))
+ 
+ (defn elapsed-time-min-estimate
+   "Return an estimate for the execution elapsed-time of a measured.
+@@ -238,7 +244,7 @@
+                           (recur
+                            (unchecked-inc i)
+                            (if (< min-t t) min-t t)))))
+-        min-t       (max 1 (long (/ (long min-t) batch-size)))
++        min-t       (planning-time-estimate min-t batch-size)
+         sum-t       (:elapsed-time collected)]
+     (assoc collected
+            :t min-t

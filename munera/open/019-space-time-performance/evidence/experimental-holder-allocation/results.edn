@@ -1,0 +1,21 @@
+{:flat? true :operation :construct :sample 0 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? true :operation :construct :sample 1 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? true :operation :construct :sample 2 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? true :operation :construct :sample 3 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? true :operation :construct :sample 4 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? true :operation :replace :sample 0 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? true :operation :replace :sample 1 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? true :operation :replace :sample 2 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? true :operation :replace :sample 3 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? true :operation :replace :sample 4 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? false :operation :construct :sample 0 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? false :operation :construct :sample 1 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? false :operation :construct :sample 2 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? false :operation :construct :sample 3 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? false :operation :construct :sample 4 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? false :operation :replace :sample 0 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? false :operation :replace :sample 1 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? false :operation :replace :sample 2 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? false :operation :replace :sample 3 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:flat? false :operation :replace :sample 4 :operations 1024 :allocated-bytes 16384 :shallow-bytes 16}
+{:holder-controls 20 :status :passed}

@@ -1,0 +1,67 @@
+{:schema-version 1
+ :configurations
+ {:ordinary {:clojure "1.11.4" :jdk "Temurin 21.0.10+7-LTS"
+             :preview? false :representations [:closed-record :defrecord]}
+  :valhalla {:clojure "1.11.4" :jdk "27-jep401ea3+1-1"
+             :preview? true :fixture :external-java-point
+             :capability-command "bash dev/bench/valhalla/probe.sh"
+             :required-layouts {:value-array :flat :reference-array :non-flat
+                                :restricted-holder :flat :reference-holder :non-flat}}}
+ :metrics {:time {:unit :ns/op}
+           :allocation {:unit :bytes/op :scope :current-thread}
+           :graph {:unit :bytes :scope :reachable-graph}}
+ :execution {:forks 5 :pair-order :alternating :time-limit-seconds 5
+             :call-site-runs-per-child 1 :thread-confined? true
+             :acceptance-ready? false}
+ :contracts
+ {:legacy {:values [1 2 3] :equal-peer-values [1 2 3]
+           :replacement 2 :key :a :setup :outside-measurement
+           :parity-rule :s-03 :metrics [:time]}
+  :assoc {:fields [:a :b :c :d :e :f :g :h :i :j :k :l :m :n :o :p]
+          :values [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]
+          :value-selection :width-prefix :key :a :replacement 23
+          :payloads :preboxed-shared :setup :outside-measurement
+          :update :new-record-source-unchanged :parity-rule :none
+          :metrics [:time :allocation :graph]
+          :graph-roots [:result :source-and-result :increment-relative-to-source]}
+  :array {:representations [:value-array :reference-array]
+          :payload-class :point :initial-x 17 :replacement-x 23 :index 0
+          :payloads :prebuilt-shared :setup :outside-measurement
+          :construction :allocate-and-fill-all-elements
+          :update :in-place-element-store :reset :outside-measurement
+          :read-result :point-x :ordering :plain :atomicity :whole-element
+          :reference-atomicity :reference :publication :none
+          :parity-rule :none :metrics [:time :allocation :graph]
+          :graph-roots [:array]}
+  :field {:representations [:restricted-holder :reference-holder]
+          :payload-class :point :initial-x 17 :replacement-x 23
+          :payloads :prebuilt-shared :setup :outside-measurement
+          :construction :new-holder :update :new-holder-source-unchanged
+          :read-result :point-x :reference-read :object-to-point-cast
+          :ordering :final-field-initialization :publication :none
+          :parity-rule :none :metrics [:time :allocation :graph]
+          :graph-roots [:result :source-and-result :increment-relative-to-source]}}
+ :cases
+ [{:id :legacy/keyword :contract :legacy :configuration :ordinary :width 3
+   :operation :keyword :expression "(:a x)"}
+  {:id :legacy/get :contract :legacy :configuration :ordinary :width 3
+   :operation :get :expression "(get x :a)"}
+  {:id :legacy/field :contract :legacy :configuration :ordinary :width 3
+   :operation :field :expression "(.a x)"}
+  {:id :legacy/assoc :contract :legacy :configuration :ordinary :width 3
+   :operation :assoc :expression "(assoc x :a 2)"}
+  {:id :legacy/hash :contract :legacy :configuration :ordinary :width 3
+   :operation :cached-hash :expression "(hash x)"}
+  {:id :legacy/equality :contract :legacy :configuration :ordinary :width 3
+   :operation :equality :expression "(= x y)"}
+  {:id :assoc/width-3 :contract :assoc :configuration :ordinary :width 3 :operation :assoc}
+  {:id :assoc/width-16 :contract :assoc :configuration :ordinary :width 16 :operation :assoc}
+  {:id :array/construct-4 :contract :array :configuration :valhalla :length 4 :operation :construct}
+  {:id :array/read-4 :contract :array :configuration :valhalla :length 4 :operation :read}
+  {:id :array/store-4 :contract :array :configuration :valhalla :length 4 :operation :store}
+  {:id :array/construct-1024 :contract :array :configuration :valhalla :length 1024 :operation :construct}
+  {:id :array/read-1024 :contract :array :configuration :valhalla :length 1024 :operation :read}
+  {:id :array/store-1024 :contract :array :configuration :valhalla :length 1024 :operation :store}
+  {:id :field/construct :contract :field :configuration :valhalla :operation :construct}
+  {:id :field/read :contract :field :configuration :valhalla :operation :read}
+  {:id :field/replace :contract :field :configuration :valhalla :operation :replace}]}

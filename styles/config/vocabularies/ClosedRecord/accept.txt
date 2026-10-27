@@ -28,3 +28,9 @@ worktree
 Ramora
 docstrings
 unstaged
+APIs
+Criterium
+JVMs
+[Nn]ullable
+preboxed
+untimed

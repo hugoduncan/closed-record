@@ -1,0 +1,9 @@
+0923ccbcf560f1f27f063e102e5dae6b67c2aaca
+openjdk version "27-jep401ea3" 2026-09-15
+OpenJDK Runtime Environment (build 27-jep401ea3+1-1)
+OpenJDK 64-Bit Server VM (build 27-jep401ea3+1-1, mixed mode, sharing)
+Darwin duncans-MacBook-Pro.local 27.0.0 Darwin Kernel Version 27.0.0: Tue Aug 11 21:06:40 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T6050 arm64
+2515586efeca63da42e713704364e822e1db91e24c6cc39f863b0cf10be42490  dev/bench/valhalla/CapabilityProbe.java
+5d2f7ae77088ef3cb59b9c628ab1cc1dc6035d0c9388e715a6166f9e7523d1f6  dev/bench/valhalla/Operations.java
+833cce9aa29430868285e5864770eb7d63fab131d35e501f7f1f5f2ffa52b8c8  dev/bench/valhalla/Allocation.java
+75ede05a9aa14647085499237f502f585a05552cd37c25b8c332ab8910d3ad91  dev/bench/valhalla/HolderAllocationTest.java

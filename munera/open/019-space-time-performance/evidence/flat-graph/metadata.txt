@@ -1,0 +1,11 @@
+Base revision: d79aae18232aa4ac0516fba1dca79d967e34e164
+Tue Oct 27 22:14:50 UTC 2026
+Darwin duncans-MacBook-Pro.local 27.0.0 Darwin Kernel Version 27.0.0: Tue Aug 11 21:06:40 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T6050 arm64
+Command: JAVA_HOME="$PWD/target/valhalla/jdk-27.jdk/Contents/Home" bash dev/bench/valhalla/flat-graph.sh
+Exit: 0; working tree contains this slice; no timing acceptance
+openjdk version "27-jep401ea3" 2026-09-15
+OpenJDK Runtime Environment (build 27-jep401ea3+1-1)
+OpenJDK 64-Bit Server VM (build 27-jep401ea3+1-1, mixed mode, sharing)
+2515586efeca63da42e713704364e822e1db91e24c6cc39f863b0cf10be42490  dev/bench/valhalla/CapabilityProbe.java
+82bfe3ec05d480d5af637b8b815eca41a538ef4505eddfa23a64be4b20b494c0  dev/bench/valhalla/FlatGraphProbe.java
+176f5e279c61182b8dec7a3399507ae3b9e69fd93d751dc09e43aa6a7a7861e1  dev/bench/valhalla/flat-graph.sh

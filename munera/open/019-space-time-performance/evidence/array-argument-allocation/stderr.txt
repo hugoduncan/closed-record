@@ -1,0 +1,2 @@
+Note: dev/bench/valhalla/CapabilityProbe.java uses preview features of Java SE 27.
+Note: Recompile with -Xlint:preview for details.

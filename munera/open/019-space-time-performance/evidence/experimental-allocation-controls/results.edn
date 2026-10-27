@@ -1,0 +1,11 @@
+{:flat? true :operations 1024 :stride 4 :small 32768 :large 4210688}
+{:flat? true :operations 1024 :stride 4 :small 32768 :large 4210688}
+{:flat? true :operations 1024 :stride 4 :small 32768 :large 4210688}
+{:flat? true :operations 1024 :stride 4 :small 32768 :large 4210688}
+{:flat? true :operations 1024 :stride 4 :small 32768 :large 4210688}
+{:flat? false :operations 1024 :stride 4 :small 32768 :large 4210688}
+{:flat? false :operations 1024 :stride 4 :small 32768 :large 4210688}
+{:flat? false :operations 1024 :stride 4 :small 32768 :large 4210688}
+{:flat? false :operations 1024 :stride 4 :small 32768 :large 4210688}
+{:flat? false :operations 1024 :stride 4 :small 32768 :large 4210688}
+{:invalid-sites 9 :layout-controls 10 :status :passed}

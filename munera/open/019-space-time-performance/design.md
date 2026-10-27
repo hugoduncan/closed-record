@@ -65,7 +65,7 @@ API remains ambiguous, obtain a user decision before fixing the benchmark matrix
 
 Use matched data and equivalent operations. Define the case matrix before the
 acceptance run, including small and larger record widths and array lengths.
-Keep the matrix small enough for a documented manual run.
+Use the fixed inventory for a documented manual run.
 
 - `assoc`: compare closed records with `defrecord` for a changed declared value.
   Measure time and bytes allocated per operation, and the retained size of
@@ -83,8 +83,12 @@ Keep the matrix small enough for a documented manual run.
 
 Time, allocation, and retained size are separate metrics. Specify units,
 ownership of reachable objects, treatment of shared values, and measurement
-limits. An unsupported or unavailable measurement is not zero. Avoid counting
-fixture setup as operation cost unless construction is the operation.
+limits. An unsupported or unavailable measurement is not zero. A metric with a
+demonstrated measurement limit may remain unavailable at completion if its reason
+and probe evidence are published. Continue the supported metrics; do not infer a
+comparison from an unavailable side. Unimplemented collection and failed runs
+are not support limits. Avoid counting fixture setup as operation cost unless
+construction is the operation.
 
 ### Evidence and documentation
 
@@ -106,6 +110,10 @@ unrelated timing harness. Keep reporting testable without long benchmarks.
 Use an isolated tool or profile for memory measurement when timing tools cannot
 provide a valid metric; document its limitations. A dependency upgrade is allowed
 only when needed for correct measurement and after existing cases are checked.
+
+Reuse the implemented tools. Separate metric commands and a bounded evidence
+index are sufficient; a universal runner and further diagnostic products are
+not required. Add infrastructure only to resolve a demonstrated acceptance defect.
 
 Documentation alone cannot supply missing evidence. A broad runtime survey or
 performance optimisation would exceed this task. Prefer a small, verified matrix

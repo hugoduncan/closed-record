@@ -24,7 +24,16 @@ Run the tests in the REPL:
 
 Run the benchmarks against `defrecord` (about 6 minutes):
 
-    clojure -M:bench
+    sh dev/bench/timing/run.sh
+
+The launcher prepares a checksum-verified local correction to Criterium
+0.5.251-ALPHA before starting the benchmark. It retains the source overlay under
+`target/` for child JVMs. The correction prevents a zero planning duration; it
+does not change raw samples. Direct `clojure -M:bench` bypasses this preparation
+and selects the uncorrected upstream tool.
+
+See [performance measurements](performance.md) for the fixed matrix, memory
+metrics, experimental runtime requirements, and saved evidence.
 
 ### Continuous integration
 

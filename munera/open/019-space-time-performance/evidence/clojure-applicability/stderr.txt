@@ -1,0 +1,3 @@
+Note: dev/bench/valhalla/CapabilityProbe.java uses preview features of Java SE 27.
+Note: Recompile with -Xlint:preview for details.
+{:status :measured :array {:null-restricted true :rejects-null true :atomic true :flat true :read 17 :replacement 23} :reference-array {:flat false :accepts-null true} :field {:null-restricted true :rejects-null true :flat true :read 17 :replacement 23} :nullable-field {:null-restricted false :accepts-null true :flat true} :reference-field {:declared-type :object :null-restricted false :accepts-null true :flat false :read 17 :replacement 23 :distinct-holders true}}

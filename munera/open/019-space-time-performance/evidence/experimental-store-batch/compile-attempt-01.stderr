@@ -1,0 +1,7 @@
+dev/bench/valhalla/CapabilityProbe.java:2: error: package jdk.internal.misc is not visible
+import jdk.internal.misc.Unsafe;
+                   ^
+  (package jdk.internal.misc is declared in module java.base, which does not export it to the unnamed module)
+Note: dev/bench/valhalla/CapabilityProbe.java uses preview features of Java SE 27.
+Note: Recompile with -Xlint:preview for details.
+1 error

@@ -1,0 +1,1 @@
+Partial allocation evidence: munera/open/019-space-time-performance/evidence/assoc-budget-diagnostic/run exit 0

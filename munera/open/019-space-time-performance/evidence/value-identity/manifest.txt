@@ -1,0 +1,12 @@
+Command: JAVA_HOME="$PWD/target/valhalla/jdk-27.jdk/Contents/Home" bash dev/bench/valhalla/value-identity.sh
+Exit: 0
+Source revision: 99d5de502ed9aaa77c529b5da149e07637bed8cf
+Working tree: modified probe and task artifacts
+Tue Oct 27 22:16:16 UTC 2026
+Darwin duncans-MacBook-Pro.local 27.0.0 Darwin Kernel Version 27.0.0: Tue Aug 11 21:06:40 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T6050 arm64
+openjdk version "27-jep401ea3" 2026-09-15
+OpenJDK Runtime Environment (build 27-jep401ea3+1-1)
+OpenJDK 64-Bit Server VM (build 27-jep401ea3+1-1, mixed mode, sharing)
+2515586efeca63da42e713704364e822e1db91e24c6cc39f863b0cf10be42490  dev/bench/valhalla/CapabilityProbe.java
+9b58b5f5d07b9b0f5544a99bce605f2e310d4fcb032de25b256a9a6c55fffd82  dev/bench/valhalla/ValueIdentityProbe.java
+23d536658221d5811c988a1c33fe2b2922b1ef219a7f68be3b01b75f8027985b  dev/bench/valhalla/value-identity.sh

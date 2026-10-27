@@ -1,7 +1,7 @@
 (ns closed-record.bench
   "Benchmarks of a closed record against `defrecord` (V-11, S-03).
 
-  Run with `clojure -M:bench`. With no arguments, `-main` is the parent: it
+  Run with `sh dev/bench/timing/run.sh`. With no arguments, `-main` is the parent: it
   starts `report/fork-count` child JVMs, one after the other, reads their
   result files and prints the table. It exits 0 when all operations pass, 1
   if not, and 2 if a fork fails. With the arguments `fork result-file`,
@@ -10,6 +10,8 @@
   (:require
    [closed-record.bench.fork :as fork]
    [closed-record.bench.report :as report]
+   [closed-record.bench.legacy-transport :as legacy-transport]
+   [closed-record.bench.timing-tool :as timing-tool]
    [closed-record.core :refer [defclosedrecord]]
    [criterium.bench :as bench]))
 
@@ -47,13 +49,14 @@
           report/ops runs)))
 
 (defn- child [n file]
-  (spit file (report/encode-result (run n 5)))
+  (let [observation (timing-tool/observe)]
+    (spit file (legacy-transport/encode (run n 5) observation)))
   0)
 
 (defn -main [& args]
   (System/exit
    (case (count args)
-     0 (fork/parent fork/default-child-cmd)
+     0 (fork/parent fork/default-child-cmd (timing-tool/observe))
      2 (let [[n file] args] (child (parse-long n) file))
      (binding [*out* *err*]
        (println "usage: closed-record.bench [fork result-file]")

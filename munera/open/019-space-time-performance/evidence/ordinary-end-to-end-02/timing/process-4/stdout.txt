@@ -1,0 +1,1 @@
+CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole = true

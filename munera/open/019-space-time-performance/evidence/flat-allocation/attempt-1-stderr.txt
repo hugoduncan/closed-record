@@ -1,0 +1,6 @@
+dev/bench/valhalla/FlatAllocationProbe.java:46: error: incompatible types: possible lossy conversion from long to int
+        int base = unsafe.arrayBaseOffset(largeArray.getClass());
+                                         ^
+Note: dev/bench/valhalla/CapabilityProbe.java uses preview features of Java SE 27.
+Note: Recompile with -Xlint:preview for details.
+1 error

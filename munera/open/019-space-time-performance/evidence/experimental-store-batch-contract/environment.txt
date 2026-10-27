@@ -1,0 +1,6 @@
+7b6a1416f56e1493ab5fc91dd3731e9e1efe781d
+openjdk version "27-jep401ea3" 2026-09-15
+OpenJDK Runtime Environment (build 27-jep401ea3+1-1)
+OpenJDK 64-Bit Server VM (build 27-jep401ea3+1-1, mixed mode, sharing)
+54e27f21d503411830fe35c198159e1a20cf8b4640a2a392d235b9569652cb32  dev/bench/valhalla/StoreBatch.java
+aab3d0296fa8e97339406434ac5aa33ce80edf0c410660979cd44975697fbd39  dev/bench/valhalla/StoreBatchCheck.java

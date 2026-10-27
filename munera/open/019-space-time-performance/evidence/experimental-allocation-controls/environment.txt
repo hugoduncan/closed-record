@@ -1,0 +1,6 @@
+d31a7c1239e1c0039f6a89d554aca81c4841415c
+openjdk version "27-jep401ea3" 2026-09-15
+OpenJDK Runtime Environment (build 27-jep401ea3+1-1)
+OpenJDK 64-Bit Server VM (build 27-jep401ea3+1-1, mixed mode, sharing)
+833cce9aa29430868285e5864770eb7d63fab131d35e501f7f1f5f2ffa52b8c8  dev/bench/valhalla/Allocation.java
+45df397b0e98c4ff2d4368011a1eebb02420dcb2ece57f3ecbc751ddcac33e50  dev/bench/valhalla/AllocationTest.java

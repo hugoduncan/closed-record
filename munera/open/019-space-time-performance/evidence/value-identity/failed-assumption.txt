@@ -1,0 +1,5 @@
+Note: Some input files use preview features of Java SE 27.
+Note: Recompile with -Xlint:preview for details.
+Exception in thread "main" java.lang.AssertionError: Expected value identity hashing to be unavailable
+	at CapabilityProbe.require(CapabilityProbe.java:26)
+	at ValueIdentityProbe.main(ValueIdentityProbe.java:20)

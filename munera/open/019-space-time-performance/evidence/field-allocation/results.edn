@@ -1,0 +1,1 @@
+{:control :field-allocation :status :passed :unit :bytes :operations 4096 :flat-holder-bytes 65536 :reference-holder-bytes 163840 :flat-shallow-bytes 16 :reference-shallow-bytes 16 :reference-extra-bytes 98304 :size-tool :jdk-instrumentation :overhead-subtracted false :graph-support :unvalidated}

@@ -1,0 +1,5 @@
+Note: dev/bench/valhalla/CapabilityProbe.java uses preview features of Java SE 27.
+Note: Recompile with -Xlint:preview for details.
+Exception in thread "main" java.lang.AssertionError: Reference holder allocation differs from shallow size
+	at CapabilityProbe.require(CapabilityProbe.java:25)
+	at FieldAllocationProbe.main(FieldAllocationProbe.java:64)

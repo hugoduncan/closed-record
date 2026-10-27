@@ -1,0 +1,13 @@
+{:control :flat-array-graph :status :passed :unit :bytes :length 4 :source 32 :result 32 :union 64 :incremental 32 :unsafe-layout 32}
+{:control :flat-array-graph :status :passed :unit :bytes :length 1024 :source 4112 :result 4112 :union 8224 :incremental 4112 :unsafe-layout 4112}
+{:control :flat-field-graph :status :passed :unit :bytes :source 16 :result 16 :union 32 :incremental 16 :reference-container-rejected true :scope :primitive-only-point-containers}
+{:operation :construct :length 4 :root :array :bytes 32}
+{:operation :read :length 4 :root :array :bytes 32}
+{:operation :store :length 4 :root :array :bytes 32}
+{:operation :construct :length 1024 :root :array :bytes 4112}
+{:operation :read :length 1024 :root :array :bytes 4112}
+{:operation :store :length 1024 :root :array :bytes 4112}
+{:operation :construct :source 16 :result 16 :union 32 :incremental 16}
+{:operation :read :source 16 :result 16 :union 16 :incremental 0}
+{:operation :replace :source 16 :result 16 :union 32 :incremental 16}
+{:operation-root-controls 11 :status :passed}

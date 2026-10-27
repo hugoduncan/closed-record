@@ -1,0 +1,3 @@
+patching file 'criterium/collect.clj'
+Verified local Criterium source overlay (not an upstream release).
+Partial timing evidence: munera/open/019-space-time-performance/evidence/ordinary-end-to-end-02/timing exit 0

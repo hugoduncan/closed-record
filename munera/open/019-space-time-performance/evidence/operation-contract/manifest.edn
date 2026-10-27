@@ -1,0 +1,15 @@
+{:kind :capability-not-performance
+ :date "2026-10-27"
+ :source-base "8656c8bb0d1a3c958cb9ef7a0ad3a25eb2a2526c" :dirty true
+ :jdk "27-jep401ea3+1-1" :clojure "1.11.4"
+ :runtime-manifest "../runtime-gate/manifest.edn"
+ :probe-sha256 "55775766aa4d1e81535fc6ce9bf8c11cdd7f2b6f2f93f078d3b3c23be67fa389"
+ :build-source {:archive-entry "java.base/jdk/internal/value/ValueClass.java"
+                :sha256 "d71782b6a93ad82435bfb2c19ff9f7dfc73b7ae9b5cde11ff59e322cf6bbd29a"}
+ :runs [{:command "JAVA_HOME=$PWD/target/valhalla/jdk-27.jdk/Contents/Home bash dev/bench/valhalla/applicability.sh"
+         :exit 0 :result "result.edn"}
+        {:command "JAVA_HOME=$PWD/target/valhalla/jdk-27.jdk/Contents/Home bash dev/bench/valhalla/probe.sh"
+         :exit 0 :result "capability.edn"}]
+ :limits ["Single-threaded capability assertions, not concurrency stress tests"
+          "Atomic layout is the internal API contract, not volatile ordering"
+          "No timing, allocation, or retained-size evidence"]}

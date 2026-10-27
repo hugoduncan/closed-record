@@ -1,0 +1,17 @@
+{:revision "749aa9cb6096b118ac0fe93927e79fffc0c0697c"
+ :purpose :timing-tool-candidate-screen
+ :acceptance-evidence? false
+ :runtime "OpenJDK 25.0.2+10-69"
+ :clojure "1.11.4"
+ :candidate "org.hugoduncan/criterium 0.5.253-ALPHA"
+ :candidate-jar-sha256 "a8b5fc55ae7c54417e785c02c14f6d9adeadf424bffd8aae9ed608276bc79c24"
+ :pinned "org.hugoduncan/criterium 0.5.251-ALPHA"
+ :pinned-jar-sha256 "b2640cac514a15f1af9582345ed0c15bdee45bbeda93a2a7e4651aa96ed7e033"
+ :identical-source-entries
+ {"criterium/collect.clj" "a73da4deaa664aa68ddbeb0989e7dcb22a5878864a720b662c00aa9ab1557fa2"
+  "criterium/collect_plan.clj" "da75fadac5db31ecfad8587e4d13937d68c0cc74b9bc6ee16a7583396f3b9e4b"}
+ :diagnostic {:namespace closed-record.timing-estimator-test
+              :exit 0 :failure-artifacts []
+              :zero-estimate :arithmetic-exception}
+ :decision :reject-candidate-as-zero-estimate-fix
+ :dependency-changed? false}

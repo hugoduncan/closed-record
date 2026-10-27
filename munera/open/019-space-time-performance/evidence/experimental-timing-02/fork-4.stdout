@@ -1,0 +1,55 @@
+CompileCommand: blackhole criterium/blackhole/Blackhole.consume bool blackhole = true
+Estimated time required for full JIT is 1.50s, but limited to 1.00s.
+  pass `:limit-time-s 1.50` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.50s, but limited to 1.00s.
+  pass `:limit-time-s 1.50` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.50s, but limited to 1.00s.
+  pass `:limit-time-s 1.50` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.50s, but limited to 1.00s.
+  pass `:limit-time-s 1.50` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.90s, but limited to 1.00s.
+  pass `:limit-time-s 1.90` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.33s, but limited to 1.00s.
+  pass `:limit-time-s 1.33` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.15s, but limited to 1.00s.
+  pass `:limit-time-s 1.15` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.44s, but limited to 1.00s.
+  pass `:limit-time-s 1.44` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.50s, but limited to 1.00s.
+  pass `:limit-time-s 1.50` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.50s, but limited to 1.00s.
+  pass `:limit-time-s 1.50` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.65s, but limited to 1.00s.
+  pass `:limit-time-s 1.65` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.45s, but limited to 1.00s.
+  pass `:limit-time-s 1.45` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.50s, but limited to 1.00s.
+  pass `:limit-time-s 1.50` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.50s, but limited to 1.00s.
+  pass `:limit-time-s 1.50` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.50s, but limited to 1.00s.
+  pass `:limit-time-s 1.50` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.50s, but limited to 1.00s.
+  pass `:limit-time-s 1.50` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.50s, but limited to 1.00s.
+  pass `:limit-time-s 1.50` to improve accuracy,
+  or consider benchmarks at a lower level.
+Estimated time required for full JIT is 1.50s, but limited to 1.00s.
+  pass `:limit-time-s 1.50` to improve accuracy,
+  or consider benchmarks at a lower level.

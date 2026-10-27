@@ -1,0 +1,4 @@
+{:layout :flat :length 4 :stores 1024 :warmup 2000 :samples 1000 :zero-count 0 :min-ns 208 :median-ns 291 :max-ns 458 :verified true :acceptance false}
+{:layout :reference :length 4 :stores 1024 :warmup 2000 :samples 1000 :zero-count 0 :min-ns 666 :median-ns 709 :max-ns 917 :verified true :acceptance false}
+{:layout :flat :length 1024 :stores 1024 :warmup 2000 :samples 1000 :zero-count 0 :min-ns 10958 :median-ns 11041 :max-ns 19458 :verified true :acceptance false}
+{:layout :reference :length 1024 :stores 1024 :warmup 2000 :samples 1000 :zero-count 0 :min-ns 875 :median-ns 958 :max-ns 1167 :verified true :acceptance false}

@@ -1,0 +1,1 @@
+{:status :verified, :clojure "1.11.4", :jdk "27-jep401ea3+1-1", :closed-record {:value-class false, :changed-assoc true, :value-payload true, :flat-array-payload true, :array-mutation-visible true, :own-array-flat false}, :hinted-field {:declared-type :object, :null-restricted false, :flat false, :accepts-null true}}

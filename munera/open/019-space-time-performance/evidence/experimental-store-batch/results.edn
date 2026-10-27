@@ -1,0 +1,12 @@
+{:layout :flat :length 4 :stores 1 :samples 1000 :zero-count 0 :min-ns 125 :median-ns 167 :max-ns 334 :verified true :acceptance false}
+{:layout :flat :length 4 :stores 64 :samples 1000 :zero-count 318 :min-ns 0 :median-ns 41 :max-ns 209 :verified true :acceptance false}
+{:layout :flat :length 4 :stores 1024 :samples 1000 :zero-count 0 :min-ns 250 :median-ns 292 :max-ns 14708 :verified true :acceptance false}
+{:layout :reference :length 4 :stores 1 :samples 1000 :zero-count 164 :min-ns 0 :median-ns 42 :max-ns 209 :verified true :acceptance false}
+{:layout :reference :length 4 :stores 64 :samples 1000 :zero-count 0 :min-ns 41 :median-ns 83 :max-ns 209 :verified true :acceptance false}
+{:layout :reference :length 4 :stores 1024 :samples 1000 :zero-count 0 :min-ns 625 :median-ns 708 :max-ns 13875 :verified true :acceptance false}
+{:layout :flat :length 1024 :stores 1 :samples 1000 :zero-count 503 :min-ns 0 :median-ns 0 :max-ns 167 :verified true :acceptance false}
+{:layout :flat :length 1024 :stores 64 :samples 1000 :zero-count 0 :min-ns 625 :median-ns 708 :max-ns 9167 :verified true :acceptance false}
+{:layout :flat :length 1024 :stores 1024 :samples 1000 :zero-count 0 :min-ns 11208 :median-ns 13625 :max-ns 55166 :verified true :acceptance false}
+{:layout :reference :length 1024 :stores 1 :samples 1000 :zero-count 813 :min-ns 0 :median-ns 0 :max-ns 125 :verified true :acceptance false}
+{:layout :reference :length 1024 :stores 64 :samples 1000 :zero-count 1 :min-ns 0 :median-ns 83 :max-ns 292 :verified true :acceptance false}
+{:layout :reference :length 1024 :stores 1024 :samples 1000 :zero-count 0 :min-ns 1166 :median-ns 1292 :max-ns 16042 :verified true :acceptance false}

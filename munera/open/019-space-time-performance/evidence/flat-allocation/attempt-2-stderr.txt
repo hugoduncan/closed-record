@@ -1,0 +1,6 @@
+Note: dev/bench/valhalla/CapabilityProbe.java uses preview features of Java SE 27.
+Note: Recompile with -Xlint:preview for details.
+Exception in thread "main" java.lang.IllegalArgumentException: Arrays of a concrete value class don't have a single base and offset
+	at java.base/jdk.internal.misc.Unsafe.arrayIndexScale0(Native Method)
+	at java.base/jdk.internal.misc.Unsafe.arrayIndexScale(Unsafe.java:1492)
+	at FlatAllocationProbe.main(FlatAllocationProbe.java:45)

@@ -1,0 +1,1 @@
+{:status :passed :tool :hotspot-thread-mxbean :unit :bytes :operations 4096 :flat true :array-base-bytes 16 :element-stride-bytes 4 :array-4-bytes 229376 :array-1024-bytes 16941056 :overhead-subtracted false :graph-support :unvalidated}

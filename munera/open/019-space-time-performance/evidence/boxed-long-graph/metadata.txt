@@ -1,0 +1,17 @@
+Tue Oct 27 22:19:35 UTC 2026
+8bfb33dd9705761455f9e0bbac3d3471cdc41b74
+ M dev/bench/memory/RecordGraphProbe.java
+ M dev/bench/memory/record-graph.clj
+?? munera/open/019-space-time-performance/evidence/boxed-long-graph/
+Darwin duncans-MacBook-Pro.local 27.0.0 Darwin Kernel Version 27.0.0: Tue Aug 11 21:06:40 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T6050 arm64
+Apple M5 Max
+openjdk version "21.0.10" 2026-01-20 LTS
+OpenJDK Runtime Environment Temurin-21.0.10+7 (build 21.0.10+7-LTS)
+OpenJDK 64-Bit Server VM Temurin-21.0.10+7 (build 21.0.10+7-LTS, mixed mode, sharing)
+openjdk version "27-jep401ea3" 2026-09-15
+OpenJDK Runtime Environment (build 27-jep401ea3+1-1)
+OpenJDK 64-Bit Server VM (build 27-jep401ea3+1-1, mixed mode, sharing)
+9c328bbe9c6ff66dc40ed678a23e3e7ad286f2dc3e453d170bd8b42dfbf833dd  dev/bench/memory/RecordGraphProbe.java
+4d05c0c523b6ee91b2df82a7b7c8666d7cb0addba2e82c118d46d489edbeffca  dev/bench/memory/record-graph.clj
+869b8f96aee394d4a3810b662d4a93e42ebd076c8f257c5bb01dc5e6c99f4e51  dev/bench/memory/record-graph-probe.sh
+3d93df525e903df721546d4f6bc64c809ed64da26557517aadd1ff30d81e3056  dev/bench/cases.edn

@@ -10,7 +10,9 @@
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
    [closed-record.bench.fork :as fork]
-   [closed-record.bench.report :as report])
+   [closed-record.bench.report :as report]
+   [closed-record.bench.legacy-transport :as transport]
+   [closed-record.bench-timing-tool-test :refer [upstream corrected]])
   (:import
    (java.io File StringWriter)
    (java.lang.management ManagementFactory)
@@ -24,7 +26,7 @@
         exit (atom nil)
         out  (with-out-str
                (binding [*err* err]
-                 (reset! exit (fork/parent child-cmd))))]
+                 (reset! exit (fork/parent child-cmd upstream))))]
     {:exit @exit :out out :err (str err)}))
 
 (defn- temp-dir []
@@ -36,7 +38,7 @@
   [pm rm]
   (let [f (File/createTempFile "closed-record-fixture-" ".edn")
         s (fn [m] {:mean m :low m :high m})]
-    (spit f (report/encode-result (mapv (fn [op] [op (s pm) (s rm)]) report/ops)))
+    (spit f (transport/encode (mapv (fn [op] [op (s pm) (s rm)]) report/ops) upstream))
     (str f)))
 
 (defn- fork-failed? [{:keys [exit out err]} fork cause]
@@ -50,10 +52,10 @@
   (testing "missing result file"
     (is (fork-failed? (run-parent (fn [_ f] ["rm" f])) 0 "missing result file")))
   (testing "decode error: empty file"
-    (is (fork-failed? (run-parent (fn [_ _] ["true"])) 0 "not a vector of 6 entries")))
+    (is (fork-failed? (run-parent (fn [_ _] ["true"])) 0 "Unsupported original timing schema")))
   (testing "decode error: invalid EDN"
     (is (fork-failed? (run-parent (fn [_ f] ["sh" "-c" (str "printf '[1' > " f)]))
-                      0 "invalid EDN"))))
+                      0 "EOF while reading"))))
 
 (deftest parent-stops-after-failure-test
   (testing "a failure at fork 1 starts no more forks"
@@ -103,3 +105,25 @@
       (is (= ["-cp" (System/getProperty "java.class.path")] (subvec cmd (inc n) (+ n 3))))
       (is (= ["clojure.main" "-m" "closed-record.bench" "3" "/tmp/r.edn"] (subvec cmd (+ n 3))))
       (is (= (+ n 8) (count cmd))))))
+
+(deftest parent-provenance-test
+  ;; Real subprocesses publish evidence; invalid identity must stop reporting.
+  (let [stats {:mean 1.0 :low 1.0 :high 1.0}
+        rows (mapv #(vector % stats stats) report/ops)]
+    (doseq [text [(report/encode-result rows)
+                  (transport/encode rows corrected)]]
+      (let [file (File/createTempFile "closed-record-provenance-" ".edn")]
+        (try
+          (spit file text)
+          (let [result (run-parent (fn [_ destination]
+                                     ["cp" (str file) destination]))]
+            (is (= 2 (:exit result)))
+            (is (str/blank? (:out result)))
+            (is (str/starts-with? (:err result) "fork 0 failed:"))
+            (is (= text (slurp file))))
+          (finally (.delete file)))))))
+
+(deftest parent-declaration-test
+  ;; Invalid provenance fails before any child command can be launched.
+  (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Invalid timing tool identity"
+                        (fork/parent fork/default-child-cmd nil))))

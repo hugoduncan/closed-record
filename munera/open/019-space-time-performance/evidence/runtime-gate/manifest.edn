@@ -1,0 +1,18 @@
+{:kind :capability-not-performance
+ :date "2026-10-27"
+ :source-base "0feb930a1b36e270e07d2c3ca968582f3956e3fa"
+ :dirty true
+ :probe-sha256 "c8cee0128fad4b7d689b99492179491ca785aab8da56f944d2cb4edaa56a17be"
+ :script-sha256 "97a387f5c0a9a460cab33480d3faabe73baf1c92de32e7f402f20216959fadee"
+ :os "macOS 27.0.1 26A434" :arch "aarch64" :cpu "Apple M5 Max"
+ :jdk "27-jep401ea3+1-1"
+ :archive-url "https://download.java.net/java/early_access/valhalla/27/1/openjdk-27-jep401ea3+1-1_macos-aarch64_bin.tar.gz"
+ :archive-sha256 "d97c8e0d90d95b81bf99cfef0b1e1edebeb07655fc84c42e6ed99d882aebe76b"
+ :command "JAVA_HOME=$PWD/target/valhalla/jdk-27.jdk/Contents/Home bash dev/bench/valhalla/probe.sh"
+ :exit 0
+ :prior-attempt {:exit 1 :phase :class-verification
+                 :reason "Restricted constructor initialized strict final field after implicit super()"
+                 :correction "Initialize field before explicit super()"}
+ :limits ["External Java fixture only; closed-record applicability not yet probed"
+          "No time, allocation, or graph-size measurements"
+          "Nullable field also flattens; a reference-field control remains needed"]}

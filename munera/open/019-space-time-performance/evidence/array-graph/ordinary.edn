@@ -1,0 +1,1 @@
+{:control :array-graph :status :passed :unit :bytes :source 192 :result 192 :union 304 :incremental 112 :container-shallow 32 :payload-shallow 80 :identity-deduplication true :cycles true :unsupported-rejected true :scope :ordinary-arrays-only :size-tool :jdk-instrumentation}

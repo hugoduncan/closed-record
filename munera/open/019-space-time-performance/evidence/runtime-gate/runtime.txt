@@ -1,0 +1,42 @@
+openjdk version "27-jep401ea3" 2026-09-15
+OpenJDK Runtime Environment (build 27-jep401ea3+1-1)
+OpenJDK 64-Bit Server VM (build 27-jep401ea3+1-1, mixed mode, sharing)
+Compiled from "ValueClass.java"
+public final class jdk.internal.value.ValueClass {
+  public jdk.internal.value.ValueClass();
+  public static boolean isValueObjectCompatible(java.lang.Class<?>);
+  public static boolean isConcreteValueClass(java.lang.Class<?>);
+  public static boolean hasBinaryPayload(java.lang.Class<?>);
+  public static boolean isNullRestrictedField(java.lang.reflect.Field);
+  public static native java.lang.Object[] newNullRestrictedAtomicArray(java.lang.Class<?>, int, java.lang.Object);
+  public static native java.lang.Object[] newNullRestrictedNonAtomicArray(java.lang.Class<?>, int, java.lang.Object);
+  public static native java.lang.Object[] newNullableAtomicArray(java.lang.Class<?>, int);
+  public static native java.lang.Object[] newReferenceArray(java.lang.Class<?>, int);
+  public static native boolean isFlatArray(java.lang.Object);
+  public static java.lang.Object[] copyOfSpecialArray(java.lang.Object[], int);
+  public static java.lang.Object[] copyOfRangeSpecialArray(java.lang.Object[], int, int);
+  public static native boolean isNullRestrictedArray(java.lang.Object);
+  public static native boolean isAtomicArray(java.lang.Object);
+  static {};
+}
+     intx AsyncDeflationInterval                   = 250                                    {diagnostic} {default}
+     uint CodeEntryAlignment                       = 64                                {pd experimental} {default}
+   size_t CompressedClassSpaceSize                 = 1073741824                                {product} {default}
+     intx FlatArrayElementMaxOops                  = 4                                         {product} {default}
+     intx GuaranteedAsyncDeflationInterval         = 60000                                  {diagnostic} {default}
+     intx InteriorEntryAlignment                   = 16                                  {C2 pd product} {default}
+     intx MonitorDeflationMax                      = 1000000                                {diagnostic} {default}
+      int MonitorUsedDeflationThreshold            = 90                                     {diagnostic} {default}
+    uintx NoAsyncDeflationProgressMax              = 3                                      {diagnostic} {default}
+      int ObjectAlignmentInBytes                   = 8                              {product lp64_product} {default}
+     intx OptoLoopAlignment                        = 16                                     {pd product} {default}
+     bool PrintFlatArrayLayout                     = false                                  {diagnostic} {default}
+     uint SuperWordAutomaticAlignment              = 1                                   {C2 diagnostic} {default}
+     bool UseArrayFlattening                       = false                                     {product} {default}
+     bool UseAtomicValueFlattening                 = false                                     {product} {default}
+     bool UseCompressedClassPointers               = true                                      {product} {default}
+     bool UseCompressedOops                        = true                           {product lp64_product} {ergonomic}
+     bool UseFieldFlattening                       = false                                     {product} {default}
+     bool UseNonAtomicValueFlattening              = false                                     {product} {default}
+     bool UseNullableNonAtomicValueFlattening      = true                                      {product} {default}
+     bool UseNullableValueFlattening               = false                                     {product} {default}

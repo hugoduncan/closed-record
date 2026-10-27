@@ -1,0 +1,14 @@
+{:kind :capability-not-performance
+ :source-base "040286434c1f81e16d77aef85b765475b12ae859"
+ :dirty true
+ :timestamp "2026-10-27T21:56:46.043043+00:00"
+ :runtime-manifest "../runtime-gate/manifest.edn"
+ :command "JAVA_HOME=$PWD/target/valhalla/jdk-27.jdk/Contents/Home bash dev/bench/valhalla/applicability.sh"
+ :exit 0
+ :layout-flags :defaults
+ :source-sha256 {"dev/bench/valhalla/CapabilityProbe.java" "8b1335f2dbf425edb7caebe29b89d641770604957c3dd54e0847143d69a7cae9"
+ "dev/bench/valhalla/applicability.clj" "1434f067cef48c9bde8c48fc93a2cec937795d99e3f212808a0196a85c26ad52"
+ "dev/bench/valhalla/applicability.sh" "36ac06e42c54751e6341a3f583ed0dc35ab7ab40b63cd00e8430f8212a96281a"}
+ :attempts [{:attempt 1 :exit 1 :cause "Missing explicit import for default-package nested class" :output "attempt-1.txt"}
+            {:attempt 2 :exit 0 :output "result.edn"}]
+ :limits ["No timing or memory measurements" "Ordering contract still open"]}

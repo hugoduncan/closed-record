@@ -1,0 +1,5 @@
+Note: dev/bench/valhalla/CapabilityProbe.java uses preview features of Java SE 27.
+Note: Recompile with -Xlint:preview for details.
+Exception in thread "main" java.lang.IllegalArgumentException: Unsupported graph type: class CapabilityProbe$Point
+	at FlatGraphProbe.graphBytes(FlatGraphProbe.java:26)
+	at GraphOperationsTest.main(GraphOperationsTest.java:26)

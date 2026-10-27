@@ -1,0 +1,16 @@
+Tue Oct 27 22:20:23 UTC 2026
+f16c9c9673e3fee5f8068e8da5f27dc9df9096c2
+ M dev/bench/memory/AllocationProbe.java
+?? munera/open/019-space-time-performance/evidence/allocation-divisor/
+Darwin duncans-MacBook-Pro.local 27.0.0 Darwin Kernel Version 27.0.0: Tue Aug 11 21:06:40 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T6050 arm64
+Apple M5 Max
+47d8d4512a21af4a01593cf71f3691bcfe842d5710706e1219e4ab33f398ae69  dev/bench/memory/AllocationProbe.java
+a4e8b58de78a2d3d704c93734a2064442cc7da19b593a758cfae230b79ec1ba2  dev/bench/memory/allocation-probe.sh
+openjdk version "21.0.10" 2026-01-20 LTS
+OpenJDK Runtime Environment Temurin-21.0.10+7 (build 21.0.10+7-LTS)
+OpenJDK 64-Bit Server VM Temurin-21.0.10+7 (build 21.0.10+7-LTS, mixed mode, sharing)
+temurin21 exit=0
+openjdk version "27-jep401ea3" 2026-09-15
+OpenJDK Runtime Environment (build 27-jep401ea3+1-1)
+OpenJDK 64-Bit Server VM (build 27-jep401ea3+1-1, mixed mode, sharing)
+valhalla27 exit=0

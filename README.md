@@ -26,8 +26,9 @@ throws `ex-info` at the location of the change:
 All other operations behave as with `defrecord`: field access,
 `assoc` of a declared key, protocols, interfaces, type hints,
 metadata, equality, hashing, printing and reader literals. Call sites
-that use a record correctly do not change. Reads and `assoc` of
-declared keys are as fast as with `defrecord`.
+that use a record correctly do not change. Reads and declared-key `assoc`
+have similar costs in the measured three-field cases. Wider records can differ;
+see [performance measurements and limits](README/performance.md).
 
 Reads are not checked. `(:nmae r)` returns nil, as with `defrecord`.
 The Clojure 1.13 destructuring directives `:keys!`, `:select` and
