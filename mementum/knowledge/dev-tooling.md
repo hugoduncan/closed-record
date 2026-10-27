@@ -3,12 +3,14 @@ title: Development tooling rules (deps aliases, scry, psi REPL)
 status: active
 category: tooling
 tags: [deps.edn, aliases, bench, scry, nrepl, psi, clj-kondo, gitignore]
-related: [README.md, mementum/state.md, mementum/knowledge/benchmarks.md, .psi/project.edn, .psi/skills/scry/SKILL.md, mementum/knowledge/testing-generated-types.md, mementum/knowledge/artifact-verification.md, mementum/knowledge/markdown-link-validation.md]
+related: [README.md, mementum/state.md, mementum/knowledge/benchmarks.md, .psi/project.edn, .psi/skills/scry/SKILL.md, mementum/knowledge/testing-generated-types.md, mementum/knowledge/artifact-verification.md, mementum/knowledge/markdown-link-validation.md, mementum/knowledge/development-quality-boundaries.md]
 depends-on: [deps.edn]
 ---
 
 💡 Rules for changes to `deps.edn`, tests and the project REPL. The commands are in `README.md` "Development".
 This page gives the rules that the commands do not show.
+Shared quality checks and their verification boundaries are in
+`mementum/knowledge/development-quality-boundaries.md`.
 
 ## Alias composition
 
@@ -60,8 +62,11 @@ and `c1112e4`.
   `master` and all pull-request targets. It uses Ubuntu, Temurin 21,
   read-only contents access, and no stored checkout credentials.
 - Pinned tools: Clojure CLI 1.12.6.1673, cljfmt 0.16.4, clj-kondo 2026.04.15.
-  Quality commands: `cljfmt check src test dev test-build test-release build.clj bb.edn` and
-  `clj-kondo --lint src test dev test-build test-release build.clj bb.edn --fail-level warning`.
+  CI and release use `bb clj-fmt:check` and `bb clj-kondo:lint`, not separate
+  direct-tool scope lists. CI also runs `bb vale`, `bb api-docs --check`, and
+  focused tooling tests. Shared tasks own scope, setup, and failure policy.
+  See `README/quality-checks.md` for commands and setup (task 018,
+  `b086c41`, `9f39418`).
 - The runtime matrix uses the three README test commands, with fail-fast
   disabled. `deps.edn` owns runtime versions, not the CLI setup version.
 - Build verification runs once outside the matrix: focused `test-build`
