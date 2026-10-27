@@ -996,3 +996,15 @@
 
 - No new actionable findings. Focused tooling suite: 51 tests, 852 assertions
   pass; exit 0, no Scry failure artifacts.
+
+## 2026-10-27 — Closure
+
+- Closed at the user's request after implementation, review follow-ups, and
+  knowledge extraction. No unchecked steps remain.
+- Final code-shape re-review: `bedaf88`. Knowledge extraction commits:
+  `9234d54`, `198c7eb`, and `ac300f8`.
+- Moved the task to `munera/closed/018-development-quality-checks` and removed
+  it from the task order. `acceptance.md` retains the verification evidence.
+- Closure changes records only; tests were not rerun. Hosted Actions execution
+  remains unverified. Fresh Linux evidence uses QEMU/Podman, not native x86-64
+  hardware. No publication was attempted.

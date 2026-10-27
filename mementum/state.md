@@ -136,6 +136,13 @@ untracked files but still reads working-tree bytes.
 
 ## Development quality tooling
 
+Reusable quality-boundary guidance is in
+`mementum/knowledge/development-quality-boundaries.md`; related alias and
+fixture rules are in `dev-tooling.md` and `artifact-verification.md` in the
+same directory. Acceptance and review evidence is in
+`munera/closed/018-development-quality-checks/`. Hosted Actions execution
+remains unverified; Linux installation evidence uses QEMU/Podman.
+
 - `.pre-commit-config.yaml` runs serial formatting before whole-index lint with
   fail-fast ordering. Internal `quality:format-staged` and `quality:lint-staged`
   tasks rely on pre-commit staged-content isolation; do not invoke them as
