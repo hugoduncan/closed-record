@@ -276,3 +276,12 @@
 - No new actionable findings. Focused format/lint checks passed. Contract
   tests passed on rerun (9 tests, 125 assertions); the first run exited 137
   without a test summary.
+
+## 2026-10-27 — Closure
+
+- Closed at the user's request after lifecycle review and knowledge extraction.
+- Two test follow-ups remain unchecked: trusted/untrusted HTTPS fixtures and
+  transient HTTP-response recovery. Closure does not mark these checks as
+  passed or change the production policy. The evidence and limits above remain
+  applicable.
+- Hosted CI, Linux execution, and macOS x86-64 installation remain unverified.
