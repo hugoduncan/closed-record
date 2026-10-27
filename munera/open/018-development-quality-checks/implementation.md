@@ -58,3 +58,23 @@
   hook contract and acceptance criteria against the pinned reference guidance,
   current API, dependency and artifact boundaries, and workflow permissions.
   Scope unchanged.
+
+## 2026-10-27 — Plan ambiguity review
+
+- No new actionable ambiguity feedback or design steps. Reviewed the plan and
+  read-only checklist against the task contract, current code/tests/workflows,
+  and pinned reference. Mechanism risks have explicit verification steps.
+
+## 2026-10-27 — Plan inconsistency review
+
+- No new actionable inconsistency feedback or design steps. The plan and
+  read-only checklist agree with the design and resolved review findings.
+
+## 2026-10-27 — Plan-review handoff
+
+- For API prose and content tests, distinguish runtime-read literals from
+  compiled constants: compilation and print/read round trips drop hidden extra
+  keys. Use `test/closed_record/literal_test.clj` and
+  `test/closed_record/hidden_key_test.clj` as evidence; do not imply that `check`
+  can recover keys already lost through these paths. This is existing behavior,
+  not a new design follow-up.
