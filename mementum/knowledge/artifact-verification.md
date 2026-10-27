@@ -30,6 +30,25 @@ Use them when changing packaging, runtime source layout, or build tests.
   overrides. Verify that protected external files and checkout output remain
   unchanged. Do not confuse CLI cache changes with changes to protected files.
 
+## Installed-hook and child-process fixtures
+
+The empty-hooks rule above applies to build fixtures, not installed-hook tests.
+For pre-commit fixtures, retain isolated Git configuration but leave
+`core.hooksPath` unset and install the actual hooks. Pre-commit 4.6.0 refuses
+installation even when that setting explicitly names `.git/hooks`.
+
+Return child-process results through fixture cleanup before calling
+`System/exit`. Calling it inside the fixture callback skips enclosing `finally`
+cleanup. Verify removal of temporary roots and caches for both accepted and
+rejected commits. Shared setup belongs in small public test-support namespaces;
+child probes must not load test namespaces or call private test helpers merely
+to create a project. Keep case data and assertions in the tests.
+
+Evidence: task 018 implementation log, installed pre-commit integration, cleanup
+review, and shared fixture review; commits `877edce`, `68461d2`, `5deed1c`.
+See `mementum/knowledge/development-quality-boundaries.md` for staged-content
+and preservation checks.
+
 ## Branch and shallow-history fixtures
 
 - Select the branch explicitly when behavior depends on it. Release fixtures
