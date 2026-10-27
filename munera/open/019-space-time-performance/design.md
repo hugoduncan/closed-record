@@ -47,6 +47,13 @@ Clojure version, JDK build, flags, and feature status. Explain whether each
 feature applies directly to closed records, to their field values, or only to
 an external comparison type.
 
+Internal Valhalla APIs with atomic arrays are acceptable for these benchmarks;
+public APIs and non-atomic arrays are not prerequisites. Pin the Valhalla build
+and document internal APIs, access flags, and atomicity guarantees. Verify the
+actual storage layout: atomicity does not prove flattening. Keep this use in
+benchmark tooling, not library runtime code, and disclose its experimental status
+on the performance page.
+
 Use a supported runtime for ordinary records. Isolate any preview or experimental
 runtime needed for the other cases. Do not raise the library's minimum runtime.
 If a feature cannot be exercised without library changes, record the evidence
@@ -66,7 +73,9 @@ Keep the matrix small enough for a documented manual run.
 - Value arrays: compare with ordinary reference arrays containing equivalent
   logical values. Measure retained size, construction, indexed read, and the
   applicable element update or replacement operation. State whether updates
-  mutate or copy; do not equate an array store with persistent `assoc`.
+  mutate or copy; do not equate an array store with persistent `assoc`. State the
+  atomicity and memory-ordering guarantees of each compared operation and explain
+  any differences.
 - Null-restricted fields: compare with nullable reference fields containing
   equivalent non-null values. Measure retained size, construction, field read,
   and the applicable replacement operation. Separate null restriction from

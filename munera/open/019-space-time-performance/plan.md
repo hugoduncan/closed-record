@@ -23,9 +23,18 @@ a feature without library changes, demonstrate that limit and use clearly
 labelled external comparisons where possible. An unavailable runtime is not
 proof that a feature is unsupported.
 
-Gate: do not fix the matrix until the probes establish the feature boundary.
-If authoritative APIs still leave the intended meaning unclear, stop for a user
-decision. Do not choose a substitute to avoid that decision.
+API selection is resolved by design commit `adfa652`: use internal Valhalla
+null-restricted atomic arrays and `@NullRestricted` fields as the experimental
+path. Runtime selection, download, and isolated setup may proceed. Public APIs,
+non-atomic arrays, and draft `!` syntax are not prerequisites. Pin and verify the
+build-specific APIs, access flags, and atomicity guarantees during setup.
+
+Capability gate: do not fix the matrix until executable probes establish
+operations, null rejection, actual layout, and closed-record applicability.
+Permission to use an API does not establish runtime support or flattening.
+Record unavailable runtimes separately from demonstrated support limits. Use
+labelled external comparisons where the design permits them; stop for a user
+decision only if a remaining API interpretation would change the approved scope.
 
 ### 2. Define measurement contracts
 
@@ -33,7 +42,9 @@ After the gate, create `dev/bench/cases.edn` as the fixed case inventory. Includ
 all six original S-03 cases, small and larger record widths, and small and larger
 array lengths. Choose and record exact dimensions, values, replacement values,
 operations, fixture ownership, configurations, and expected capability outcomes.
-Keep the matrix bounded and estimate its manual run time before acceptance.
+State atomicity and memory-ordering guarantees for each compared array operation
+and explain differences. Keep the matrix bounded and estimate its manual run
+time before acceptance.
 
 Use matched non-null logical values. Changed-value `assoc` creates a new record;
 array stores and persistent replacement are different operations. Specify
@@ -122,11 +133,20 @@ tables.
 Design and referenced README, development guide, benchmark knowledge, entry
 point, and S-03 were checked on 2026-10-27. No blocking inconsistency was found.
 The broad README claim is the documented problem, not a new acceptance rule.
-Feature identification is explicit discovery work, not permission to assume
-Valhalla or another API. Exact experimental versions, tools, and dimensions
-remain non-blocking choices subject to slices 1 and 2.
+That review preceded design commit `adfa652`, which now permits the internal
+Valhalla path described below. Exact experimental versions, tools, and dimensions
+remain choices subject to build verification and the gates in slices 1 and 2.
 
 Plan ambiguity review completed with `steps.md` read-only. No blocking issue
 was found. New memory requirements apply to the new topic cases, not all six
 legacy operations. Steps for unsupported features end with recorded limits,
 not substitute measurements. No library implementation is planned.
+
+## Feature gate finding
+
+Upstream discovery found three distinct contracts; `features.md` retains their
+references. Design commit `adfa652` permits the internal Valhalla path with atomic
+arrays. No API-selection decision remains before runtime setup. The selected
+path uses `ValueClass.newNullRestrictedAtomicArray` and `@NullRestricted` fields,
+subject to build-specific verification. Executable capability and layout checks
+remain open and must precede the fixed matrix. No runtime support is claimed.

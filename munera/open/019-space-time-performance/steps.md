@@ -2,21 +2,22 @@
 
 Record decisions, commands, verification results, and limits in
 `implementation.md` as each slice completes. Commit each completed slice.
-All items below are implementation work, not completed planning work.
+The six slices below track implementation work. The final section tracks
+feature discovery and plan-review follow-up.
 
 ## Slice 1 — Feature and runtime gate
 
-- [ ] Create `features.md` with authoritative references for the exact value-array and null-restricted-field APIs, their status, and their applicability to closed records, field values, or external types.
-- [ ] Add isolated benchmark runtime setup with pinned Clojure/JDK versions and flags; verify ordinary cases still load on Clojure 1.11.4 and Temurin 21 without experimental tools.
+- [ ] Complete the existing `features.md` with build-verified references for the selected value-array and null-restricted-field APIs, their status, and their applicability to closed records, field values, or external types. Source discovery and API selection are complete; build-specific verification remains open.
+- [ ] Add isolated benchmark runtime setup for internal Valhalla atomic arrays and `@NullRestricted` fields with pinned Clojure/JDK versions, build-specific APIs, access flags, and layout settings; verify ordinary cases still load on Clojure 1.11.4 and Temurin 21 without experimental tools. API permission is resolved; setup may proceed.
 - [ ] Add executable probes for array construction, read, and update; retain structured results that identify the actual representation and supported operations.
 - [ ] Add executable probes for field construction, null rejection, read, replacement, and layout; retain separate findings for null restriction and flattening.
 - [ ] Run the probes against closed-record applicability and any required external fixtures; save commands, metadata, failures, and support limits under `evidence/`.
-- [ ] Resolve the feature gate in `features.md`: identify each supported comparison or demonstrated limit; stop for a user decision if the intended API remains ambiguous.
+- [ ] Resolve the executable capability and layout gate in `features.md` before fixing the matrix: identify each supported comparison or demonstrated limit, and distinguish runtime unavailability from unsupported features. API permission alone does not complete this step; ask for a user decision only if a remaining API interpretation would change the approved scope.
 
 ## Slice 2 — Inventory and memory contract
 
 - [ ] Create `dev/bench/cases.edn` with stable IDs, the six original S-03 cases, exact small/larger record widths and array lengths, configurations, and topic-specific operations; check IDs are unique.
-- [ ] Specify each case's matched values, changed replacement, mutation/copy semantics, and setup boundary in the inventory; verify equivalent logical outputs without timing.
+- [ ] Specify each case's matched values, changed replacement, mutation/copy semantics, and setup boundary in the inventory; include atomicity and memory-ordering guarantees for compared array operations and explain differences. Verify equivalent logical outputs without timing.
 - [ ] Document ns/op, bytes/op, retained roots, payload ownership, identity deduplication, and source/result incremental accounting in `features.md`; define unavailable outcomes and memory-tool limitations.
 - [ ] Select and pin memory tooling in benchmark-only dependencies; verify its compatibility with each selected runtime and layout without adding tools to base or ordinary test dependencies.
 - [ ] Add allocation controls with known allocating and non-allocating operations; verify the counter scope, operation divisor, and measurement overhead treatment.
@@ -62,3 +63,8 @@ All items below are implementation work, not completed planning work.
 - [ ] Run `bb clj-fmt:check`, `bb clj-kondo:lint`, `bb vale`, and `bb api-docs --check`; correct defects and record final results without adding timing gates to CI.
 - [ ] Stage the intended Markdown evidence and documentation, then run `bb lychee:check` so all new tracked links are checked; record local and online results.
 - [ ] Audit every public claim against the retained evidence and all six design acceptance criteria; append final verification, support limits, and unresolved acceptance gaps to `implementation.md`.
+
+## Feature discovery follow-up
+
+- [x] Review authoritative feature documentation and pin internal API source references; record distinct candidates in `features.md`.
+- [x] Resolve API selection from design commit `adfa652` in `features.md` and `plan.md`: internal Valhalla atomic arrays and `@NullRestricted` fields are the selected path. Runtime setup may proceed; no further API-selection decision is needed. Original slice 1 items remain open: build-specific verification and executable capability/layout evidence are still required before fixing the matrix.

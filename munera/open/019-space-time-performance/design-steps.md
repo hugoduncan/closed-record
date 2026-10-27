@@ -1,0 +1,3 @@
+# Design follow-up steps
+
+- [x] Clarify the feature gate after design commit `adfa652`, which permits internal Valhalla APIs with atomic arrays. Update `plan.md` and `features.md` to state whether runtime setup can proceed on that basis or identify the exact remaining user decision. Append the resulting disposition of the active blocker to `implementation.md`. The current artifacts still require API selection before runtime setup, so the next slice cannot tell whether to proceed or stop. Keep executable capability and layout checks as a separate gate before fixing the matrix; API permission is not evidence of runtime support.
