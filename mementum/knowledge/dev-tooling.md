@@ -3,7 +3,7 @@ title: Development tooling rules (deps aliases, scry, psi REPL)
 status: active
 category: tooling
 tags: [deps.edn, aliases, bench, scry, nrepl, psi, clj-kondo, gitignore]
-related: [README.md, mementum/state.md, mementum/knowledge/benchmarks.md, .psi/project.edn, .psi/skills/scry/SKILL.md, mementum/knowledge/testing-generated-types.md, mementum/knowledge/artifact-verification.md]
+related: [README.md, mementum/state.md, mementum/knowledge/benchmarks.md, .psi/project.edn, .psi/skills/scry/SKILL.md, mementum/knowledge/testing-generated-types.md, mementum/knowledge/artifact-verification.md, mementum/knowledge/markdown-link-validation.md]
 depends-on: [deps.edn]
 ---
 
@@ -60,8 +60,8 @@ and `c1112e4`.
   `master` and all pull-request targets. It uses Ubuntu, Temurin 21,
   read-only contents access, and no stored checkout credentials.
 - Pinned tools: Clojure CLI 1.12.6.1673, cljfmt 0.16.4, clj-kondo 2026.04.15.
-  Quality commands: `cljfmt check src test dev test-build test-release build.clj` and
-  `clj-kondo --lint src test dev test-build test-release build.clj --fail-level warning`.
+  Quality commands: `cljfmt check src test dev test-build test-release build.clj bb.edn` and
+  `clj-kondo --lint src test dev test-build test-release build.clj bb.edn --fail-level warning`.
 - The runtime matrix uses the three README test commands, with fail-fast
   disabled. `deps.edn` owns runtime versions, not the CLI setup version.
 - Build verification runs once outside the matrix: focused `test-build`
@@ -76,6 +76,11 @@ and `c1112e4`.
   files before another invocation can clear `.scry-results/`. The manual
   release workflow uploads failures immediately after each suite and stops
   later suites through normal success gating (task 016, `c1112e4`).
+- Markdown links run once outside the runtime matrix. CI installs tools and
+  invokes `bb lychee:check`; the task and `lychee.toml` own shared local/CI
+  policy. This job does not need Java or Clojure CLI. See
+  `mementum/knowledge/markdown-link-validation.md` for coverage and network
+  verification limits (task 017, `cb327a3`).
 - Local validation is not proof of hosted Ubuntu or fork-event execution.
 
 ## Scry
