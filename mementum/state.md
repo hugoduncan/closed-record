@@ -44,12 +44,18 @@ Main form: `defclosedrecord`.
 
 - `bb lychee:check` selects Git-tracked Markdown from the repository root.
   `dev/link_check.clj` runs local fragment validation then online validation
-  with shared `lychee.toml` policy. Supported tools: Babashka 1.13.225 and
+  with shared `lychee.toml` policy. It constructs both command vectors before
+  eager execution and returns the first nonzero exit. Supported tools: Babashka 1.13.225 and
   lychee 0.24.2. `bb dev/link_check_test.clj` runs isolated real-tool
-  contract tests (seven tests, 131 assertions), with a loopback HTTP server.
+  contract tests (nine tests, 125 assertions), with a loopback HTTP server.
+  Fixtures cover mixed local/online failures, HTTP 429, and request timeout,
+  with a 90-second process deadline. TLS trust and HTTP-response retry recovery
+  remain unverified; see task 017 implementation notes.
   The live repository check passes for 133 tracked Markdown files, with no
   URL exceptions or link repairs. Tracked bytes and Git status remain unchanged.
   CI runs fixtures and the shared task in one separate read-only job.
+  The changelog records the command and CI check; the embodiment artifact map
+  describes the link tooling and links to the development guide.
   Pinned installation commands are in README/development.md; macOS arm64
   installation and actionlint pass. Final local acceptance also passes: full-path
   format/lint, contract fixtures, and both live passes. Hosted CI remains unverified.

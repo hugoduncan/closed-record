@@ -45,3 +45,19 @@
 - [x] Run the final `bb lychee:check`; record both-pass success, exit code, live external result, and evidence that the check made no checkout changes.
 - [x] Complete `implementation.md` with evidence for each design acceptance criterion, including versions, installation checks, repairs/exceptions, and hosted CI evidence or an explicit unverified statement; do not push solely for evidence.
 - [x] Review the final diff for runtime/dependency changes, unrelated rewrites, broad exclusions, and leftover temporary files; confirm none are present and commit the completed implementation.
+
+## Test review follow-up
+
+- [x] Add a mixed-failure fixture in `dev/link_check_test.clj`: put a missing local heading and a loopback HTTP 404 in the same tracked document. Assert a nonzero task exit and diagnostics for both failures. Current cases test each failure separately, so they do not detect a regression that stops after the local pass and omits online diagnostics.
+- [ ] Add real loopback HTTPS fixtures that prove a trusted certificate succeeds and an untrusted certificate fails with source/link diagnostics. Supply certificate trust through the child process environment, not a production test option. Current HTTP-only fixtures cannot detect disabled TLS verification or omitted HTTPS checking.
+- [ ] Extend real network fixtures to cover request timeout failure, HTTP 429 rejection, and recovery from a transient response within the retry budget. Bound fixture execution and assert observable results, not exact request counts. The current permanent HTTP 503 case passes even if retries are disabled; no current case checks the timeout or rate-limit contracts.
+- [x] Remove the `is` assertion after `fs/delete-tree` in `with-project`. Keep unconditional cleanup in `finally`, but do not count fixture-helper cleanup as a production contract test. Keep the before/after checkout assertions, which test the command's non-writing contract.
+
+## Documentation review follow-up
+
+- [x] Add an entry under `CHANGELOG.md`'s `Unreleased` heading for the new `bb lychee:check` command and Markdown links CI check. The current changelog does not mention this maintainer-visible command or check.
+- [x] Update `ramora/defclosedrecord/embodiment.md` to describe the link-check artifacts (`bb.edn`, `dev/link_check.clj`, `lychee.toml`, and `dev/link_check_test.clj`) and the separate Markdown links CI job. Link to `README/development.md#markdown-links` for installation and commands. Ramora currently has no link-check documentation, and its CI artifact description omits the new job.
+
+## Code-shaper review follow-up
+
+- [x] Separate command construction from process execution in `dev/link_check.clj`'s `check!`. The `mapv` callback currently nests three `into` calls inside `apply process/shell` and exit extraction. Build the two complete argument vectors in a small pure helper or named binding, then execute them in order. Keep eager execution of both passes, explicit `--` before document paths, and first-nonzero exit selection. Run the existing path-with-spaces and mixed-failure fixtures to verify that the change preserves these contracts.

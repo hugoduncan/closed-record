@@ -44,8 +44,7 @@
       (git! fixture "add" ".")
       (f fixture)
       (finally
-        (fs/delete-tree workspace)
-        (is (not (fs/exists? workspace)) "Temporary workspace was removed")))))
+        (fs/delete-tree workspace)))))
 
 (defn- inventory [root]
   (into (sorted-map)
@@ -58,7 +57,13 @@
 (defn- check! [fixture]
   (let [before (inventory (:root fixture))
         status (:out (git! fixture "status" "--porcelain"))
-        result (command fixture bb-bin "lychee:check")]
+        child (process/process [bb-bin "lychee:check"]
+                               {:dir (:root fixture) :env (:env fixture)
+                                :out :string :err :string})
+        result (try
+                 (or (deref child 90000 nil)
+                     (throw (ex-info "Link check exceeded 90 seconds" {})))
+                 (finally (process/destroy-tree child)))]
     (is (= before (inventory (:root fixture))) "Check must not write files")
     (is (= status (:out (git! fixture "status" "--porcelain")))
         "Check must not change Git status")
@@ -141,6 +146,42 @@
                   (is (zero? (:exit result)) (pr-str result))
                   (failure! result "source.md" (str base path))))))))
       (finally (server)))))
+
+(deftest mixed-failure-test
+  ;; A local fragment failure must not prevent online failure diagnostics.
+  (let [server (http/run-server response {:ip "127.0.0.1" :port 0})
+        url (str "http://127.0.0.1:" (:local-port (meta server)) "/missing")]
+    (try
+      (with-project
+        (fn [{:keys [root] :as fixture}]
+          (put! root "source.md" (str "# Source\n[Local](#absent)\n[Web](" url ")\n"))
+          (failure! (check! fixture) "source.md" "#absent" url "404")))
+      (finally (server)))))
+
+(deftest network-policy-test
+  ;; Unanswered requests and rate limits must fail within a bounded run.
+  (let [channels (atom [])
+        server (http/run-server
+                (fn [{:keys [uri] :as request}]
+                  (case uri
+                    "/timeout" (http/as-channel request
+                                                {:on-open #(swap! channels conj %)})
+                    "/limited" {:status 429 :body "Rate limited"}))
+
+                {:ip "127.0.0.1" :port 0})
+        base (str "http://127.0.0.1:" (:local-port (meta server)))]
+    (try
+      (doseq [[path diagnostic] [["/timeout" "Timeout"]
+                                 ["/limited" "429"]]]
+        (testing path
+          (with-project
+            (fn [{:keys [root] :as fixture}]
+              (put! root "source.md" (str "[Web](" base path ")\n"))
+              (let [result (check! fixture)]
+                (failure! result "source.md" (str base path) diagnostic))))))
+      (finally
+        (doseq [channel @channels] (http/close channel))
+        (server)))))
 
 (deftest invalid-input-test
   ;; Configuration errors and missing tracked inputs cannot become success.

@@ -23,9 +23,15 @@
         (throw (ex-info "Tracked Markdown input is missing or not a file."
                         {:path path}))))
     (let [base ["lychee" "--config" "lychee.toml" "--root-dir" root]
+          commands (mapv (fn [options]
+                           (-> base
+                               (into options)
+                               (conj "--")
+                               (into paths)))
+                         [["--offline" "--include-fragments=anchor-only"]
+                          ["--include-fragments=none"]])
           ;; Do not short-circuit: report online failures even after local failures.
-          exits (mapv (fn [options]
-                        (:exit (apply process/shell {:continue true} (into (into base options) (into ["--"] paths)))))
-                      [["--offline" "--include-fragments=anchor-only"]
-                       ["--include-fragments=none"]])]
+          exits (mapv (fn [command]
+                        (:exit (apply process/shell {:continue true} command)))
+                      commands)]
       (or (some #(when-not (zero? %) %) exits) 0))))

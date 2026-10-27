@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add `bb lychee:check` and a Markdown links CI check for tracked Markdown.
+
 - Add `defclosedrecord`, a record that rejects changes to its declared keys.
 - Add source-only JAR packaging with an EPL-2.0 license.
 - Add a local `prepare` command that validates release notes and commits a dated

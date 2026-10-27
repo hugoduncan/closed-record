@@ -188,3 +188,91 @@
   has no runtime source/dependency changes, unrelated rewrites, broad
   exclusions, or leftover temporary files. All implementation steps are done;
   the task stays open for review.
+
+## 2026-10-27 — Implementation review
+
+- No new actionable findings. Contract tests passed (7 tests, 131 assertions),
+  as did both live link passes, focused format/lint checks, and actionlint.
+  Hosted CI remains unverified.
+
+## 2026-10-27 — Test review
+
+- Added 4 steps to be addressed.
+
+## 2026-10-27 — Review follow-up
+
+- Addressed mixed-failure review step. Both fragment and HTTP 404 diagnostics
+  are required from one run. `bb dev/link_check_test.clj`: exit 0,
+  8 tests, 139 assertions.
+- HTTPS review step blocked locally: a real Python loopback TLS server with an
+  OpenSSL-generated certificate failed the trusted case on macOS with lychee
+  0.24.2. Child `SSL_CERT_FILE` did not establish trust; the verifier returned
+  macOS error -67843 (certificate not trusted). The untrusted case failed as
+  expected. Removed the failing probe. Need an environment-only trust mechanism
+  supported by this verifier, or verified platform-specific fixture support.
+  No system trust, production policy, or dependencies were changed.
+- Network review step partly addressed: real unanswered HTTP requests and HTTP
+  429 now require failure with source/link diagnostics. Each check has a
+  90-second deadline and process-tree cleanup. Suite: exit 0, 9 tests,
+  153 assertions; focused format/lint pass.
+- Recovery remains blocked: an endpoint returning HTTP 503 once, then HTTP 200,
+  failed with `Rejected status code: 503` under the unchanged policy. Lychee
+  0.24.2 does not retry that rejected response. Removed the failing recovery
+  probe; kept the step unchecked. Need a policy/tool decision for HTTP-response
+  retries without accepting error statuses. No exact request counts are asserted.
+- Addressed cleanup review step: removed the helper cleanup assertion; retained
+  unconditional deletion and all command non-writing assertions. Final suite:
+  `bb dev/link_check_test.clj`, exit 0, 9 tests, 125 assertions. Focused cljfmt
+  and clj-kondo pass. Correction to the preceding entry: its lint run found an
+  unresolved binding in the HTTP macro. Using the server's `as-channel` API
+  resolved it; no lint suppression was added.
+- Addressed 2 review steps; 2 remain unchecked with blocking evidence above.
+  The network step has partial coverage. Design and production policy unchanged.
+
+## 2026-10-27 — Test re-review
+
+- No new actionable test findings.
+
+## 2026-10-27 — Documentation review
+
+- Added 2 steps to be addressed.
+
+## 2026-10-27 — Documentation follow-up execution
+
+- Addressed the changelog review step: added the command and CI check under
+  Unreleased. `git diff --check` passed.
+- Addressed the embodiment review step: documented four link-tool artifacts,
+  the separate CI job, and the installation/command link. `bb lychee:check`
+  passed both passes (98 links; online: 98 successful).
+- Addressed 2 review steps. HTTPS remains blocked by macOS certificate trust
+  ignoring child `SSL_CERT_FILE` in the recorded probe. Transient-response
+  recovery remains blocked by lychee 0.24.2 rejecting HTTP 503 without retry
+  under the current policy. Both test steps remain unchecked; prior probe
+  evidence still applies. No production policy or design changes were made.
+
+## 2026-10-27 — Documentation re-review
+
+- No new actionable documentation findings.
+
+## 2026-10-27 — Code-shaper review
+
+- Added 1 step to be addressed.
+
+## 2026-10-27 — Code-shaper follow-up execution
+
+- Addressed 1 review step: construct both argument vectors before process
+  execution. Retained eager passes, `--`, and first-nonzero exit selection.
+- `cljfmt check dev/link_check.clj`, focused clj-kondo with warning failure,
+  and `bb dev/link_check_test.clj` exited 0. All 9 tests and 125 assertions
+  passed, including paths with spaces and mixed failures.
+- Two test steps remain unchecked. Prior probe evidence still applies:
+  macOS TLS trust ignores child `SSL_CERT_FILE`; lychee 0.24.2 rejects HTTP
+  503 without retry under current policy. Completion needs a supported
+  environment-only trust mechanism and a retry policy/tool decision.
+  No production policy or design changes were made.
+
+## 2026-10-27 — Code-shaper re-review
+
+- No new actionable findings. Focused format/lint checks passed. Contract
+  tests passed on rerun (9 tests, 125 assertions); the first run exited 137
+  without a test summary.
