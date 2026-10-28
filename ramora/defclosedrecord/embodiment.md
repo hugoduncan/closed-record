@@ -1,5 +1,16 @@
 # Embodiment
 
+## Verification limits
+
+V-13 tests the compiler rules K-06 to K-08. K-09 and K-10 are measured JVM
+constraints, not method-size assertions in the test suite. V-11 is their
+regression signal (R-05).
+
+S-03 applies to the original three-field benchmark cases. It does not establish
+performance parity for arbitrary record widths. See the
+[performance report](../../README/performance.md) for current measurements and
+limits.
+
 ## Artifacts
 
 See the [artifact map](embodiment/artifacts.md) for source, test, build, and

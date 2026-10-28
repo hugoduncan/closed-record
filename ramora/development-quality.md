@@ -20,4 +20,6 @@ selected current prose, while lychee retains the broader tracked-Markdown scope.
 
 See [contributor quality instructions](../README/quality-checks.md) for commands,
 scopes, generated output, tests, and hook recovery. See
+[embodiment](development-quality/embodiment.md) for current artifacts and
+verification limits. See
 [development](../README/development.md) for runtime and artifact verification.

@@ -6,7 +6,6 @@ Assertion records in the shape of the architecture metamodel. `enforced-by` name
 
 ```text
 id: I-01
-status: intended
 subject: observable keys of r (seq, count, contains?, java.util.Map views)
 predicate: equal
 object: D(T)
@@ -20,7 +19,6 @@ confidence: high
 
 ```text
 id: I-02
-status: intended
 subject: every operation on r except check
 predicate: result does not depend on
 object: __extmap
@@ -34,7 +32,6 @@ confidence: high
 
 ```text
 id: I-03
-status: intended
 subject: (assoc r k v), k ∈ D(T)
 predicate: has type
 object: T
@@ -47,7 +44,6 @@ confidence: high
 
 ```text
 id: I-04
-status: intended
 subject: (dissoc r k)
 predicate: throws if k ∈ D(T), else returns
 object: r
@@ -60,7 +56,6 @@ confidence: high
 
 ```text
 id: I-05
-status: intended
 subject: equality and hash of r
 predicate: equal to
 object: the defrecord result for the same declared entries
@@ -73,7 +68,6 @@ confidence: high
 
 ```text
 id: I-06
-status: intended
 subject: (read-string (pr-str r))
 predicate: equals
 object: r
@@ -86,7 +80,6 @@ confidence: high
 
 ```text
 id: I-07
-status: intended
 subject: __extmap
 predicate: non-empty only if made by
 object: create from a map literal with extra keys, or assoc and withMeta of such an instance (cons, so conj and
@@ -95,7 +88,7 @@ scope: all instances. Print, code constants and positional reads drop __extmap; 
   constant is a constant that the compiler emits into a class (Compiler.emitValue). A constant that Clojure evaluates
   without a class keeps the object (observed: only the init of a top-level def, when the init is not compiled into a
   function).
-basis: K-07; E-03 (emitValue uses the java.util.Map view, I-09); task 003 observation (2026-10-19, Clojure 1.11.4);
+basis: K-07; E-03 (emitValue uses the java.util.Map view, I-09); Clojure 1.11.4 evaluation behaviour;
   Compiler.eval path (DefExpr.eval evaluates the init, ConstantExpr.eval returns the object; other top-level forms
   compile into a function)
 enforced-by: no method writes new keys to __extmap
@@ -105,7 +98,6 @@ confidence: high
 
 ```text
 id: I-08
-status: intended
 subject: map literal #ns.T{...} with keys outside D(T)
 predicate: is detected by
 object: (check r)
@@ -118,7 +110,6 @@ confidence: high
 
 ```text
 id: I-09
-status: intended
 subject: java.util.Map views of r
 predicate: contain only
 object: the declared entries

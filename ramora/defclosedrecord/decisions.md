@@ -2,7 +2,7 @@
 
 Each decision has this shape:
 `⟨subject, choice, rejected, rationale, assumptions, qualities, scope, commitment⟩`.
-The status of each decision is `intended`. An empty field is omitted only when it does not apply.
+Decisions define the current design. An empty field is omitted only when it does not apply.
 
 Commitment levels:
 

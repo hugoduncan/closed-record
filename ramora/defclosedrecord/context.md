@@ -87,7 +87,9 @@
 
 ## Evidence
 
-Source: `clojure-1.13.0-alpha6-sources.jar`. Line numbers are for that version.
+Compiler observations use Clojure 1.11.4 and 1.13.0-alpha6. Source:
+`clojure-1.13.0-alpha6-sources.jar`. Line numbers are for that version.
+K-09 and K-10 use measurements on Clojure 1.11.4 and OpenJDK 25.0.2.
 The tests that observed these facts on 1.11.4 and 1.13.0-alpha6 must be kept as V-13 (see [qualities](qualities.md#verification-plan)).
 
 | Id | Location | Fact |

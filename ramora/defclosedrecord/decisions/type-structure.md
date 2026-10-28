@@ -81,10 +81,9 @@
   form (cold path, but it adds bytecode to the method). A public helper in `core` (D-20, principle 9). A helper in
   `impl.*` (generated code → `impl.*` is forbidden; the emitter is for expansion time only).
 - Rationale: K-05, K-09, K-10. C2 does not inline a hot method above `FreqInlineSize` (325 bytes, K-09). A `case` on
-  keywords is large (K-10). Observed (task 012): `P::assoc` with `case` (995 bytes) is not inlined, `R::assoc`
-  (228 bytes) is inlined. After the change `P::assoc` is 217 bytes and is inlined. The helper location: the earlier
-  boundaries permit no location for it. A private var in `core` is the smallest change: the generated code already
-  depends on `core` (D-17), and the public API does not change.
+  keywords can exceed that limit (K-10). Moving error construction out of the generated method keeps the hot
+  path small. A private var in `core` keeps the helper out of the public API and avoids a run-time dependency
+  on the emitter. Generated code already depends on `core` (D-17).
 - Assumptions: the generated code can refer to `closed-record.core`, because the macro is in that namespace (as
   D-17). The C2 inline limits stay near their current defaults (R-05).
 - Qualities: + performance, + `defrecord` parity. − The generated code depends on a private var of `core`. AOT

@@ -12,7 +12,10 @@ Main form: `defclosedrecord`.
 
 - Repository initialised: README, AGENTS, psi extension config.
 - Protocol directories initialised: ramora, mementum, munera.
-- Design document: `ramora/defclosedrecord/` (status intended).
+- Design documents: `ramora/INDEX.md`. Design pages describe the current design,
+  not implementation progress. Each design's `embodiment.md` owns current
+  implementation differences and verification limits. Historical work records
+  stay in Munera and Git history.
 - Project skeleton: `deps.edn` (Clojure 1.11.4, aliases `:test`, `:bench`, `:nrepl`, `:clj-1.12`, `:clj-1.13`),
   `src/closed_record/core.cljc` (`defclosedrecord`, `check`, `ClosedRecord`),
   `src/closed_record/impl/jvm.clj` (JVM emitter). Test runner: scry.

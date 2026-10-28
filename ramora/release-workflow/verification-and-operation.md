@@ -2,8 +2,7 @@
 
 ## Acceptance evidence
 
-Use [task 016](../../munera/closed/016-simple-release-workflow/design.md)'s six
-acceptance criteria. Required evidence is proportionate to the small release path:
+Required evidence is proportionate to the small release path:
 
 - Pure notes checks and real temporary Git preparation tests.
 - Real build fixtures for JAR/POM version, coordinate, content, and runtime
@@ -14,8 +13,6 @@ acceptance criteria. Required evidence is proportionate to the small release pat
   checks-before-writes, secret placement, timeout, and concurrency. Run actionlint.
 - Run Java 21 format/lint, three runtime suites, and focused build/release tests.
   Use exit codes and structured scry results, not terminal-output scraping.
-- Confirm all task-015 implementation was reverted before replacement, and old
-  transport requirements are not active. Do not maintain tests for transport policies no longer required.
 
 Transport source audits, exactly-once tests, CDN absence proofs, retry suppression,
 and custom checksum guards are not acceptance requirements. Local tests and
@@ -56,5 +53,5 @@ Manual recovery can require service support or a new version. The standard
 libraries' internal actions are accepted; do not reintroduce custom transports
 to eliminate them.
 
-No secret setup, push, real release, or hosted success is required for task
-acceptance. Record these evidence limits in implementation.md.
+Local acceptance does not require secret setup, a push, or a real release.
+Record current verification limits in [embodiment](embodiment.md).
