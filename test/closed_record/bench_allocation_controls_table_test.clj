@@ -47,7 +47,8 @@
         observation (runtime/observe)]
     (try
       (evidence/create-run! directory inventory
-                            {:command ["test"] :runtimes {:ordinary observation}} children)
+                            {:command ["test"] :runtimes {:ordinary observation}
+                             :measurement {:operations 10 :warmup-batches 2}} children)
       (doseq [index [0 1]]
         (evidence/capture-child!
          directory index

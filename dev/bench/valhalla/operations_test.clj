@@ -26,7 +26,7 @@
 (deftest field-operations-test
   ;; Replacement is a fresh holder, not mutation or a read of the source.
   (doseq [[construct read-value] [[#(Operations/restrictedHolder %) #(Operations/restrictedRead %)]
-                                 [#(Operations/referenceHolder %) #(Operations/referenceRead %)]]]
+                                  [#(Operations/referenceHolder %) #(Operations/referenceRead %)]]]
     (let [initial (Operations/point 17)
           replacement (Operations/point 23)
           source (construct initial)

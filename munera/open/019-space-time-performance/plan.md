@@ -10,7 +10,8 @@ The capability gate is complete for Temurin 21.0.10+7-LTS and Valhalla
 27-jep401ea3+1-1 with Clojure 1.11.4. Internal atomic arrays and
 `@NullRestricted` fields are approved. Ordinary assoc collectors, saved evidence,
 reports, graph tooling, and the isolated timing correction already exist.
-The complete matrix and public report now exist; final repository checks remain.
+The complete matrix, public report, and final repository checks are complete.
+See the final verification entry in implementation.md for acceptance and limits.
 
 Use `features.md` for commands and capability evidence, `measurement-contract.md`
 for metric semantics, and `dev/bench/cases.edn` for the fixed inventory. Earlier
@@ -293,3 +294,8 @@ topics, unavailable reference graphs, and reproduction commands. README claims
 are limited to measured cases. Vale and tracked Markdown links pass. Next run
 the three runtime suites, affected benchmark tests, remaining quality checks,
 and final acceptance review; no measurement repetition is needed.
+
+Final verification is complete on pinned Temurin 21. All three Clojure suites
+and shared quality checks pass. The saved-controls test fixture now declares its
+budget; no collector, dependency, acceptance capture, or library semantics changed.
+The design acceptance criteria are satisfied with the published measurement limits.

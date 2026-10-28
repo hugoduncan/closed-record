@@ -69,11 +69,11 @@ These checks are foundations, not full-matrix or acceptance results.
 - [x] Create `README/performance.md` with measured tables, evidence links,
   commands, definitions, comparison limits, and explicit unavailable metrics.
   Qualify and link the README claim; link from the development guide.
-- [ ] Run ordinary tests on Clojure 1.11, 1.12, and 1.13 plus affected benchmark
+- [x] Run ordinary tests on Clojure 1.11, 1.12, and 1.13 plus affected benchmark
   tests. Inspect structured Scry outcomes and failures.
-- [ ] Run shared format/lint, Vale, API freshness, and tracked Markdown link checks.
+- [x] Run shared format/lint, Vale, API freshness, and tracked Markdown link checks.
   Record and resolve relevant failures; preserve unrelated user changes.
-- [ ] Audit all design acceptance criteria and record final verification and
+- [x] Audit all design acceptance criteria and record final verification and
   limits in `implementation.md`. Mark complete only from actual evidence.
 
 Experimental integration detail:

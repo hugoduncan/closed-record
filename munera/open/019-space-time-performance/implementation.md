@@ -2380,3 +2380,52 @@ zero errors), and git diff --check passes. No tests were added for prose;
 existing real-evidence tables supply the numbers. Final runtime/benchmark suites,
 format/lint/API checks, and acceptance review remain for the next slice. Do not
 recollect measurements or interpret publication as completed final verification.
+
+## 2026-10-28 — Final verification and acceptance review
+
+On pinned Temurin 21.0.10+7-LTS, ran `clojure -Srepro -M:ALIASES -m
+scry.cli --dir test` with `test`, `test:clj-1.12`, and `test:clj-1.13`.
+Each final run passes 182 tests/2,770 assertions, exit 0, empty `.scry-results`.
+This includes the ordinary benchmark regression tests. Initial runs each had
+one error: saved-controls-test omitted the now-required manifest measurement
+budget. Added the matching explicit budget to that real-file fixture; did not
+weaken validation. No mocks or new timing measurements.
+
+Shared format initially found one alignment error in the Valhalla operation
+test. Shared lint found the existing duplicate require in the acceptance script's
+implicit user namespace. Formatting is repaired; the script now owns a namespace.
+Its real-process content-defect probe still exits 0 and confirms exactly the
+intended rejection (41 assertions pass, one expected content assertion fails).
+Command: `clojure -Srepro -M:quickdoc:tooling-test
+dev/acceptance/api_content_defect.clj`.
+
+Final `bb clj-fmt:check`, `bb clj-kondo:lint`, `bb vale`,
+`bb api-docs --check`, and `bb lychee:check` all exit 0. Lint reports zero
+warnings/errors across 151 files; tracked links have no errors. Diff check passes.
+No dependency, library, design, measurement, or acceptance budget changed.
+No actor-step override or PR metadata was supplied; used task 019/current worktree.
+
+Acceptance review against design.md:
+
+1. Feature definitions and pinned-runtime capability/layout probes are in
+   features.md. All three topics have time and memory evidence; reference value
+   graphs have a demonstrated physical-identity limit, not invented zero counts.
+2. Frozen commands, expression regressions, reset contracts, independent forks,
+   variation, counter controls, and graph ownership checks support the fixed
+   workload. Public limits include timer/traversal costs and order effects.
+3. Acceptance-01 preserves the first complete capture, commands, revisions,
+   machine/runtime/tool metadata, exits, and unfavourable results. Prior failed
+   diagnostics remain. The inventory audit covers 490 slots: 430 raw outcomes
+   and 60 original statistics, including 75 unavailable graph outcomes.
+4. Three-version tests pass, including identity, units, normalization, reporting,
+   unavailable outcomes, and real process failures. Original S-03 and field tests
+   passed in retained acceptance evidence. Base/test tool isolation was verified
+   before acceptance. Isolated measured smoke evidence remains in earlier entries.
+5. README/performance.md covers all topics and distinguishes closed records from
+   external Valhalla fixtures. README and development links qualify the claims.
+6. All required shared checks pass. Benchmark commands remain manual.
+
+Implementation is complete. Do not recollect for favourable results or infer
+universal parity, convergence, or a total-space ratio from unavailable reference
+graphs. Task location is unchanged for review; no further implementation slice
+is required by the current design.

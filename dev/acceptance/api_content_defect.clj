@@ -1,8 +1,9 @@
-(require '[clojure.edn :as edn]
-         '[clojure.java.io :as io]
-         '[clojure.java.shell :as shell]
-         '[clojure.string :as str]
-         '[closed-record.test-support.api-project :as fixture])
+(ns acceptance.api-content-defect
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
+            [clojure.java.shell :as shell]
+            [clojure.string :as str]
+            [closed-record.test-support.api-project :as fixture]))
 
 ;; Separate acceptance probe: freshness must not replace independent content checks.
 (fixture/with-project
