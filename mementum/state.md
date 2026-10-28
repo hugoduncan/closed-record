@@ -410,7 +410,7 @@ tools still need independent validation for flat layouts.
 ## Benchmark inventory accounting
 
 Task 019's fixed inventory is `dev/bench/cases.edn`; its accounting contract is
-`munera/open/019-space-time-performance/measurement-contract.md`. Graph union
+`munera/closed/019-space-time-performance/measurement-contract.md`. Graph union
 minus source measures newly reachable data; prebuilt payloads can contribute to
 that metric without operation allocation. Flat payloads belong to container
 layout, not invented boxed objects. Memory tooling remains unvalidated.
@@ -469,7 +469,7 @@ allocate only their 16-byte shallow size; typed Point arguments still allocate
 memory tooling is not yet approved.
 
 Task 019: ordinary-array graph controls pass on both pinned JDKs. See
-`munera/open/019-space-time-performance/evidence/array-graph/`. Record traversal
+`munera/closed/019-space-time-performance/evidence/array-graph/`. Record traversal
 and flat-layout graph accounting remain open; the array walker is not a general
 memory tool.
 
@@ -495,7 +495,7 @@ unrelated duplicate require in dev/acceptance/api_content_defect.clj.
 ## Task 019 allocation divisor controls
 
 Unequal-batch and empty-boundary controls pass on both pinned runtimes; see
-`munera/open/019-space-time-performance/evidence/allocation-divisor/`.
+`munera/closed/019-space-time-performance/evidence/allocation-divisor/`.
 Allocation counter controls are complete. Full memory-tool approval still needs
 physical value-box graph accounting; case-specific allocation remains unverified.
 
@@ -1154,7 +1154,7 @@ collector. Experimental memory integration and timing assessment remain open.
 
 Task 019 latest slice: experimental `Allocation.sample` now exercises all 18
 sites with real counters and checked escaping results. Single-JVM evidence:
-`munera/open/019-space-time-performance/evidence/experimental-allocation-boundary`.
+`munera/closed/019-space-time-performance/evidence/experimental-allocation-boundary`.
 Not acceptance. Next integrate allocation inventory/persistence and controls,
 five forks, graph outcomes, and reports. Store timing quantisation remains open.
 
@@ -1260,7 +1260,7 @@ directory. Saved rendering is repeatable; focused format/lint and shell syntax
 pass. No mocks or speed assertions. Attempt 01 remains unchanged.
 
 Task 019 acceptance commands are frozen in
-`munera/open/019-space-time-performance/evidence/acceptance-01/README.md`.
+`munera/closed/019-space-time-performance/evidence/acceptance-01/README.md`.
 No acceptance measurements have run. Next retain original S-03 raw children
 (zero-based forks) and run the four frozen metric scripts; validate 490 matrix
 outcomes. Base/test dependency isolation verified on Temurin 21. Preserve the

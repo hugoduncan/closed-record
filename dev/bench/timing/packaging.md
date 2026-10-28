@@ -14,7 +14,7 @@ mkdir -p target
 sh dev/bench/timing/prepare.sh \
   "$HOME/.m2/repository/org/hugoduncan/criterium/0.5.251-ALPHA/criterium-0.5.251-ALPHA.jar" \
   target/019-timing-overlay
-clojure -Sdeps '{:aliases {:candidate {:extra-paths ["target/019-timing-overlay" "munera/open/019-space-time-performance/evidence/timing-source-correction"] :main-opts []}}}' -M:test:bench:candidate -m scry.cli --namespace planning-estimate-test
+clojure -Sdeps '{:aliases {:candidate {:extra-paths ["target/019-timing-overlay" "munera/closed/019-space-time-performance/evidence/timing-source-correction"] :main-opts []}}}' -M:test:bench:candidate -m scry.cli --namespace planning-estimate-test
 ```
 
 The script requires `shasum`, `unzip`, and `patch`. It verifies the full input

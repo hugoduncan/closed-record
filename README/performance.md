@@ -6,7 +6,7 @@ three-field cases. Wider records and experimental storage have different costs.
 
 ## Evidence and runtime
 
-[Acceptance attempt 01](../munera/open/019-space-time-performance/evidence/acceptance-01/README.md)
+[Acceptance attempt 01](../munera/closed/019-space-time-performance/evidence/acceptance-01/README.md)
 retains commands, revisions, JVM flags, tool identities, raw results, and exits.
 The machine is a macOS arm64 MacBook Pro. Clojure is 1.11.4. Ordinary records use
 Temurin 21.0.10+7-LTS; external Java value types use Valhalla
@@ -32,11 +32,11 @@ graph sizes include reachable payloads once per physical object.
 | 16 | defrecord | 17.419 [11.683–21.902] | 96 | 480 | 600 | 120 |
 
 Memory counts were constant across forks. Increment means union minus source,
-not bytes allocated. See [full results and allocation controls](../munera/open/019-space-time-performance/evidence/acceptance-01/ordinary/report.stdout).
+not bytes allocated. See [full results and allocation controls](../munera/closed/019-space-time-performance/evidence/acceptance-01/ordinary/report.stdout).
 The wider closed-record mean is slower; these results do not establish parity
 for arbitrary record widths.
 
-The [original six-case report](../munera/open/019-space-time-performance/evidence/acceptance-01/s03/report.md)
+The [original six-case report](../munera/closed/019-space-time-performance/evidence/acceptance-01/s03/report.md)
 passes the existing S-03 ratio-or-overlapping-95%-interval rule for lookup, get,
 field access, assoc, cached hash, and equality. That rule applies only to those
 original three-field cases. Their retained per-call statistics are not raw batches.
@@ -48,8 +48,8 @@ hint does not request flat or null-restricted storage. The internal
 `ValueClass.newNullRestrictedAtomicArray` API and `@NullRestricted` annotation
 require the pinned EA, preview support, and module exports. Capability probes
 verify null rejection and physical layout separately. See
-[APIs, flags, and executable probes](../munera/open/019-space-time-performance/features.md)
-and [operation contracts](../munera/open/019-space-time-performance/measurement-contract.md).
+[APIs, flags, and executable probes](../munera/closed/019-space-time-performance/features.md)
+and [operation contracts](../munera/closed/019-space-time-performance/measurement-contract.md).
 These internal APIs are not supported library features.
 
 Both array layouts have atomic element access with plain ordering, not volatile
@@ -89,22 +89,22 @@ replacement have 32-byte source/result unions and 16-byte increments; reads alia
 the source, with a 16-byte union and zero increment. All are constant across forks.
 **Reference graphs are unavailable**, not zero: physical value-box identity cannot
 be established. No total-space ratio is supported. See
-[identity evidence](../munera/open/019-space-time-performance/evidence/value-identity/).
+[identity evidence](../munera/closed/019-space-time-performance/evidence/value-identity/).
 
-Full experimental tables: [time](../munera/open/019-space-time-performance/evidence/acceptance-01/experimental-timing/report.md),
-[allocation](../munera/open/019-space-time-performance/evidence/acceptance-01/experimental-allocation/report.md),
-and [graphs](../munera/open/019-space-time-performance/evidence/acceptance-01/experimental-graph/report.md).
+Full experimental tables: [time](../munera/closed/019-space-time-performance/evidence/acceptance-01/experimental-timing/report.md),
+[allocation](../munera/closed/019-space-time-performance/evidence/acceptance-01/experimental-allocation/report.md),
+and [graphs](../munera/closed/019-space-time-performance/evidence/acceptance-01/experimental-graph/report.md).
 
 ## Reproduction and limits
 
-Follow the [frozen commands and budgets](../munera/open/019-space-time-performance/evidence/acceptance-01/README.md)
+Follow the [frozen commands and budgets](../munera/closed/019-space-time-performance/evidence/acceptance-01/README.md)
 from the repository root. Use a new output identity; do not overwrite evidence.
 Ordinary timing uses five seconds per site; experimental timing uses one.
 Allocation uses fixed warmup budgets, not a convergence test. The verified
 Criterium correction changes planning only, not raw samples. Timing runs exclude
 memory agents. Saved report and audit commands need no new measurements.
 
-The [coverage audit](../munera/open/019-space-time-performance/evidence/acceptance-01/audit.md)
+The [coverage audit](../munera/closed/019-space-time-performance/evidence/acceptance-01/audit.md)
 accounts for 430 raw outcomes and 60 original statistics, including 75 unavailable
 reference graph outcomes. No supported slots are missing or failed. Earlier
 failed diagnostics remain in the task evidence; they are not substituted for
