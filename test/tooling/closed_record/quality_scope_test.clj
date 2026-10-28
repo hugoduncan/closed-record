@@ -43,9 +43,10 @@
 (deftest owned-source-test
   ;; Git path selection must not include downloaded or generated inputs.
   (testing "maintained code and configuration are selected"
-    (doseq [path ["dev/probe.bb" "src/core.cljc" "test/a.clj" "dev/quality/a.clj"
-                  "test-tooling/a.clj" "build.clj" "bb.edn" "deps.edn"
-                  ".clj-kondo/config.edn"]]
+    (doseq [path ["dev/probe.bb" "src/core.cljc" "dev/quality/a.clj"
+                  "test/runtime/a.clj" "test/bench/a.clj" "test/build/a.clj"
+                  "test/release/a.clj" "test/tooling/a.clj"
+                  "build.clj" "bb.edn" "deps.edn" ".clj-kondo/config.edn"]]
       (is (scope/owned-source? path) path)))
   (testing "imports, caches, generated files, and adjacent paths are excluded"
     (doseq [path [".clj-kondo/imports/malli/config.edn" ".clj-kondo/.cache/a.edn"
@@ -55,7 +56,7 @@
 
 (deftest maintained-scope-contract-test
   ;; Contract expectations stay independent of production scope and path order.
-  (let [roots ["src" "test" "dev" "test-build" "test-release" "test-tooling"]
+  (let [roots ["src" "test" "dev"]
         files ["build.clj" "bb.edn" "deps.edn" ".cljfmt.edn" ".clj-kondo/config.edn"]
         required (merge (zipmap roots (repeat :directory))
                         (zipmap files (repeat :file)))

@@ -51,7 +51,7 @@ jobs:
         run: bb clj-kondo:lint
       - name: Test runtime-111
         id: runtime-111
-        run: clojure -M:test -m scry.cli
+        run: clojure -M:test -m scry.cli --dir test/runtime
       - name: Upload runtime-111 failures
         if: ${{ failure() && steps.runtime-111.outcome == 'failure' }}
         uses: actions/upload-artifact@v4.6.2
@@ -62,7 +62,7 @@ jobs:
           if-no-files-found: warn
       - name: Test runtime-112
         id: runtime-112
-        run: clojure -M:test:clj-1.12 -m scry.cli
+        run: clojure -M:test:clj-1.12 -m scry.cli --dir test/runtime
       - name: Upload runtime-112 failures
         if: ${{ failure() && steps.runtime-112.outcome == 'failure' }}
         uses: actions/upload-artifact@v4.6.2
@@ -73,7 +73,7 @@ jobs:
           if-no-files-found: warn
       - name: Test runtime-113
         id: runtime-113
-        run: clojure -M:test:clj-1.13 -m scry.cli
+        run: clojure -M:test:clj-1.13 -m scry.cli --dir test/runtime
       - name: Upload runtime-113 failures
         if: ${{ failure() && steps.runtime-113.outcome == 'failure' }}
         uses: actions/upload-artifact@v4.6.2
@@ -84,7 +84,7 @@ jobs:
           if-no-files-found: warn
       - name: Test build
         id: build
-        run: clojure -M:test:build-test -m scry.cli --dir test-build
+        run: clojure -M:test:build-test -m scry.cli --dir test/build
       - name: Upload build failures
         if: ${{ failure() && steps.build.outcome == 'failure' }}
         uses: actions/upload-artifact@v4.6.2
@@ -95,7 +95,7 @@ jobs:
           if-no-files-found: warn
       - name: Test release
         id: release
-        run: clojure -M:test:release:release-test -m scry.cli --dir test-release
+        run: clojure -M:test:release:release-test -m scry.cli --dir test/release
       - name: Upload release failures
         if: ${{ failure() && steps.release.outcome == 'failure' }}
         uses: actions/upload-artifact@v4.6.2

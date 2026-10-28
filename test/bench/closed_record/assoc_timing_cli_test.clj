@@ -45,7 +45,7 @@
             (is (= (tool/declaration (tool/observe))
                    (get-in manifest [:metadata :timing-tool])))
             (is (= arguments (subvec (get-in manifest [:metadata :command])
-                                    (- (count (get-in manifest [:metadata :command])) 4))))
+                                     (- (count (get-in manifest [:metadata :command])) 4))))
             (is (string? (get-in manifest [:metadata :machine :os])))
             (is (= 2 (:exit (invoke! parent arguments))))
             (is (= before (into {} (map (fn [[path _]] [path (slurp path)])) before))))))

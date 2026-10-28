@@ -64,7 +64,7 @@ jobs:
         id: tests
         env:
           JAVA_TOOL_OPTIONS: -Xmx768m
-        run: clojure -Srepro -M:quickdoc:tooling-test -m scry.cli --dir test-tooling
+        run: clojure -Srepro -M:quickdoc:tooling-test -m scry.cli --dir test/tooling
       - name: Upload tooling test failures
         if: ${{ failure() && steps.tests.outcome == 'failure' }}
         uses: actions/upload-artifact@v4.6.2
@@ -114,11 +114,11 @@ jobs:
       matrix:
         include:
           - version: '1.11'
-            command: clojure -M:test -m scry.cli
+            command: clojure -M:test -m scry.cli --dir test/runtime
           - version: '1.12'
-            command: clojure -M:test:clj-1.12 -m scry.cli
+            command: clojure -M:test:clj-1.12 -m scry.cli --dir test/runtime
           - version: '1.13'
-            command: clojure -M:test:clj-1.13 -m scry.cli
+            command: clojure -M:test:clj-1.13 -m scry.cli --dir test/runtime
     steps:
       - uses: actions/checkout@v4.2.2
         with:
@@ -160,7 +160,7 @@ jobs:
           cli: '1.12.6.1673'
       - name: Run build tests
         id: tests
-        run: clojure -M:test:build-test -m scry.cli --dir test-build
+        run: clojure -M:test:build-test -m scry.cli --dir test/build
       - name: Upload build test failures
         if: ${{ failure() && steps.tests.outcome == 'failure' }}
         uses: actions/upload-artifact@v4.6.2
@@ -190,7 +190,7 @@ jobs:
           cli: '1.12.6.1673'
       - name: Run release tests
         id: tests
-        run: clojure -M:test:release:release-test -m scry.cli --dir test-release
+        run: clojure -M:test:release:release-test -m scry.cli --dir test/release
       - name: Upload release test failures
         if: ${{ failure() && steps.tests.outcome == 'failure' }}
         uses: actions/upload-artifact@v4.6.2

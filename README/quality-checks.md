@@ -18,7 +18,7 @@ Dependency imports, tool caches, and downloaded prose styles are ignored files.
 
 Format and lint share the required scope in
 [`quality_scope.clj`](../dev/quality/closed_record/quality_scope.clj): `src/`,
-`test/`, `dev/`, `test-build/`, `test-release/`, `test-tooling/`, `build.clj`,
+`test/` (all suites), `dev/`, `build.clj`,
 `bb.edn`, `deps.edn`, `.cljfmt.edn`, and `.clj-kondo/config.edn`.
 Generated output, dependency imports, and caches are excluded. Missing required
 paths fail; they do not reduce coverage. Source roots must be directories;
@@ -127,7 +127,7 @@ Install the quality tools and synchronize styles, then run:
 
 ```bash
 vale sync --config=.vale.ini
-clojure -Srepro -M:quickdoc:tooling-test -m scry.cli --dir test-tooling
+clojure -Srepro -M:quickdoc:tooling-test -m scry.cli --dir test/tooling
 ```
 
 Tests use real tools, temporary files, and isolated Git repositories, including

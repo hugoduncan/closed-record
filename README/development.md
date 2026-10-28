@@ -4,14 +4,25 @@ Use the Clojure CLI. Run all commands from the repository root.
 See [tool installation](tool-installation.md) for pinned Java, Clojure CLI,
 format, lint, and prose tools.
 
-Run the tests on Clojure 1.11:
+Test suites share the `test/` parent directory:
 
-    clojure -M:test -m scry.cli
+- `test/runtime/`: library and benchmark support tests.
+- `test/build/`: build and artifact tests.
+- `test/release/`: release tooling tests.
+- `test/tooling/`: development tool tests.
+- `test/bench/`: measurement tests with separate dependency and JVM requirements.
+
+Each suite has a separate source path. Select the suite directory explicitly;
+The default scry discovery scans all of `test/`.
+
+Run the runtime tests on Clojure 1.11:
+
+    clojure -M:test -m scry.cli --dir test/runtime
 
 Run the tests on Clojure 1.12 and on Clojure 1.13:
 
-    clojure -M:test:clj-1.12 -m scry.cli
-    clojure -M:test:clj-1.13 -m scry.cli
+    clojure -M:test:clj-1.12 -m scry.cli --dir test/runtime
+    clojure -M:test:clj-1.13 -m scry.cli --dir test/runtime
 
 Start a REPL. The nREPL server writes the port to `.nrepl-port`:
 
@@ -20,7 +31,7 @@ Start a REPL. The nREPL server writes the port to `.nrepl-port`:
 Run the tests in the REPL:
 
     (require '[scry.core :as scry])
-    (scry/run)
+    (scry/run {:dirs ["test/runtime"]})
 
 Run the benchmarks against `defrecord` (about 6 minutes):
 
@@ -85,7 +96,7 @@ Each build removes stale output from `target/` before packaging.
 
 Run the separate build tests, including a consumer JVM that loads the JAR:
 
-    clojure -M:test:build-test -m scry.cli --dir test-build
+    clojure -M:test:build-test -m scry.cli --dir test/build
 
 Remove build output:
 
@@ -97,7 +108,7 @@ deploy the artifact; there is no published Clojars release yet.
 
 Run the separate release tooling tests (pure notes and real Git fixtures):
 
-    clojure -M:test:release:release-test -m scry.cli --dir test-release
+    clojure -M:test:release:release-test -m scry.cli --dir test/release
 
 ### Markdown links
 

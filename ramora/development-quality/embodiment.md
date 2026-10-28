@@ -6,7 +6,7 @@
 |---|---|
 | `bb.edn` | Shared quality commands and internal staged-content tasks |
 | `dev/quality/closed_record/` | Scope validation, tool setup, format/lint, prose checks, API generation, and hook helpers |
-| `test-tooling/` | Scope contracts and real-tool, real-Git, and API tests |
+| `test/tooling/` | Scope contracts and real-tool, real-Git, and API tests |
 | `.cljfmt.edn`, `.clj-kondo/config.edn` | Owned format and analysis configuration |
 | `.vale.ini`, `styles/config/vocabularies/ClosedRecord/` | Prose policy and project vocabulary |
 | `doc/API.md` | Generated API reference with separate freshness and content checks |

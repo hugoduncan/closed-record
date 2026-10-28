@@ -8,7 +8,7 @@
 | `deps.edn` | Build/deploy dependencies and release aliases, outside runtime dependencies |
 | `dev/release/closed_record/notes.clj` | Changelog validation, stamping, and note selection |
 | `dev/release/closed_record/release.clj` | Local preparation and notes export commands |
-| `test-release/`, `test-build/` | Notes, preparation, credential, and packaging verification |
+| `test/release/`, `test/build/` | Notes, preparation, credential, and packaging verification |
 | `.github/workflows/release.yml` | Manual single-job release with default dry run and explicit-false publication gates |
 | `.github/workflows/ci.yml` | Release-tooling checks as part of read-only CI |
 | `CHANGELOG.md` | Maintained release notes |

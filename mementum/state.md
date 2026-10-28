@@ -1294,3 +1294,17 @@ checks pass. Final verification repaired a missing test-fixture budget, one
 formatting error, and an implicit-user-namespace lint collision. No measurements
 changed. See task implementation.md for the six-criterion acceptance review;
 do not repeat acceptance captures. Task remains in open/ for review.
+
+## Test suite layout — 2026-10-27
+
+All suites now live below `test/`: `runtime`, `build`, `release`, `tooling`,
+and `bench`. Aliases keep separate source paths. Runtime CLI commands must use
+`--dir test/runtime`; REPL calls use `(scry/run {:dirs ["test/runtime"]})`.
+Default scry discovery scans the parent and is not suitable for this layout.
+See README/development.md for current commands. Older knowledge pages and task
+logs retain the previous paths; captured benchmark evidence is unchanged.
+Shared format/lint scope now includes all suites through the `test/` root.
+Verification on OpenJDK 25.0.2: runtime suites pass on Clojure 1.11/1.12/1.13
+(each 182 tests/2,770 assertions); build 6/100, release 9/104, tooling 51/810,
+and two focused benchmark support tests 2/19 pass. Format, lint, Vale, API
+freshness, and offline Markdown links pass. Full measurement suites were not run.

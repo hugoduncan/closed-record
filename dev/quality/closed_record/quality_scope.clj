@@ -7,7 +7,6 @@
 (def required-types
   "Expected types of required quality inputs, relative to the repository root."
   (array-map "src" :directory "test" :directory "dev" :directory
-             "test-build" :directory "test-release" :directory "test-tooling" :directory
              "build.clj" :file "bb.edn" :file "deps.edn" :file
              ".cljfmt.edn" :file ".clj-kondo/config.edn" :file))
 

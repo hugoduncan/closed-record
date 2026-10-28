@@ -322,7 +322,7 @@ outside timing; raw batch estimates retain their actual divisors.
 Run the isolated real-Criterium test in a fresh JVM:
 
 ```sh
-clojure -Sdeps '{:aliases {:smoke {:extra-paths ["test-bench"] :main-opts []}}}' \
+clojure -Sdeps '{:aliases {:smoke {:extra-paths ["test/bench"] :main-opts []}}}' \
   -M:test:bench:smoke -m scry.cli --namespace closed-record.assoc-timing-test
 ```
 
@@ -445,7 +445,7 @@ Run the real-agent regression from the repository root with Temurin 21 selected:
 ```sh
 bash dev/bench/memory/record-graph-probe.sh
 clojure -J-javaagent:target/bench-memory/record-graph-agent.jar \
-  -Sdeps '{:paths ["src" "target/bench-memory/classes" "test-bench"]}' \
+  -Sdeps '{:paths ["src" "target/bench-memory/classes" "test/bench"]}' \
   -M:test -m scry.cli --namespace closed-record.bench.assoc-graph-test
 ```
 
@@ -502,7 +502,7 @@ transformation. The graph parent reads this declaration before launch.
 Run the real build-reader tests separately from ordinary tests:
 
 ```sh
-clojure -Sdeps '{:aliases {:graph-build-test {:extra-paths ["test-bench"]}}}' \
+clojure -Sdeps '{:aliases {:graph-build-test {:extra-paths ["test/bench"]}}}' \
   -M:test:graph-build-test -m scry.cli \
   --namespace closed-record.bench-graph-build-test
 ```

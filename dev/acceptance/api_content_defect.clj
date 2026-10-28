@@ -9,9 +9,9 @@
 (fixture/with-project
   (fn [root]
     (let [generator (io/file root "dev/quality/closed_record/api_docs.clj")
-          content-test (io/file root "test-tooling/closed_record/api_docs_test.clj")]
+          content-test (io/file root "test/tooling/closed_record/api_docs_test.clj")]
       (io/make-parents content-test)
-      (io/copy (io/file "test-tooling/closed_record/api_docs_test.clj") content-test)
+      (io/copy (io/file "test/tooling/closed_record/api_docs_test.clj") content-test)
       (spit generator
             (str/replace (slurp generator)
                          "ClojureScript and Babashka are not supported."

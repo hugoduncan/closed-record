@@ -2,7 +2,7 @@
 
 The development boundary owns shared format/lint scope, prose policy, generated
 API documentation, and staged-content hooks. Thin Babashka tasks call helpers
-under `dev/quality/closed_record/`; real-tool tests live in `test-tooling/`.
+under `dev/quality/closed_record/`; real-tool tests live in `test/tooling/`.
 Tool dependencies do not enter the runtime basis or source-only JAR.
 
 Local checks and CI use the same commands. Release reuses format/lint without

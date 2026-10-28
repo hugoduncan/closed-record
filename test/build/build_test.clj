@@ -189,7 +189,7 @@
   (doseq [path ["test/excluded_test.clj"
                 "dev/bench/excluded_bench.clj"
                 "dev/release/excluded_release.clj"
-                "test-release/excluded_test.clj"
+                "test/release/excluded_test.clj"
                 "munera/excluded-task.md"
                 "mementum/excluded-memory.md"]]
     (let [probe (io/file directory path)]

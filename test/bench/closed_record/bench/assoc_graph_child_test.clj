@@ -32,7 +32,7 @@
             (is (= (runtime/observe) (:runtime envelope)))
             (is (= 12 (count rows)))
             (is (every? #(= (into {} (map (fn [[k v]] [(keyword k) v]))
-                                       (RecordGraphProbe/identity))
+                                  (RecordGraphProbe/identity))
                             (:graph-tool %)) rows))
             (is (= (if (odd? fork) :closed-record :defrecord)
                    (:representation (first rows))))
@@ -78,7 +78,7 @@
             envelope (transport/decode inventory association (:raw-result capture))]
         (is (= observed (:runtime envelope)))
         (is (every? #(= (into {} (map (fn [[k v]] [(keyword k) v]))
-                                   (RecordGraphProbe/identity))
+                              (RecordGraphProbe/identity))
                         (:graph-tool %)) (:results envelope)))
         (is (= 12 (count (:results envelope))))
         (is (every? #(and (= :measured (:status %)) (pos? (:raw %)))
