@@ -45,9 +45,8 @@ this project, under the direction of a human developer.
 
 ## Status
 
-Pre-release. There is no release on Clojars yet. The API is small:
-`defclosedrecord` and `check`. After the first release, the API will
-change only by addition.
+Released on Clojars. The API is small: `defclosedrecord` and `check`.
+The API changes only by addition. See the [changelog](CHANGELOG.md).
 
 - Host: Clojure on the JVM. ClojureScript and Babashka are not
   supported.
@@ -56,12 +55,18 @@ change only by addition.
 
 ## Installation
 
-Add a git dependency to `deps.edn`:
+The library is on [Clojars](https://clojars.org/org.hugoduncan/closed-record).
+
+Clojure CLI (`deps.edn`):
 
 ```clojure
-{:deps {io.github.hugoduncan/closed-record
-        {:git/url "https://github.com/hugoduncan/closed-record"
-         :git/sha "<commit sha>"}}}
+{:deps {org.hugoduncan/closed-record {:mvn/version "0.1.190"}}}
+```
+
+Leiningen (`project.clj`):
+
+```clojure
+[org.hugoduncan/closed-record "0.1.190"]
 ```
 
 ## Usage

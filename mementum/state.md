@@ -14,7 +14,10 @@ keys and `dissoc` of declared keys. Main form: `defclosedrecord`.
 
 ## Current state
 
-- Not released. `CHANGELOG.md` has only an Unreleased section; no Git tags.
+- Released: `org.hugoduncan/closed-record` `0.1.190` on Clojars, Git tag
+  `v0.1.190`, and a GitHub Release. This is the first release.
+- The release workflow calls CI (`workflow_call`), so a CI failure stops a
+  release. `doc/releases.md` has the steps.
 - Verification limits (hosted CI, publication, benchmark scope) are in each
   design's `embodiment.md`.
 
