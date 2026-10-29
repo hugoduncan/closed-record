@@ -35,22 +35,24 @@ commands, output paths, the Git version rule, and history requirements.
 | Side | Contents |
 |---|---|
 | Public | `defclosedrecord`, `check`, generated `->Name` and `map->Name`, the `ex-data` of D-03. |
-| Internal | `closed-record.impl.*`, the `ClosedRecord` protocol, `closed-record.core/key-error`, the fields `__meta __extmap __hash __hasheq`. |
+| Internal | `closed-record.runtime`, `closed-record.impl.*`, the `ClosedRecord` protocol, `closed-record.runtime/key-error`, the fields `__meta __extmap __hash __hasheq`. |
 
 Permitted dependencies:
 
 - User code → public names only.
+- `core` → `runtime`. `check` uses the protocol and class-name helper.
 - `core` → `impl.*`. The macro calls the emitter at expansion time.
-- Generated code → `closed-record.core/ClosedRecord`, `clojure.lang`, public `clojure.core` vars and JDK classes
+- Generated code → `closed-record.runtime/ClosedRecord`, `clojure.lang`, public `clojure.core` vars and JDK classes
   (`java.lang`, `java.util`, `java.io`).
-- Generated code → the private helper `closed-record.core/key-error` (through its var, D-21).
+- Generated code → the public runtime helper `closed-record.runtime/key-error` (D-21).
 
 Forbidden dependencies:
 
-- User code → `impl.*`. User code must not extend `ClosedRecord`.
-- `impl.*` → `core`. An emitter does not require `core`. It emits the protocol name and the `key-error` var name only as symbols.
+- User code → `impl.*` or `runtime`. User code must not extend `ClosedRecord`.
+- `impl.*` → `core`. An emitter does not require `core`. It emits runtime protocol and helper references as symbols.
+- `runtime` → `core` or `impl.*`. Runtime support does not load the public API or emitter.
 - Generated code → `impl.*`. The emitter runs only at expansion time.
-- Generated code, `core` or `impl.*` → private `clojure.core` vars. A private var can change in each Clojure version,
+- Generated code, `core`, `runtime` or `impl.*` → private `clojure.core` vars. A private var can change in each Clojure version,
   and V-13 does not find the change.
 
 ## Public interface
@@ -72,7 +74,7 @@ deftype* ns/Name ns.Name
    ^int ^:unsynchronized-mutable __hasheq]
   :implements [IRecord IHashEq IObj ILookup IKeywordLookup
                IPersistentMap java.util.Map Serializable
-               closed_record.core.ClosedRecord   ; protocol interface, D-17
+               closed_record.runtime.ClosedRecord   ; protocol interface, D-17
                user-interfaces*]
   ; not IType (K-08)
 ```

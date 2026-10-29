@@ -24,8 +24,8 @@
 - Missing primitive field (D-19): parity, but the error is a host exception with no data.
 - No disable switch (D-12): the same behaviour everywhere, but a small cost in error paths only.
 - Out-of-line throw helper (D-21): the generated methods stay small enough for C2 inlining (K-09), but the generated
-  code depends on a private var of `core`, and AOT-compiled user classes refer to it by name. Mitigation: the D-21
-  commitment (a new helper name after the first release).
+  code depends on an internal var of `runtime`, and AOT-compiled user classes refer to it by name. Changes to
+  internal names require recompilation of those classes (D-21).
 - Closed maps in an open-map ecosystem: errors are found early, but some generic map code throws.
   This is intended. The docs must name the common cases: malli default-value transformers and code that adds keys such as `:db/id`.
 

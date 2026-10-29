@@ -37,9 +37,7 @@
                  :toc true
                  :var-links true
                  :var-regex #"`([^\s`]+)`"}
-        overrides {'closed-record.core
-                   {'ClosedRecord {:no-doc true}
-                    '-extra-keys {:no-doc true}}}]
+        overrides {}]
     (with-out-str
       (quickdoc/print-toc entries namespaces names options overrides)
       (doseq [[namespace definitions] (sort-by first entries)]

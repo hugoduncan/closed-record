@@ -6,6 +6,8 @@
 - Choice:
   - Start with the JVM.
   - Put the public namespace `closed-record.core` in a `.cljc` file.
+  - Put the internal protocol and error helpers in `closed-record.runtime`, a `.cljc` file with no dependency on
+    the public API or emitters.
   - Put host-specific emitters in internal namespaces behind the macro.
 - Rejected: one public namespace for each host. The API can then differ between hosts.
 - Rationale: K-02. ClojureScript and babashka can add emitters and keep the same API.
@@ -25,14 +27,14 @@
 ## D-17 `ClosedRecord` protocol
 
 - Subject: how `check` reads the extra keys.
-- Choice: `(defprotocol ClosedRecord (-extra-keys [r]))` in `closed-record.core`. Each generated type implements it
-  inline. On the JVM, the protocol interface is `closed_record.core.ClosedRecord`.
+- Choice: `(defprotocol ClosedRecord (-extra-keys [r]))` in `closed-record.runtime`. Each generated type implements it
+  inline. On the JVM, the protocol interface is `closed_record.runtime.ClosedRecord`.
 - Rejected:
   - `definterface`. It is JVM-only, so it cannot be in a portable `.cljc` file (K-02).
   - Read `__extmap` by reflection. It is slow and host-specific.
 - Rationale: K-02. One abstraction for all hosts. Inline implementation gives a fast `satisfies?` check.
-- Assumptions: the generated code can refer to `closed-record.core/ClosedRecord`, because the macro is in that namespace.
-- Qualities: + portability. − The generated code depends on `closed-record.core`.
+- Assumptions: `core` loads `runtime` before macro expansion. Generated code refers to the runtime protocol.
+- Qualities: + portability. − The generated code depends on the internal runtime namespace.
 - Scope: all hosts. Internal: users must not extend the protocol.
 - Commitment: medium.
 

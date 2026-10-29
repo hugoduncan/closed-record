@@ -74,24 +74,21 @@
 - Choice: each method has the `defrecord` shape, within the size of the `defrecord` method plus the helper call.
   - `assoc`: `condp identical?` on the declared keywords. `without`: `identical?` tests on the declared keywords.
   - `containsKey` and `entryAt` call `(.valAt this k this)`, with `this` as the not-found value.
-  - The throw paths of `assoc` and `without` call the private helper `closed-record.core/key-error` through its var.
+  - The throw paths of `assoc` and `without` call the public runtime helper `closed-record.runtime/key-error` directly.
     The helper returns the `ex-info` of D-03; the call site throws it. Generated code → this helper is a permitted
     dependency.
 - Rejected: `case` in these methods (the `tableswitch` size depends on the keyword hashes, K-10). The inline throw
-  form (cold path, but it adds bytecode to the method). A public helper in `core` (D-20, principle 9). A helper in
+  form (cold path, but it adds bytecode to the method). A public API helper (D-20, principle 9). A helper in
   `impl.*` (generated code → `impl.*` is forbidden; the emitter is for expansion time only).
 - Rationale: K-05, K-09, K-10. C2 does not inline a hot method above `FreqInlineSize` (325 bytes, K-09). A `case` on
   keywords can exceed that limit (K-10). Moving error construction out of the generated method keeps the hot
-  path small. A private var in `core` keeps the helper out of the public API and avoids a run-time dependency
-  on the emitter. Generated code already depends on `core` (D-17).
-- Assumptions: the generated code can refer to `closed-record.core`, because the macro is in that namespace (as
-  D-17). The C2 inline limits stay near their current defaults (R-05).
-- Qualities: + performance, + `defrecord` parity. − The generated code depends on a private var of `core`. AOT
+  path small. A public var in the internal `runtime` namespace permits direct calls and avoids a run-time dependency
+  on the emitter. Generated code already depends on the runtime protocol (D-17).
+- Assumptions: `core` loads `runtime` before macro expansion (D-17). The C2 inline limits stay near their
+  current defaults (R-05).
+- Qualities: + performance, + `defrecord` parity. − The generated code depends on an internal runtime var. AOT
   classes of user code refer to the var by name.
-- Scope: JVM emitter. The helper in `core` is portable.
-- Commitment: medium, as D-17. The helper is an internal mechanism: it is not in the public API of D-20, and only the
-  generated code calls it. A change of the helper name or arguments changes the JVM emitter and the private helper in
-  `core` together, in one release. User classes that were AOT-compiled with an earlier version refer to the helper by
-  name, as they refer to the D-17 protocol interface. Before the first release, K-03 applies. After it, a change adds
-  a helper with a new name and keeps the old helper, so that the earlier AOT classes still work. The message and the
-  data of D-03 do not change.
+- Scope: JVM emitter. The helper in `runtime` is portable.
+- Commitment: medium, as D-17. The helper is internal, not part of the public API of D-20. Changes to its name
+  or arguments must update the emitter and runtime together. No compatibility aliases are retained. Consumer
+  classes compiled against the previous internal names must be recompiled. The message and data of D-03 do not change.

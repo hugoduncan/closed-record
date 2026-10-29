@@ -3,15 +3,11 @@
   factories. Internal: the function name and argument shape can change.
 
   This namespace does not require closed-record.core. It emits the
-  ClosedRecord protocol interface name and the key-error var name only as
+  runtime protocol interface name and the key-error function name only as
   symbols.")
 
 (def ^:private protocol-interface
-  'closed_record.core.ClosedRecord)
-
-(def ^:private key-error
-  "The private throw helper of closed-record.core, as a var form (D-21)."
-  '(var closed-record.core/key-error))
+  'closed_record.runtime.ClosedRecord)
 
 (def hidden-fields
   "The hidden fields of a closed record type, with their deftype* metadata,
@@ -190,13 +186,13 @@
                              [kw `(new ~tname ~@(replace {fld v} fields)
                                        ~'__meta ~'__extmap)])
                            kws fields)
-                 (throw (~key-error :closed-record/undeclared-key
-                                    (class ~this) ~k))))
+                 (throw (closed-record.runtime/key-error :closed-record/undeclared-key
+                                                         (class ~this) ~k))))
      `(~'without [~this ~k]
                  ~(if (seq kws)
                     `(if (or ~@(map (fn [kw] `(identical? ~k ~kw)) kws))
-                       (throw (~key-error :closed-record/declared-key-dissoc
-                                          (class ~this) ~k))
+                       (throw (closed-record.runtime/key-error :closed-record/declared-key-dissoc
+                                                               (class ~this) ~k))
                        ~this)
                     this))
      ;; java.util.Map

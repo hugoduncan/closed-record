@@ -2,7 +2,8 @@
 
 | Artifact | Responsibility |
 |---|---|
-| `src/closed_record/core.cljc` | Public API: the `defclosedrecord` macro and `check`. Internal protocol `ClosedRecord` (D-17). Internal run-time helper `key-error`, which the generated code calls (D-21). |
+| `src/closed_record/core.cljc` | Public API: the `defclosedrecord` macro and `check`. |
+| `src/closed_record/runtime.cljc` | Internal protocol `ClosedRecord` (D-17), class-name helper, and public run-time helper `key-error`, which the generated code calls (D-21). No dependency on the public API or emitter. |
 | `src/closed_record/impl/jvm.clj` | JVM emitter. Builds the `deftype*` form and the factories. |
 | `test/runtime/closed_record/*_test.clj` | Behaviour, differential, equality, malli, nil, literal and constant tests. |
 | `test/runtime/closed_record/compiler_rules_test.clj` | Tests that fix K-06 to K-08 (V-13). |

@@ -31,7 +31,7 @@ Return x if x is a closed record with no extra literal keys.
   if x is a closed record read from a literal with undeclared keys. Throw
   ex-info with :type :closed-record/not-closed-record (and :value-class)
   for any other value, including nil.
-<p><sub><a href="https://github.com/hugoduncan/closed-record/blob/master/src/closed_record/core.cljc#L103-L122">Source</a></sub></p>
+<p><sub><a href="https://github.com/hugoduncan/closed-record/blob/master/src/closed_record/core.cljc#L78-L97">Source</a></sub></p>
 
 ## <a name="closed-record.core/defclosedrecord">`defclosedrecord`</a>
 ``` clojure
@@ -71,4 +71,4 @@ Macro.
   Compilation of a literal as a code constant and print/read round trips
   discard extra keys. Call check on a runtime-read literal before those
   operations; check cannot find keys that have already been discarded.
-<p><sub><a href="https://github.com/hugoduncan/closed-record/blob/master/src/closed_record/core.cljc#L39-L76">Source</a></sub></p>
+<p><sub><a href="https://github.com/hugoduncan/closed-record/blob/master/src/closed_record/core.cljc#L36-L73">Source</a></sub></p>

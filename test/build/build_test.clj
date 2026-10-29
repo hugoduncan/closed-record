@@ -149,7 +149,11 @@
           (pr-str
            '(do
               (require '[clojure.java.io :as io]
-                       '[closed-record.core :refer [defclosedrecord]])
+                       '[closed-record.runtime :as runtime])
+              (def runtime-independent?
+                (and (nil? (find-ns 'closed-record.core))
+                     (nil? (find-ns 'closed-record.impl.jvm))))
+              (require '[closed-record.core :refer [defclosedrecord check]])
               (defclosedrecord ConsumerRecord [value])
               (let [record (->ConsumerRecord 7)
                     error-type (fn [operation]
@@ -158,8 +162,11 @@
                                    nil
                                    (catch clojure.lang.ExceptionInfo error
                                      (:type (ex-data error)))))]
-                (prn {:resources (mapv #(str (io/resource %))
-                                       ["closed_record/core.cljc"
+                (prn {:runtime-independent? runtime-independent?
+                      :checked (identical? record (check record))
+                      :protocol (satisfies? runtime/ClosedRecord record)
+                      :resources (mapv #(str (io/resource %))
+                                       ["closed_record/runtime.cljc" "closed_record/core.cljc"
                                         "closed_record/impl/jvm.clj"])
                       :value (:value record)
                       :updated (:value (assoc record :value 9))
@@ -170,9 +177,12 @@
                            :dir (str directory))]
       (is (= 0 (:exit result)) (pr-str result))
       (when (zero? (:exit result))
-        (is (= {:resources
+        (is (= {:runtime-independent? true
+                :checked true
+                :protocol true
+                :resources
                 (mapv #(str "jar:" (.toURL (.toURI (io/file artifact-path))) "!/" %)
-                      ["closed_record/core.cljc" "closed_record/impl/jvm.clj"])
+                      ["closed_record/runtime.cljc" "closed_record/core.cljc" "closed_record/impl/jvm.clj"])
                 :value 7
                 :updated 9
                 :assoc-error :closed-record/undeclared-key
@@ -221,7 +231,7 @@
   [directory archive sources entries pom-path properties-path]
   (let [required (into #{"LICENSE" pom-path properties-path} (keys sources))
         extra (set/difference entries required)]
-    (is (set/subset? #{"closed_record/core.cljc" "closed_record/impl/jvm.clj"}
+    (is (set/subset? #{"closed_record/runtime.cljc" "closed_record/core.cljc" "closed_record/impl/jvm.clj"}
                      entries))
     (is (empty? (set/difference required entries)) "Required files are packaged")
     (is (every? #(re-matches #"META-INF/(MANIFEST\.MF|INDEX\.LIST|[^/]+\.(SF|RSA|DSA|EC))" %)

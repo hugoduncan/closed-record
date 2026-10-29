@@ -17,7 +17,8 @@ Main form: `defclosedrecord`.
   implementation differences and verification limits. Historical work records
   stay in Munera and Git history.
 - Project skeleton: `deps.edn` (Clojure 1.11.4, aliases `:test`, `:bench`, `:nrepl`, `:clj-1.12`, `:clj-1.13`),
-  `src/closed_record/core.cljc` (`defclosedrecord`, `check`, `ClosedRecord`),
+  `src/closed_record/core.cljc` (`defclosedrecord`, `check`),
+  `src/closed_record/runtime.cljc` (internal protocol and error helpers),
   `src/closed_record/impl/jvm.clj` (JVM emitter). Test runner: scry.
 - Tests: `test/closed_record/compiler_rules_test.clj` (K-06..K-08 compiler rules),
   `test/closed_record/defclosedrecord_test.clj` (behaviour, errors, factories),
@@ -1318,3 +1319,17 @@ Vale checks root README/AGENTS plus recursive doc Markdown, with API.md still
 required and selected only once. Validate the doc root before child paths.
 Focused prose/policy tests pass (9/127); link fixtures pass (9/125). Format,
 lint, Vale, API freshness, and offline Markdown links pass.
+
+## Runtime namespace — 2026-10-27
+
+`closed-record.runtime` now owns `ClosedRecord`, `class-name`, and public
+`key-error`. It has no dependency on core or the emitter. Core requires runtime;
+the emitter writes runtime interface references and direct helper calls into
+generated forms. There is no forwarding helper var in the emitter.
+No aliases remain in core. Recompile consumer AOT classes that use the previous
+internal names. Public operations and error messages/data are unchanged.
+
+All three Clojure runtime suites pass (each 182 tests, 2,770 assertions).
+Build tests pass (6 tests, 101 assertions), including a fresh artifact-only JVM
+that loads runtime independently and checks protocol, validation, and rejected
+key operations. API content, format, lint, Vale, and API freshness checks pass.

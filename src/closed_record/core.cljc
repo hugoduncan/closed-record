@@ -1,11 +1,8 @@
 (ns closed-record.core
   "Public API of closed-record: a record type that does not permit assoc of
   undeclared keys or dissoc of declared keys."
-  #?(:clj (:require [closed-record.impl.jvm :as jvm])))
-
-(defprotocol ClosedRecord
-  "Internal. Implemented only by types that defclosedrecord generates."
-  (-extra-keys [r] "The map of the extra entries of a map literal, or nil."))
+  (:require [closed-record.runtime :as runtime]
+            #?(:clj [closed-record.impl.jvm :as jvm])))
 
 #?(:clj
    (defn- validate-fields
@@ -78,28 +75,6 @@
 (defn- value-class [x]
   #?(:clj (class x) :cljs (type x)))
 
-(defn- class-name
-  "The name of class c without a \"class \" prefix, or \"nil\"."
-  [c]
-  (if (nil? c)
-    "nil"
-    #?(:clj (.getName ^Class c) :cljs (pr-str c))))
-
-#_{:clj-kondo/ignore [:unused-private-var]}
-(defn- key-error
-  "Return the ex-info of a rejected key operation on a closed record.
-  Internal: the generated assoc and without call it through its var, on the
-  rejected path only (D-21). `t` is :closed-record/undeclared-key or
-  :closed-record/declared-key-dissoc. `c` is the record class."
-  [t c k]
-  (ex-info (case t
-             :closed-record/undeclared-key
-             (str "Undeclared key " k " for closed record " (class-name c))
-             :closed-record/declared-key-dissoc
-             (str "Cannot dissoc declared key " k " from closed record "
-                  (class-name c)))
-           {:type t :record c :key k}))
-
 (defn check
   "Return x if x is a closed record with no extra literal keys.
 
@@ -109,14 +84,14 @@
   for any other value, including nil."
   [x]
   (let [c (value-class x)]
-    (if (satisfies? ClosedRecord x)
-      (if-let [extra (seq (-extra-keys x))]
+    (if (satisfies? runtime/ClosedRecord x)
+      (if-let [extra (seq (runtime/-extra-keys x))]
         (let [ks (set (map key extra))]
-          (throw (ex-info (str "Extra keys " ks " for closed record " (class-name c))
+          (throw (ex-info (str "Extra keys " ks " for closed record " (runtime/class-name c))
                           {:type :closed-record/extra-keys
                            :record c
                            :keys ks})))
         x)
-      (throw (ex-info (str "Not a closed record: " (class-name c))
+      (throw (ex-info (str "Not a closed record: " (runtime/class-name c))
                       {:type :closed-record/not-closed-record
                        :value-class c})))))
