@@ -1,1 +1,204 @@
-/Users/duncan/projects/hugoduncan/psi/psi-main/.psi/workflows/task-lifecycle.edn
+{:steps
+ [{:name "review-task-design",
+   :type :delegate,
+   :target "review-task-design-core",
+   :prompt-string
+   {:type :map,
+    :fields {:input {:from :workflow-input, :path [:input]}}},
+   :context [{:type :source, :from :workflow-original}]}
+  {:name "check-scope-question-status",
+   :type :invoke,
+   :operation "workflow/constant-routing",
+   :args {:route "DONE"},
+   :judge
+   {:type :invoke,
+    :operation "workflow/scope-question-gate-routing",
+    :args {:task-path {:from :workflow-input, :path [:input]},
+           :artifact "design-steps.md",
+           :marker "SCOPE_QUESTION:",
+           :proceed-route "DONE",
+           :open-route "SCOPE_QUESTION_OPEN"}},
+   :on {"DONE" {:goto "check-design-review-status"},
+        "SCOPE_QUESTION_OPEN" {:goto "final-summary-scope-question-open"}}}
+  {:name "check-design-review-status",
+   :type :invoke,
+   :operation "workflow/constant-routing",
+   :args {:route "DONE"},
+   :judge
+   {:type :invoke,
+    :operation "workflow/pass-status-routing",
+    :args {:text {:from {:step "review-task-design", :yield :text}},
+           :allowed-statuses ["ACTIONABLE_FEEDBACK" "REVIEW_COMPLETE"]}},
+   :on {"DONE" {:goto "create-task-plan"},
+        "REPEAT" {:goto "final-summary-design-not-converged"}}}
+  {:name "create-task-plan",
+   :type :delegate,
+   :target "create-task-plan",
+   :prompt-string
+   {:type :map,
+    :fields {:input {:from :workflow-input, :path [:input]}}},
+   :context [{:type :source, :from :workflow-original}]}
+  {:name "review-task-plan",
+   :type :delegate,
+   :target "review-task-plan-core",
+   :prompt-string
+   {:type :map,
+    :fields {:input {:from :workflow-input, :path [:input]}}},
+   :context [{:type :source, :from :workflow-original}]}
+  {:name "check-plan-review-status",
+   :type :invoke,
+   :operation "workflow/constant-routing",
+   :args {:route "DONE"},
+   :judge
+   {:type :invoke,
+    :operation "workflow/pass-status-routing",
+    :args {:text {:from {:step "review-task-plan", :yield :text}},
+           :allowed-statuses ["ACTIONABLE_FEEDBACK" "REVIEW_COMPLETE"]}},
+   :on {"DONE" {:goto "implement-task"},
+        "REPEAT" {:goto "final-summary-plan-not-converged"}}}
+  {:name "implement-task",
+   :type :delegate,
+   :target "implement-task",
+   :prompt-string
+   {:type :map,
+    :fields {:input {:from :workflow-input, :path [:input]}}},
+   :context [{:type :source, :from :workflow-original}]}
+  {:name "check-implementation-status",
+   :type :invoke,
+   :operation "workflow/constant-routing",
+   :args {:route "DONE"},
+   :judge
+   {:type :invoke,
+    :operation "workflow/exact-marker-routing",
+    :args {:text {:from {:step "implement-task", :yield :text}},
+           :marker-label "IMPLEMENTATION_STATUS",
+           :allowed-routes ["IMPLEMENTATION_COMPLETE"
+                            "IMPLEMENTATION_BLOCKED"]}},
+   :on {"IMPLEMENTATION_COMPLETE" {:goto "review-task-implementation"},
+        "IMPLEMENTATION_BLOCKED" {:goto "final-summary-implementation-blocked"}}}
+  {:name "review-task-implementation",
+   :type :delegate,
+   :target "review-task-implementation-core",
+   :prompt-string
+   {:type :map,
+    :fields {:input {:from :workflow-input, :path [:input]}}},
+   :context [{:type :source, :from :workflow-original}]}
+  {:name "check-implementation-review-status",
+   :type :invoke,
+   :operation "workflow/constant-routing",
+   :args {:route "DONE"},
+   :judge
+   {:type :invoke,
+    :operation "workflow/pass-status-routing",
+    :args {:text {:from {:step "review-task-implementation", :yield :text}},
+           :allowed-statuses ["ACTIONABLE_FEEDBACK" "REVIEW_COMPLETE"]}},
+   :on {"DONE" {:goto "extract-task-knowledge"},
+        "REPEAT" {:goto "final-summary-without-extraction"}}}
+  {:name "extract-task-knowledge",
+   :type :delegate,
+   :target "extract-task-knowledge",
+   :prompt-string
+   {:type :map,
+    :fields {:input {:from :workflow-input, :path [:input]}
+             :implementation-review-yield
+             {:from {:step "review-task-implementation", :yield :text}}}},
+   :context [{:type :source, :from :workflow-original}],
+   :judge {:type :invoke,
+           :operation "workflow/constant-routing",
+           :args {:route "DONE"}},
+   :on {"DONE" {:goto "final-summary-after-extraction"}}}
+  {:name "final-summary-after-extraction",
+   :type :session,
+   :tools ["read" "bash"],
+   :contributions
+   [{:type :source, :from :workflow-original}
+    {:type :source, :from {:step "review-task-implementation", :yield :text}}
+    {:type :source, :from {:step "extract-task-knowledge", :yield :text}}
+    {:type :template,
+     :text "Produce the user-facing final result for the Munera task lifecycle described by {{input}} after implementation review completed and mementum knowledge extraction ran. Independently inspect the specific task artifacts (design.md, plan.md, steps.md, implementation.md, and whether the task is under munera/open or munera/closed) and use the prior step outputs as supporting context.\n\nRespond with a concise summary for the user. Include:\n- whether the task-lifecycle run completed cleanly through design → plan → implement → review → extract knowledge\n- the main work completed in this run\n- the implementation-review outcome proving extraction was authorized\n- the knowledge-extraction result and any memories/knowledge pages created or updated\n- the task artifact files updated\n- whether the task was closed or remains open, with the reason recorded in the task artifacts\n- any remaining notes or risks explicitly recorded in the task artifacts\n- any commit ids created during the run that are evident from the provided step outputs\n\nInput:\n{{input}}",
+     :vars {"input" {:from :workflow-input, :path [:input]}}}],
+   :judge {:type :invoke,
+           :operation "workflow/constant-routing",
+           :args {:route "DONE"}},
+   :on {"DONE" {:goto :done}}}
+  {:name "final-summary-without-extraction",
+   :type :session,
+   :tools ["read" "bash"],
+   :contributions
+   [{:type :source, :from :workflow-original}
+    {:type :source, :from {:step "review-task-implementation", :yield :text}}
+    {:type :template,
+     :text "Produce the user-facing final result for the Munera task lifecycle described by {{input}} when implementation review did not complete cleanly. Summarize the design → plan → implement → review outcome, explain that extract-task-knowledge was not invoked because `review-task-implementation` did not yield `PASS_STATUS: REVIEW_COMPLETE`, and preserve the implementation-review outcome. Do not extract or write mementum knowledge here.\n\nInput:\n{{input}}",
+     :vars {"input" {:from :workflow-input, :path [:input]}}}],
+   :judge {:type :invoke,
+           :operation "workflow/constant-routing",
+           :args {:route "DONE"}},
+   :on {"DONE" {:goto :done}}}
+  {:name "final-summary-design-not-converged",
+   :type :session,
+   :tools ["read" "bash"],
+   :contributions
+   [{:type :source, :from :workflow-original}
+    {:type :source, :from {:step "review-task-design", :yield :text}}
+    {:type :template,
+     :text "Produce the user-facing final result for the Munera task lifecycle described by {{input}} when the design review did not converge. Explain that the lifecycle stopped at the design stage because `review-task-design` did not reach a clean design (it yielded `PASS_STATUS: ACTIONABLE_FEEDBACK`), summarise the unresolved design feedback from the review yield, and hand control back to the human for further design work before plan creation. Do not proceed to plan creation and do not extract or write mementum knowledge here.\n\nInput:\n{{input}}",
+     :vars {"input" {:from :workflow-input, :path [:input]}}}],
+   :judge {:type :invoke,
+           :operation "workflow/constant-routing",
+           :args {:route "DONE"}},
+   :on {"DONE" {:goto :done}}}
+  {:name "final-summary-plan-not-converged",
+   :type :session,
+   :tools ["read" "bash"],
+   :contributions
+   [{:type :source, :from :workflow-original}
+    {:type :source, :from {:step "review-task-plan", :yield :text}}
+    {:type :template,
+     :text "Produce the user-facing final result for the Munera task lifecycle described by {{input}} when the plan review did not converge. Explain that the lifecycle stopped at the plan stage because `review-task-plan` did not reach a clean plan (it yielded `PASS_STATUS: ACTIONABLE_FEEDBACK`), summarise the unresolved plan feedback from the review yield, and hand control back to the human for further plan work before implementation. Do not proceed to implementation and do not extract or write mementum knowledge here.\n\nInput:\n{{input}}",
+     :vars {"input" {:from :workflow-input, :path [:input]}}}],
+   :judge {:type :invoke,
+           :operation "workflow/constant-routing",
+           :args {:route "DONE"}},
+   :on {"DONE" {:goto :done}}}
+  {:name "final-summary-implementation-blocked",
+   :type :session,
+   :tools ["read" "bash"],
+   :contributions
+   [{:type :source, :from :workflow-original}
+    {:type :source, :from {:step "implement-task", :yield :text}}
+    {:type :template,
+     :text "Produce the user-facing blocked handback for the Munera task lifecycle described by {{input}}. Independently inspect the specific task artifacts, especially `design.md`, `plan.md`, `steps.md`, and `implementation.md`, for completed work and verification only. The lifecycle stopped because implementation yielded `IMPLEMENTATION_STATUS: IMPLEMENTATION_BLOCKED`; it did not complete implementation.
+
+The `implement-task` yielded handback contains exactly one column-zero `IMPLEMENTATION_BLOCKER: <text>` line and one column-zero `IMPLEMENTATION_REQUIRED_HUMAN_ACTION: <text>` line selected from the artifact snapshot that passed deterministic validation. Reproduce those two values verbatim. Do not re-read or select a blocker record from `implementation.md`; a later artifact revision is not authoritative for this handback. End with the two validated blocker/action lines verbatim and exactly one column-zero `IMPLEMENTATION_STATUS: IMPLEMENTATION_BLOCKED` line.
+
+Output a compact Markdown summary with headings `## Implementation Blocked`, `## Completed Work and Verification`, and `## Required Human Action`. State completed work, current checklist state, task artifacts updated, and verification already performed. Explicitly state that `review-task-implementation` and `extract-task-knowledge` did not run. Tell the human to take the recorded required action and then freshly re-invoke `task-lifecycle`; do not resolve, guess, or bypass the blocker and do not write mementum knowledge here.
+
+Input:
+{{input}}",
+     :vars {"input" {:from :workflow-input, :path [:input]}}}],
+   :judge {:type :invoke,
+           :operation "workflow/exact-marker-routing",
+           :args {:text {:from {:step "final-summary-implementation-blocked", :output :final-llm-reply}},
+                  :marker-label "IMPLEMENTATION_STATUS",
+                  :allowed-routes ["IMPLEMENTATION_BLOCKED"],
+                  :required-fields-source-text {:from {:step "implement-task", :yield :text}},
+                  :required-field-labels-by-route
+                  {"IMPLEMENTATION_BLOCKED"
+                   ["IMPLEMENTATION_BLOCKER"
+                    "IMPLEMENTATION_REQUIRED_HUMAN_ACTION"]}}},
+   :on {"IMPLEMENTATION_BLOCKED" {:goto :done}}}
+  {:name "final-summary-scope-question-open",
+   :type :session,
+   :tools ["read" "bash"],
+   :contributions
+   [{:type :source, :from :workflow-original}
+    {:type :template,
+     :text "Produce the user-facing final result for the Munera task lifecycle described by {{input}} when the lifecycle is halted before plan creation by an unresolved scope question. The lifecycle stopped because one or more open (unchecked) `SCOPE_QUESTION:` items remain in the task's `design-steps.md`. Independently read the task's `design-steps.md` and quote each open `- [ ] SCOPE_QUESTION:` item verbatim so the human knows exactly which scope decision is required.\n\nExplain to the human that scope decisions must not be made implicitly by the autonomous lifecycle. To resume: decide each open scope question, record the decision and rationale in `design.md` (scope decisions are intent and belong in the design), check the corresponding `- [x] SCOPE_QUESTION:` item in `design-steps.md`, then re-invoke `task-lifecycle` for this task — the gate re-scans and proceeds once no unchecked `SCOPE_QUESTION:` items remain. Do not proceed to plan creation and do not extract or write mementum knowledge here.\n\nInput:\n{{input}}",
+     :vars {"input" {:from :workflow-input, :path [:input]}}}],
+   :judge {:type :invoke,
+           :operation "workflow/constant-routing",
+           :args {:route "DONE"}},
+   :on {"DONE" {:goto :done}}}],
+ :name "task-lifecycle",
+ :description
+ "Run a Munera task through its full design → plan → implement → review → extract knowledge lifecycle by chaining the task-lifecycle workflows in order, extracting knowledge only after implementation review completes."}

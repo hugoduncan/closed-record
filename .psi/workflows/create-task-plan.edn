@@ -1,1 +1,8 @@
-/Users/duncan/projects/hugoduncan/psi/psi-main/.psi/workflows/create-task-plan.edn
+{:steps
+ [{:name "create-plan",
+   :type :session,
+   :session-profile :planning,
+   :prompt-workflow "create-task-plan-create-plan.md"}],
+ :name "create-task-plan",
+ :description
+ "Given a stable design.md, create plan.md and steps.md for a Munera task"}
