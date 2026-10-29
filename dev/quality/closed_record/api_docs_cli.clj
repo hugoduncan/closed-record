@@ -7,18 +7,19 @@
            [java.util Arrays]))
 
 (defn execute!
-  "Generate the reference, or check its exact UTF-8 bytes without writing."
-  [args]
+  "Generate the reference under root, or check its exact UTF-8 bytes without
+  writing. Return the exit code."
+  [root args]
   (if-not (contains? #{[] ["--check"]} (vec args))
     (do (binding [*out* *err*]
           (println "Usage: bb api-docs [--check]"))
         2)
     (do
-      (when (scope/linked-path? "." "doc/API.md")
+      (when (scope/linked-path? root "doc/API.md")
         (throw (ex-info "Symbolic links are not allowed in API output path: doc/API.md"
                         {:path "doc/API.md"})))
-      (let [output (io/file "doc/API.md")
-            expected (.getBytes (docs/generate) StandardCharsets/UTF_8)]
+      (let [output (io/file root "doc/API.md")
+            expected (.getBytes (docs/generate root) StandardCharsets/UTF_8)]
         (if (= ["--check"] (vec args))
           (if (and (.isFile output)
                    (Arrays/equals expected (Files/readAllBytes (.toPath output))))
@@ -34,4 +35,4 @@
 (defn -main
   "Run the API reference command."
   [& args]
-  (System/exit (execute! args)))
+  (System/exit (execute! "." args)))

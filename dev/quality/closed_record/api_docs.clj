@@ -1,20 +1,25 @@
 (ns closed-record.api-docs
   "In-memory API reference generation. File operations belong at the CLI boundary."
   (:require [clj-kondo.core :as kondo]
+            [clojure.java.io :as io]
             [closed-record.quality-scope :as scope]
-            [quickdoc.impl :as quickdoc]))
+            [quickdoc.impl :as quickdoc])
+  (:import [java.io File]))
 
 (def ^:private source-path "src/closed_record/core.cljc")
 
-(defn- reference-markdown []
-  (scope/validate-paths! "." [source-path ".clj-kondo/config.edn"]
+(defn- reference-markdown [root]
+  (scope/validate-paths! root [source-path ".clj-kondo/config.edn"]
                          {source-path :file ".clj-kondo/config.edn" :file})
   ;; Quickdoc v0.2.6 does not expose :repro. Keep analysis owned and use its
   ;; pinned renderer without changing process globals or contributor settings.
-  (let [result (kondo/run!
-                {:lint [source-path]
+  ;; Analyse an absolute path so that Quickdoc can read the source from any
+  ;; working directory. Source links remove the root prefix.
+  (let [root-path (-> (io/file root) .toPath .toAbsolutePath .normalize)
+        result (kondo/run!
+                {:lint [(str (.resolve root-path source-path))]
                  :repro true
-                 :config-dir ".clj-kondo"
+                 :config-dir (str (.resolve root-path ".clj-kondo"))
                  :config {:skip-comments true
                           :output {:analysis
                                    {:arglists true
@@ -34,6 +39,7 @@
         names (update-vals entries #(into #{} (map :name) %))
         options {:github/repo "https://github.com/hugoduncan/closed-record"
                  :git/branch "master"
+                 :filename-remove-prefix (str root-path File/separator)
                  :toc true
                  :var-links true
                  :var-regex #"`([^\s`]+)`"}
@@ -44,12 +50,14 @@
         (quickdoc/print-namespace namespaces names namespace definitions options overrides)))))
 
 (defn generate
-  "Return the API reference as Markdown without writing an output file."
-  []
-  (str "# API reference\n\n"
-       "Generated file. Do not edit. Regenerate with `bb api-docs`; "
-       "check with `bb api-docs --check`.\n\n"
-       "See the [README](../README.md) for examples. "
-       "This library supports Clojure 1.11+ on the JVM only. "
-       "ClojureScript and Babashka are not supported.\n\n"
-       (reference-markdown)))
+  "Return the API reference for the project at root as Markdown. Do not write
+  an output file."
+  ([] (generate "."))
+  ([root]
+   (str "# API reference\n\n"
+        "Generated file. Do not edit. Regenerate with `bb api-docs`; "
+        "check with `bb api-docs --check`.\n\n"
+        "See the [README](../README.md) for examples. "
+        "This library supports Clojure 1.11+ on the JVM only. "
+        "ClojureScript and Babashka are not supported.\n\n"
+        (reference-markdown root))))
