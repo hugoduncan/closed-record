@@ -2,6 +2,5 @@
 
 ## [Unreleased]
 
-## [0.1.188] - 2026-10-29
-
-- Add `defclosedrecord`, a record that rejects changes to its declared keys.
+- Add `defclosedrecord`, a record that rejects undeclared keys and
+  prevents removal of declared keys.
