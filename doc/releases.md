@@ -48,8 +48,10 @@ Dispatch the [Release workflow](../.github/workflows/release.yml) on master:
     gh run list --repo hugoduncan/closed-record --workflow release.yml --limit 5
 
 Open the selected run with `gh run view RUN_ID --repo hugoduncan/closed-record --web`.
-Inspect checks and the summary's SHA, version, tag, notes source, and
-preparation-required flag. Dry run is the default in the Actions interface.
+The workflow first rejects dispatch from other branches. Then it calls the
+[CI workflow](../.github/workflows/ci.yml) at the dispatch SHA, so every CI
+job must pass before the release job starts. Inspect the CI jobs and the
+summary's SHA, version, tag, notes source, and preparation-required flag. Dry run is the default in the Actions interface.
 It builds locally without release writes or Clojars secrets. If matching
 notes are absent, preview can use nonempty Unreleased notes; the summary
 then reports that preparation is required. Invalid notes never cause fallback.
@@ -63,8 +65,9 @@ Before publication, a maintainer must set these repository Actions secrets:
   `org.hugoduncan/closed-record`.
 
 Do not put values in source, command logs, or notes. GitHub writes use the
-workflow's `github.token`, passed as `GH_TOKEN` only where needed. The job
-has contents-write permission; checkout does not retain credentials.
+workflow's `github.token`, passed as `GH_TOKEN` only where needed. Only the
+release job has contents-write permission. The CI jobs have read-only access
+and get no secrets. Checkout does not retain credentials.
 Dry run does not need Clojars credentials.
 
 After a successful preview of the prepared commit, explicitly authorize writes:
@@ -75,7 +78,7 @@ Each dispatch fixes its own master SHA. A preview of an earlier SHA does
 not verify a later dispatch. Publication repeats all checks and requires
 notes matching its version. Runs are serialized without cancellation.
 
-After format/lint and runtime/build/release tests, the workflow validates
+After all CI jobs pass, the release job validates
 credentials, creates and pushes `vVERSION` without force, then runs
 `clojure -T:build:deploy deploy`. That command checks credentials, rebuilds
 one JAR/POM, and calls stock deps-deploy 0.2.2. It returns `:version`,

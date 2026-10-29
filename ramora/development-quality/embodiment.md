@@ -12,7 +12,7 @@
 | `doc/API.md` | Generated API reference with separate freshness and content checks |
 | `.pre-commit-config.yaml` | Serial formatting followed by whole-index lint under staged-content isolation |
 | `.github/workflows/ci.yml` | Shared quality commands and focused tooling tests |
-| `.github/workflows/release.yml` | Shared format/lint checks before publication |
+| `.github/workflows/release.yml` | Calls `ci.yml`, so all quality checks pass before publication |
 
 See the [contributor guide](../../doc/quality-checks.md) for commands and the
 [library artifact map](../defclosedrecord/embodiment/artifacts.md) for dependency

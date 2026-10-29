@@ -13,7 +13,8 @@ Publish one artifact only. Use manual dispatch, not tag-triggered publication.
 | Maintainer | Notes, local preparation, separate push, dispatch, remote inspection |
 | Local prepare command | Stamp notes and commit only the changelog; no remote writes |
 | build.clj | Version, source JAR/POM, credential validation, stock Clojars deployment |
-| One workflow job | Check out dispatch SHA, run checks, gate writes, run normal commands |
+| CI workflow | All checks at the dispatch SHA, called by the release workflow |
+| Release job | Check out dispatch SHA after CI passes, gate writes, run normal commands |
 | Git | Create and push a tag without force |
 | gh | Create Release and upload the deployed JAR/POM with prepared notes |
 | External services | Own published state and enforce their normal conflict rules |
@@ -26,8 +27,11 @@ state classifier, or alternative Maven transport is needed.
 
 - One full-history checkout at the master dispatch SHA. There is no alternate
   target input or separately trusted control checkout.
-- One job has contents-write permission. Publication conditions and step-scoped
-  credentials protect dry runs; separate read/write jobs are not required.
+- The release workflow calls CI instead of keeping a second check list. A
+  separate check list can drift from CI and let a release pass when CI fails.
+- Only the release job has contents-write permission. CI jobs are read-only
+  and get no secrets. Publication conditions and step-scoped credentials
+  protect dry runs.
 - Deploy builds from the checked source, as scry does. Tests need not establish
   byte identity with an earlier fixture or preview build. GitHub receives the
   actual deployment outputs, without another rebuild.

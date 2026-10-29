@@ -18,14 +18,18 @@ Only workflow_dispatch from master is allowed. A boolean dry-run input defaults
 to true; only explicit boolean false permits publication. There is no target
 input. Check out the dispatch SHA with full history and do not retarget it.
 
-Use one Ubuntu/Temurin 21 job with CI-consistent pins, finite timeout, and
-non-cancelling release concurrency. The job has contents-write permission;
-checkout credentials are not persisted. Put secrets only on the publishing
-steps that need them. Values are arguments/environment data, not generated code.
+Use three jobs and non-cancelling release concurrency. A guard job rejects
+dispatch from other branches before CI starts. A `ci` job calls `ci.yml`
+through `workflow_call` at the dispatch SHA, with read-only contents access
+and no secrets. The release job needs `ci`. It is the only job with
+contents-write permission. It uses Ubuntu/Temurin 21 with CI-consistent pins
+and a finite timeout. Checkout credentials are not persisted. Put secrets only
+on the publishing steps that need them. Values are arguments/environment
+data, not generated code.
 
-Before writing remotely, run format/lint, all three runtime aliases, focused
-build tests, and release tests. Normal fail-fast execution is allowed.
-Upload hidden scry failure evidence as in CI. No benchmark run is required.
+The release workflow does not keep its own check list. Every CI job must pass
+before the release job starts, so a check added to CI also gates releases.
+CI owns scry failure artifacts. No benchmark run is required.
 
 Select nonempty prepared notes matching the checked version for publication.
 Dry run may use valid Unreleased notes only when that version section is absent;

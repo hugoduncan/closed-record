@@ -52,6 +52,7 @@ metrics, experimental runtime requirements, and saved evidence.
 against any branch, including forks. All jobs use Ubuntu and read-only repository permissions.
 Clojure jobs use Temurin Java 21 and Clojure CLI `1.12.6.1673`.
 The separate Markdown links job uses Babashka and lychee, not Java or Clojure CLI.
+The [release workflow](releases.md) calls CI, so a CI failure stops a release.
 
 The code-quality job uses cljfmt `0.16.4` and clj-kondo `2026.04.15`.
 Run the same non-writing checks locally:

@@ -5,11 +5,11 @@ The manual release workflow defaults to dry run. Each publication step uses
 negation. Serialization distinguishes boolean false from missing/null values
 and the string "false"; only the boolean permits writes.
 
-Keep normal success gating, so an earlier failed check stops publication.
+Keep normal success gating, so a failed CI job stops publication.
 Scope credentials to the publication steps that need them and disable checkout
-credential persistence. The single job has contents-write permission: step
-gates and secret placement are the chosen boundary, not job-level read-only
-isolation. The workflow trusts maintainer-controlled master code.
+credential persistence. Only the release job has contents-write permission;
+the called CI jobs are read-only. Within the release job, step gates and
+secret placement are the boundary. The workflow trusts maintainer-controlled master code.
 
 Use this rule when adding or changing release steps. Do not infer hosted
 permission or publication success from local workflow inspection.

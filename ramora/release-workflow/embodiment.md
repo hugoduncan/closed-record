@@ -9,12 +9,12 @@
 | `dev/release/closed_record/notes.clj` | Changelog validation, stamping, and note selection |
 | `dev/release/closed_record/release.clj` | Local preparation and notes export commands |
 | `test/release/`, `test/build/` | Notes, preparation, credential, and packaging verification |
-| `.github/workflows/release.yml` | Manual single-job release with default dry run and explicit-false publication gates |
-| `.github/workflows/ci.yml` | Release-tooling checks as part of read-only CI |
+| `.github/workflows/release.yml` | Manual release: master guard, called CI, and one release job with default dry run and explicit-false publication gates |
+| `.github/workflows/ci.yml` | Read-only CI for pushes and pull requests; called by the release workflow through `workflow_call` |
 | `CHANGELOG.md` | Maintained release notes |
 | `doc/releases.md` | Maintainer commands and failure inspection |
 
-The workflow uses one full-history checkout at the dispatch SHA. Publication
+The release job uses one full-history checkout at the dispatch SHA. Publication
 steps create the Git tag, deploy the JAR/POM, and pass those deployment outputs
 to `gh release create`. Notes remain outside the build output directory.
 

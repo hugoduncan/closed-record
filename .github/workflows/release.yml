@@ -9,25 +9,40 @@ on:
         default: true
         required: true
 
-permissions:
-  contents: write
+permissions: {}
 
 concurrency:
   group: release
   cancel-in-progress: false
 
 jobs:
-  release:
+  guard:
+    name: Require master dispatch
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    defaults:
-      run:
-        shell: bash
+    timeout-minutes: 5
     steps:
       - name: Require master dispatch
         env:
           DISPATCH_REF: ${{ github.ref }}
         run: test "$DISPATCH_REF" = refs/heads/master
+
+  ci:
+    name: CI
+    needs: guard
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
       - uses: actions/checkout@v4.2.2
         with:
           ref: ${{ github.sha }}
@@ -40,70 +55,8 @@ jobs:
       - uses: DeLaGuardo/setup-clojure@13.4
         with:
           cli: '1.12.6.1673'
-          bb: '1.13.225'
-          clj-kondo: '2026.04.15'
-          cljfmt: '0.16.4'
       - name: GitHub CLI version
         run: gh --version
-      - name: Check formatting
-        run: bb clj-fmt:check
-      - name: Lint
-        run: bb clj-kondo:lint
-      - name: Test runtime-111
-        id: runtime-111
-        run: clojure -M:test -m scry.cli --dir test/runtime
-      - name: Upload runtime-111 failures
-        if: ${{ failure() && steps.runtime-111.outcome == 'failure' }}
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: release-scry-runtime-111
-          path: .scry-results/
-          include-hidden-files: true
-          if-no-files-found: warn
-      - name: Test runtime-112
-        id: runtime-112
-        run: clojure -M:test:clj-1.12 -m scry.cli --dir test/runtime
-      - name: Upload runtime-112 failures
-        if: ${{ failure() && steps.runtime-112.outcome == 'failure' }}
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: release-scry-runtime-112
-          path: .scry-results/
-          include-hidden-files: true
-          if-no-files-found: warn
-      - name: Test runtime-113
-        id: runtime-113
-        run: clojure -M:test:clj-1.13 -m scry.cli --dir test/runtime
-      - name: Upload runtime-113 failures
-        if: ${{ failure() && steps.runtime-113.outcome == 'failure' }}
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: release-scry-runtime-113
-          path: .scry-results/
-          include-hidden-files: true
-          if-no-files-found: warn
-      - name: Test build
-        id: build
-        run: clojure -M:test:build-test -m scry.cli --dir test/build
-      - name: Upload build failures
-        if: ${{ failure() && steps.build.outcome == 'failure' }}
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: release-scry-build
-          path: .scry-results/
-          include-hidden-files: true
-          if-no-files-found: warn
-      - name: Test release
-        id: release
-        run: clojure -M:test:release:release-test -m scry.cli --dir test/release
-      - name: Upload release failures
-        if: ${{ failure() && steps.release.outcome == 'failure' }}
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: release-scry-release
-          path: .scry-results/
-          include-hidden-files: true
-          if-no-files-found: warn
       - name: Select notes
         id: notes
         env:
@@ -178,6 +131,6 @@ jobs:
           {
             echo 'Release workflow failed. Failed steps:'
             jq -r 'to_entries[] | select(.value.outcome == "failure") | "- " + .key' <<< "$STEP_OUTCOMES"
-            echo 'See the failed step in the job log, including setup and quality checks.'
+            echo 'See the failed step in the job log. CI checks run in the separate CI jobs.'
             echo 'Inspect GitHub tags, Releases, assets, and Clojars before another attempt. Publication can be partial. No automatic rollback or resume is provided.'
           } >> "$GITHUB_STEP_SUMMARY"

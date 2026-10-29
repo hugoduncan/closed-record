@@ -62,7 +62,7 @@ and `c1112e4`.
   `master` and all pull-request targets. It uses Ubuntu, Temurin 21,
   read-only contents access, and no stored checkout credentials.
 - Pinned tools: Clojure CLI 1.12.6.1673, cljfmt 0.16.4, clj-kondo 2026.04.15.
-  CI and release use `bb clj-fmt:check` and `bb clj-kondo:lint`, not separate
+  CI uses `bb clj-fmt:check` and `bb clj-kondo:lint`, not separate
   direct-tool scope lists. CI also runs `bb vale`, `bb api-docs --check`, and
   focused tooling tests. Shared tasks own scope, setup, and failure policy.
   See `README/quality-checks.md` for commands and setup (task 018,
@@ -78,9 +78,13 @@ and `c1112e4`.
 - Release-tooling tests run separately with `--dir test-release` and the
   `:test:release:release-test` aliases; their failure artifact is `scry-release`.
 - When one job runs several scry suites, preserve each suite's hidden failure
-  files before another invocation can clear `.scry-results/`. The manual
-  release workflow uploads failures immediately after each suite and stops
-  later suites through normal success gating (task 016, `c1112e4`).
+  files before another invocation can clear `.scry-results/`. Upload failures
+  immediately after each suite (task 016, `c1112e4`).
+- `ci.yml` has a `workflow_call` trigger. The release workflow calls it at
+  the dispatch SHA, and the release job needs it. Add checks to CI only; the
+  release workflow keeps no check list. A separate release check list once
+  missed the link, prose, API, and tooling checks, so a dry run passed while
+  CI failed on the same SHA.
 - Markdown links run once outside the runtime matrix. CI installs tools and
   invokes `bb lychee:check`; the task and `lychee.toml` own shared local/CI
   policy. This job does not need Java or Clojure CLI. See
