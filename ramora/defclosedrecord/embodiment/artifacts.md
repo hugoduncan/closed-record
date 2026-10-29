@@ -26,5 +26,5 @@
 Quality and link tooling stay outside runtime dependencies. See
 [development quality architecture](../../development-quality.md) for helper,
 configuration, generated-file, and hook ownership. See
-[Markdown link instructions](../../../README/development.md#markdown-links) for
+[Markdown link instructions](../../../doc/development.md#markdown-links) for
 pinned installation and commands.

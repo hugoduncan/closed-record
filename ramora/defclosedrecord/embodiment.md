@@ -8,7 +8,7 @@ regression signal (R-05).
 
 S-03 applies to the original three-field benchmark cases. It does not establish
 performance parity for arbitrary record widths. See the
-[performance report](../../README/performance.md) for current measurements and
+[performance report](../../doc/performance.md) for current measurements and
 limits.
 
 ## Artifacts
@@ -27,7 +27,7 @@ Both `jar` and `deploy` return `:version`, `:jar-file`, and `:pom-file`.
 The `:release` and `:release-test` aliases isolate notes/preparation tooling
 and its tests from runtime paths. See the [release architecture](../release-workflow.md).
 
-See [README build instructions](../../README/development.md#build-a-library-jar) for
+See [README build instructions](../../doc/development.md#build-a-library-jar) for
 commands, output paths, the Git version rule, and history requirements.
 
 ## Boundaries

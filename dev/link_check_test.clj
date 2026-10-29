@@ -92,7 +92,7 @@
 
 (deftest tracked-selection-test
   ;; A broken link proves each tracked document is actually inspected.
-  (doseq [path ["root.md" "README/a.md" "ramora/a.md" "mementum/a.md"
+  (doseq [path ["root.md" "doc/a.md" "ramora/a.md" "mementum/a.md"
                 "munera/open/a.md" "munera/closed/a.md" ".hidden/a.md"
                 "ignored.md"]]
     (testing path

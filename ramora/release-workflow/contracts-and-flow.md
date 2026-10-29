@@ -66,4 +66,4 @@ Notes stay outside `target/`, which each build removes.
 `clojure -M:release -m closed-record.release notes NOTES_FILE GITHUB_OUTPUT [--preview]`
 validates the full changelog, writes the selected body, and appends `sha`,
 `version`, `tag`, `source`, and `preparation-required` outputs. Only `--preview`
-permits Unreleased fallback. See [maintainer commands](../../README/releases.md).
+permits Unreleased fallback. See [maintainer commands](../../doc/releases.md).

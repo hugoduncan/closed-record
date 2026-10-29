@@ -14,7 +14,7 @@
 | `.github/workflows/ci.yml` | Shared quality commands and focused tooling tests |
 | `.github/workflows/release.yml` | Shared format/lint checks before publication |
 
-See the [contributor guide](../../README/quality-checks.md) for commands and the
+See the [contributor guide](../../doc/quality-checks.md) for commands and the
 [library artifact map](../defclosedrecord/embodiment/artifacts.md) for dependency
 and packaging boundaries.
 

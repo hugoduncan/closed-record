@@ -18,8 +18,8 @@ staging and restoration conflicts.
 The API reference has separate freshness and content contracts. Vale checks
 selected current prose, while lychee retains the broader tracked-Markdown scope.
 
-See [contributor quality instructions](../README/quality-checks.md) for commands,
+See [contributor quality instructions](../doc/quality-checks.md) for commands,
 scopes, generated output, tests, and hook recovery. See
 [embodiment](development-quality/embodiment.md) for current artifacts and
 verification limits. See
-[development](../README/development.md) for runtime and artifact verification.
+[development](../doc/development.md) for runtime and artifact verification.

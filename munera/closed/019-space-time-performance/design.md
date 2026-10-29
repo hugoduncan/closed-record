@@ -23,7 +23,7 @@ public claim. A type hint alone does not prove null restriction or flat storage.
 ## Context
 
 - [README](../../../README.md): current performance claim.
-- [Development guide](../../../README/development.md): benchmark command.
+- [Development guide](../../../doc/development.md): benchmark command.
 - [Benchmark knowledge](../../../mementum/knowledge/benchmarks.md): measurement
   hazards, fork policy, and prior results.
 - [Benchmark entry point](../../../dev/bench/closed_record/bench.clj):

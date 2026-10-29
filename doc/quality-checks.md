@@ -60,9 +60,9 @@ Explicit source paths retain link handling by the formatter; use them only when
 you intend to check or repair their targets.
 
 Vale synchronizes the pinned proselint styles before checking `README.md`,
-recursive Markdown under `README/`, `AGENTS.md`, and `doc/API.md`. Before
+`AGENTS.md`, and recursive Markdown under `doc/`, including `doc/API.md`. Before
 synchronization, required documents, `.vale.ini`, and the vocabulary must be
-regular files; `README/` must be a directory. Suggestions
+regular files; `doc/` must be a directory. Suggestions
 are reported but pass. Warnings, errors, invalid results, and setup failures
 fail. Fenced and inline code and lambda instruction lines are excluded; adjacent
 ordinary prose is checked. Historical tasks and Ramora files are outside this
@@ -72,7 +72,7 @@ through linked directories. Ordinary nested Markdown files remain in scope.
 
 ## Generated API
 
-[`doc/API.md`](../doc/API.md) is committed output. Edit source docstrings or
+[`doc/API.md`](API.md) is committed output. Edit source docstrings or
 [`api_docs.clj`](../dev/quality/closed_record/api_docs.clj), not the output.
 Then regenerate and verify:
 

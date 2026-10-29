@@ -32,7 +32,7 @@
   ;; Real Markdown parsing must exclude instructions and code, not nearby prose.
   (with-directory
     (fn [root]
-      (doseq [path ["AGENTS.md" "README/nested/guide.md"]]
+      (doseq [path ["AGENTS.md" "doc/nested/guide.md"]]
         (let [file (io/file root path)
               protected-text (str "λ instructions. This is very unique.\n\n"
                                   "```clojure\nThis is very unique.\n```\n\n"

@@ -14,7 +14,7 @@
   (let [root (.toFile (Files/createTempDirectory "prose-" (make-array FileAttribute 0)))]
     (try
       (io/copy (io/file "bb.edn") (io/file root "bb.edn"))
-      (doseq [path ["README.md" "README/nested/guide.md" "AGENTS.md" "doc/API.md"]]
+      (doseq [path ["README.md" "doc/nested/guide.md" "AGENTS.md" "doc/API.md"]]
         (put! root path "Clear prose.\n"))
       (put! root "styles/config/vocabularies/ClosedRecord/accept.txt" "ClosedRecord\n")
       (put! root ".vale.ini" "StylesPath = styles\nMinAlertLevel = suggestion\n[*.md]\nBasedOnStyles = Probe\n")
@@ -50,7 +50,7 @@
       (is (zero? (:exit (check! root []))))
       (doseq [[severity expected] [["suggestion" 0] ["warning" 1] ["error" 1]]]
         (testing severity
-          (put! root "README/nested/guide.md" (str severity "token\n"))
+          (put! root "doc/nested/guide.md" (str severity "token\n"))
           (let [before (snapshot root)
                 result (check! root [])]
             (is (= expected (:exit result)) (pr-str result))
@@ -143,7 +143,7 @@
                  ["sync failure" "Clear prose.\n"
                   "StylesPath = styles\nPackages = /nonexistent/closed-record-style.zip\n[*.md]\nBasedOnStyles = Probe\n" 2]]]
           (testing label
-            (put! root "README/nested/guide.md" content)
+            (put! root "doc/nested/guide.md" content)
             (put! root ".vale.ini" config)
             (let [before (tracked-state root environment)
                   result (check! root [] environment)]
@@ -170,7 +170,7 @@
 (deftest wrong-prose-path-types-test
   ;; Each wrong type must fail before style setup and preserve files and index.
   (doseq [path ["README.md" "AGENTS.md" "doc/API.md" ".vale.ini"
-                "styles/config/vocabularies/ClosedRecord/accept.txt" "README"]]
+                "styles/config/vocabularies/ClosedRecord/accept.txt" "doc"]]
     (testing path
       (with-project
         (fn [root]
@@ -184,7 +184,7 @@
             (git! root environment "config" "core.autocrlf" "false")
             (doseq [entry (reverse (file-seq file))]
               (io/delete-file entry))
-            (if (= path "README")
+            (if (= path "doc")
               (spit file "Not a directory.\n")
               (.mkdir file))
             (put! root "unrelated.txt" "Staged prose.\n")
@@ -226,7 +226,7 @@
                 result (task! root environment)]
             (is (zero? (:exit result)) (pr-str result))
             (is (= before (tracked-state root environment)))))
-        (doseq [path ["README.md" "AGENTS.md" "doc/API.md" "README/nested/guide.md"]]
+        (doseq [path ["README.md" "AGENTS.md" "doc/API.md" "doc/nested/guide.md"]]
           (testing (str "warning in " path " fails")
             (put! root path "warningtoken\n")
             (let [before (tracked-state root environment)
@@ -274,9 +274,9 @@
                                          (System/getenv))
                                    "GIT_CONFIG_NOSYSTEM" "1"
                                    "GIT_CONFIG_GLOBAL" (str (io/file root "gitconfig")))
-                links {"README/nested/file.md" (io/file external "external.md")
-                       "README/nested/directory" external
-                       "README/nested/cycle" (io/file root "README")}
+                links {"doc/nested/file.md" (io/file external "external.md")
+                       "doc/nested/directory" external
+                       "doc/nested/cycle" (io/file root "doc")}
                 external-before (vec (Files/readAllBytes (.toPath (io/file external "external.md"))))]
             (put! root "gitconfig" "")
             (try
@@ -287,12 +287,12 @@
               (git! root environment "config" "core.autocrlf" "false")
               (git! root environment "add" ".")
               (doseq [[content expected] [["Clear prose.\n" 0] ["warningtoken\n" 1]]]
-                (put! root "README/nested/guide.md" content)
+                (put! root "doc/nested/guide.md" content)
                 (let [before (tracked-state root environment)
                       result (bounded-task! root environment)]
                   (is (= expected (:exit result)) (pr-str result))
                   (when (= 1 expected)
-                    (is (.contains (:out result) "README/nested/guide.md") (pr-str result))
+                    (is (.contains (:out result) "doc/nested/guide.md") (pr-str result))
                     (is (.contains (:out result) "Probe.warning") (pr-str result)))
                   (is (= before (tracked-state root environment)))
                   (is (= external-before

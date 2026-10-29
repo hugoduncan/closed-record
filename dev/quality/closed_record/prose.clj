@@ -8,15 +8,15 @@
             [closed-record.vale-results :as results]))
 
 (defn- prose-paths! [root]
-  (let [required-types {"README.md" :file "README" :directory
-                        "AGENTS.md" :file "doc/API.md" :file
+  (scope/validate-paths! root ["doc"] {"doc" :directory})
+  (let [required-types {"README.md" :file "AGENTS.md" :file "doc/API.md" :file
                         ".vale.ini" :file
                         "styles/config/vocabularies/ClosedRecord/accept.txt" :file}]
     (scope/validate-paths! root (vec (keys required-types)) required-types))
-  (into ["README.md" "AGENTS.md" "doc/API.md"]
+  (into ["README.md" "AGENTS.md"]
         (comp (filter #(str/ends-with? (.getName %) ".md"))
               (map #(str (.relativize (.toPath (io/file root)) (.toPath %)))))
-        (sort-by str (scope/regular-files (io/file root "README")))))
+        (sort-by str (scope/regular-files (io/file root "doc")))))
 
 (defn check!
   "Sync styles and check required prose with owned configuration. Return process

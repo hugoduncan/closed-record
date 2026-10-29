@@ -1308,3 +1308,13 @@ Verification on OpenJDK 25.0.2: runtime suites pass on Clojure 1.11/1.12/1.13
 (each 182 tests/2,770 assertions); build 6/100, release 9/104, tooling 51/810,
 and two focused benchmark support tests 2/19 pass. Format, lint, Vale, API
 freshness, and offline Markdown links pass. Full measurement suites were not run.
+
+## Documentation layout — 2026-10-27
+
+The five former `README/` pages now live directly under `doc/`, alongside
+`API.md`. Root `README.md` remains the entry point. Current links and the one
+historical task link were updated; historical path mentions remain unchanged.
+Vale checks root README/AGENTS plus recursive doc Markdown, with API.md still
+required and selected only once. Validate the doc root before child paths.
+Focused prose/policy tests pass (9/127); link fixtures pass (9/125). Format,
+lint, Vale, API freshness, and offline Markdown links pass.

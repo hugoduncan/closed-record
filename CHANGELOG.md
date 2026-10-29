@@ -11,7 +11,7 @@
 - Add staged-content formatting and lint hooks. Repairs stop commits for review
   and manual staging; hooks preserve unstaged edits and never stage changes.
 - Expand CI quality checks with the shared format/lint commands, Vale, API
-  freshness, and tooling tests. See the [contributor guide](README/quality-checks.md)
+  freshness, and tooling tests. See the [contributor guide](doc/quality-checks.md)
   for setup, commands, and hook recovery. Release publication behavior is unchanged.
 
 - Add `bb lychee:check` and a Markdown links CI check for tracked Markdown.

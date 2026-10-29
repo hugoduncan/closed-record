@@ -12,7 +12,7 @@
 | `.github/workflows/release.yml` | Manual single-job release with default dry run and explicit-false publication gates |
 | `.github/workflows/ci.yml` | Release-tooling checks as part of read-only CI |
 | `CHANGELOG.md` | Maintained release notes |
-| `README/releases.md` | Maintainer commands and failure inspection |
+| `doc/releases.md` | Maintainer commands and failure inspection |
 
 The workflow uses one full-history checkout at the dispatch SHA. Publication
 steps create the Git tag, deploy the JAR/POM, and pass those deployment outputs

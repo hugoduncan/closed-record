@@ -28,7 +28,7 @@ All other operations behave as with `defrecord`: field access,
 metadata, equality, hashing, printing and reader literals. Call sites
 that use a record correctly do not change. Reads and declared-key `assoc`
 have similar costs in the measured three-field cases. Wider records can differ;
-see [performance measurements and limits](README/performance.md).
+see [performance measurements and limits](doc/performance.md).
 
 Reads are not checked. `(:nmae r)` returns nil, as with `defrecord`.
 The Clojure 1.13 destructuring directives `:keys!`, `:select` and
@@ -139,11 +139,11 @@ declared key gives nil.
 
 ## Development
 
-See [development instructions](README/development.md) for tests, CI,
+See [development instructions](doc/development.md) for tests, CI,
 benchmarks, and source JAR builds.
 
 ## Releases
 
-See [release instructions](README/releases.md) for local preparation,
+See [release instructions](doc/releases.md) for local preparation,
 inspection, a separate push, manual preview and publication, credentials,
 and recovery after partial failure. No release has been published yet.
