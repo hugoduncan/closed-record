@@ -6,7 +6,8 @@
             [clojure.test :refer [deftest is testing]]
             [closed-record.index-scope :as index]
             [closed-record.lint :as lint]
-            [closed-record.quality-scope :as scope])
+            [closed-record.quality-scope :as scope]
+            [closed-record.test-support.classpath-cache :as classpath-cache])
   (:import [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]))
 
@@ -30,6 +31,7 @@
       (doseq [path (conj paths "src/space and\nnewline.clj" "src/imports/ignored.edn")]
         (put! path))
       (is (zero? (:exit (run "git" "add" "."))))
+      (classpath-cache/seed! root)
       (put! "src/untracked.clj")
       (spit (io/file root "src/untracked.clj") "(missing-symbol)")
       (shell/with-sh-env env

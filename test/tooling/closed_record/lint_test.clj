@@ -3,7 +3,8 @@
             [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing]]
             [closed-record.lint :as lint]
-            [closed-record.quality-scope :as scope])
+            [closed-record.quality-scope :as scope]
+            [closed-record.test-support.classpath-cache :as classpath-cache])
   (:import [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]))
 
@@ -16,6 +17,7 @@
             (do (io/make-parents file) (spit file "{}\n"))
             (.mkdirs file))))
       (spit (io/file root ".clj-kondo/config.edn") (slurp ".clj-kondo/config.edn"))
+      (classpath-cache/seed! root)
       (f root)
       (finally
         (doseq [file (reverse (file-seq root))]

@@ -1,7 +1,8 @@
 (ns closed-record.test-support.code-project
   (:require [clojure.java.io :as io]
             [clojure.java.shell :as shell]
-            [closed-record.quality-scope :as scope])
+            [closed-record.quality-scope :as scope]
+            [closed-record.test-support.classpath-cache :as classpath-cache])
   (:import [java.nio.file Files]
            [java.nio.file.attribute FileAttribute]))
 
@@ -82,6 +83,7 @@
       (git! root environment "init")
       (git! root environment "config" "core.autocrlf" "false")
       (git! root environment "add" ".")
+      (classpath-cache/seed! root)
       (spit (io/file root "unrelated.md") "Unstaged prose.\r\n")
       (f root environment)
       (finally
