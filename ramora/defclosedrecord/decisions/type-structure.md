@@ -15,6 +15,8 @@
 - Qualities: + `defrecord` parity, + performance. − It depends on an internal special form.
 - Scope: JVM emitter.
 - Commitment: medium. If `deftype*` changes, only the emitter changes.
+- Value mode: `:value-type true` uses immutable hash fields through `defvaluetype*`
+  ([VT-D3, VT-D5](../../value-type-records/decisions.md)).
 
 ## D-06 Record identity
 
@@ -41,6 +43,7 @@
   - `hash` (`hasheq`): `type-hash XOR APersistentMap/mapHasheq`.
   - `.hashCode`: `APersistentMap/mapHash`. It is the same as for an equal plain map.
   - Both hashes are cached in `__hash` and `__hasheq`. Metadata does not have an effect.
+    Value mode has the same values with no cache ([VT-D6](../../value-type-records/decisions.md#vt-d6-no-hash-cache)).
 - Rejected: `.equals` that also requires the same class. It breaks the `java.util.Map` contract and S-02 parity.
 - Rationale: O-02. Code that puts records into Java collections must see no change.
 - Qualities: + parity, + interop. − `=` and `.equals` disagree for a plain map. This comes from `defrecord`.
@@ -62,6 +65,8 @@
 - Subject: the `defclosedrecord` macro syntax.
 - Choice: the same syntax as `defrecord`: name, fields with type hints, options, protocol and interface implementations.
   `->Name` and `map->Name` are generated, also for more than 20 fields.
+- Options: `:no-print` and `:load-ns`, as `defrecord`, and `:value-type`
+  ([VT-D1](../../value-type-records/decisions.md#vt-d1-selection-by-an-explicit-option)).
 - Reserved field names: `__meta`, `__extmap`, `__hash`, `__hasheq`. The macro rejects them.
 - Rejected: a new syntax with key specifications (optional keys, defaults). It breaks O-02 and K-04.
 - Rationale: O-02.
