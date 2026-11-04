@@ -159,3 +159,49 @@
   existing format and lint scope (all of `test/`) also assumes that both
   directories are under `test/`; state this as a constraint on the paths
   that the plan selects.
+- [ ] Plan ambiguity: state how the shared VT-V3/VT-V4 checks get the
+  record types that they test. The ordinary tests use types defined at the
+  top level (`defclosedrecord R [a b]` in
+  `test/runtime/closed_record/defclosedrecord_test.clj` and other files) and
+  bind to them by name: `->R`, `map->R`, reader literals with the class name,
+  `.a` field interop, `instance?`. Plan "both suites call them" suggests
+  functions, which cannot express the literal and interop checks. Choose
+  and record in plan.md: for example, a macro that takes the record options
+  and expands the type definitions and the `deftest`s in the calling
+  namespace, or check functions over a descriptor of factories (state how
+  the type-bound checks run then). Also state how a check gets the
+  representation (D-06 serialization on identity only), the namespace names
+  and paths of the shared check and subprocess-helper namespaces (in
+  `test/runtime`, loadable without value-type, names that do not match the
+  scry discovery pattern `.*-test$`).
+- [ ] Plan ambiguity: state the path, format and record procedure of the
+  expansion fixture file. Plan and steps say only "a fixture file in
+  `test/runtime`". The design requires a re-record in the same change after
+  an intended expansion change, and an artifact-map row for the file. State:
+  the file path; the content (for example an EDN map of form name to
+  normalised printed expansion, or forms and expansions together); where the
+  input forms live (test file or fixture file); and how to record it again
+  (a function or a command).
+- [ ] Plan ambiguity: state the `dev/bench/timing/run.sh` argument syntax for
+  extra aliases and JVM options. Now `"$@"` are main args after
+  `-M:bench:corrected-timing` (`run.sh -m <ns>` selects an entry), and no
+  arguments select `-m closed-record.bench`. The script also finds the
+  Criterium JAR with `clojure -Srepro -Spath -M:bench`. State how the caller
+  gives aliases and `-J` options (for example environment variables such as
+  `BENCH_ALIASES` and `BENCH_JVM_OPTS`, or leading arguments before `--`),
+  whether the JAR lookup uses the same aliases, and the full VT-V8 command.
+- [ ] Plan ambiguity: state where VT-V7 runs and where it compiles. Slice 5
+  puts VT-V7 in the `test/value-type/` suite. Slice 6 says the Valhalla job
+  runs "the Valhalla suite command and the value-output VT-V7", which can
+  mean a separate step (that would need its own upload name). State that
+  VT-V7 runs inside the suite command (or name its step, command and
+  artifact). Also state where the compile happens (test JVM or subprocess)
+  and the compile output path (for example a temporary directory on the
+  subprocess class path).
+- [ ] Plan ambiguity: state how slice 3 verifies value mode. Slice 3 asks to
+  verify that no value-mode method reads or writes `__hash`/`__hasheq`, but
+  the alias arrives in slice 4 and `emit` resolves `defvaluetype*` before it
+  builds the form (VT-D4), so the value-mode expansion fails without
+  value-type. Choose: code reading only, a local run with an uncommitted
+  `-Sdeps` value-type dependency, a check of a form builder that runs after
+  resolution, or defer the check to VT-V2 in slice 5.

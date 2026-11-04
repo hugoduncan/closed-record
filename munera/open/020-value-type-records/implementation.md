@@ -341,3 +341,13 @@ Paths:
 - Plan-only items that are not in design.md: add the value-type alias to
   `dependency-bases` in `dev/quality/closed_record/lint_dependencies.clj`.
   Keep the Clojure CLI clause at `doc/development.md` line 53.
+
+## Plan review (2026-11-03)
+
+- ambiguity review added 5 new design steps
+- Context: scry 0.1.61 discovers namespaces with the default pattern
+  `.*-test$`. Shared check and helper namespaces in `test/runtime` are not
+  run as tests if their names do not end in `-test`.
+- Shared-check step is the main one: ordinary tests bind to top-level types
+  by name (reader literals, `.field` interop), so a function-only extraction
+  loses checks. A macro over the record options keeps them.
