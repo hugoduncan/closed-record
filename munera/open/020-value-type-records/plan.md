@@ -89,10 +89,11 @@ Key decisions:
   - Paths: `test/runtime/closed_record/checks/<topic>.clj`, namespace
     `closed-record.checks.<topic>`, one for each ordinary test file that has
     selected tests. `<topic>` is the test namespace name without `-test`
-    (for example `closed-record.checks.defclosedrecord`). Helpers that more
-    than one check namespace uses (for example `thrown`, `data-of`,
-    `round-trip`) are in `closed-record.checks.support`
-    (`test/runtime/closed_record/checks/support.clj`).
+    (for example `closed-record.checks.defclosedrecord`). Each body keeps its own helpers (`thrown`, `round-trip`, …) as
+    in the original test file. `closed-record.checks.support`
+    (`test/runtime/closed_record/checks/support.clj`) has `expand`, which
+    rewrites a quoted body for the calling namespace (slice-4 entry in
+    implementation.md).
   - Callers: each ordinary test namespace calls
     `(define-checks {:record-opts [] :representation :identity})` and keeps
     its tests that are not shared. The value-type suite has one test
