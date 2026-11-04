@@ -408,3 +408,19 @@ Paths:
   `:lint-as {closed-record.core/defclosedrecord clojure.core/defrecord}`.
 - The `:test` alias has no `:main-opts`, so `clojure -M:test -e …` (the
   fixture record command) reaches `clojure.main`.
+
+## Plan review, second round (2026-11-03)
+
+- ambiguity review added 1 new design step
+- Context for the VT-V8 step: `report/ops` (six S-03 texts),
+  `report/fork-count` 5, `report/fork-stats`, `report/table` and
+  `report/exit-code` serve the default run only. `fork/parent` takes a
+  `child-cmd` but always prints the S-03 table and returns the S-03 exit
+  code. The step is actionable because `legacy-transport/decode` rejects a
+  result that is not six `[op p r]` entries, so `fork/parent` cannot take
+  a two-op VT-V8 result as it is.
+- Checked, not filed: `macroexpand-1` of `defclosedrecord` gives the
+  `jvm/emit` output directly (`core.cljc`), so the fixture captures the
+  emitter. A user method can name `__hash` (no closed-record check), so
+  the VT-V6 `:removed-field-access` case is reachable. `run.sh` must put
+  `BENCH_ALIASES` before `:corrected-timing`, which clears the main opts.

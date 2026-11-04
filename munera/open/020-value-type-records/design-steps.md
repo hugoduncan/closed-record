@@ -216,3 +216,18 @@
   emitter can reach (`^:non-nil` or `^:nil-restricted` field; optionally a
   user method that reads `__hash`, which gives `:removed-field-access` on
   value output only). Remove the `:mutable-field` case.
+- [ ] Plan ambiguity: state how the VT-V8 entry runs the forks and reports
+  the result. Plan and steps say only "its own child command" and "via the
+  criterium fork harness". The harness parent and transport are fixed to
+  S-03: `fork/parent` prints `report/table` of `report/fork-stats` and
+  returns `report/exit-code` (the S-03 pass rule); `legacy-transport/encode`
+  and `decode` and `report/decode-result` accept only the six `report/ops`
+  entries; `fork/run-fork` is private. VT-V8 measures `hash` and `=` only,
+  and the S-03 pass rule and exit code do not apply (design). State: the
+  parent loop (reuse `fork/parent`, or a VT-V8 loop in the entry namespace);
+  the child result format and its validation (including the collector
+  identity of `timing-tool/observe`); the output (table columns, ns per
+  call, ratio, no pass rule); the exit code; and which `dev/bench`
+  namespaces change, if any (for example `run-fork` made public, or `ops`
+  as a parameter). A change to `fork`, `report` or `legacy-transport` must
+  keep the default `:bench` run and its tests unchanged (VT-I2).
