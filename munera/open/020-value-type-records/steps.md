@@ -439,13 +439,13 @@
 
 ## Test review follow-ups
 
-- [ ] Remove `test/runtime/closed_record/subprocess_test.clj`. It tests
+- [x] Remove `test/runtime/closed_record/subprocess_test.clj`. It tests
       `closed-record.subprocess`, which is test support code (a test of a
       test). The absent-var, does-not-load, VT-V5 and AOT tests use the
       helper; a time-out or a left directory shows there. Update the
       `*_test.clj` row of `ramora/defclosedrecord/embodiment/artifacts.md`
       (it names `subprocess_test.clj`).
-- [ ] Cover "the option works together with `:no-print` and `:load-ns`"
+- [x] Cover "the option works together with `:no-print` and `:load-ns`"
       (design, Public contract) for `:value-type true`. No test defines a
       value-type record with these options: `accepted-options-test` and
       `load-ns-option-test` are not shared, and the ordinary-suite
@@ -454,7 +454,8 @@
       with `:value-type true :load-ns true` are working types (factories,
       `=`) with the expected representation; `:load-ns true` makes class
       initialisation require the namespace, as `load-ns-option-test` checks.
-- [ ] Remove the position check of the `require` preamble in
+      Done: `representation-test/options-test`.
+- [x] Remove the position check of the `require` preamble in
       `closed-record.value-type.representation-test/value-expansion-test`
       ("the expansion loads value-type.core first", `(nth expansion 2)`).
       The preamble is an implementation decision of slice 5, not a VT-V2

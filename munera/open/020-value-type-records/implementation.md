@@ -1050,3 +1050,18 @@ Paths:
 ## Test review (2026-11-04)
 
 - added 3 steps to be addressed
+
+## Test review follow-ups (2026-11-04)
+
+- addressed 3 review steps.
+- Removed `subprocess_test.clj` and its `artifacts.md` mention.
+- `closed-record.value-type.representation-test/options-test`:
+  `:value-type true` with `:no-print true` and with `:load-ns true`
+  (factories, `=`, representation against the expectation; `:load-ns`
+  class initialisation in a new namespace gives
+  `ExceptionInInitializerError`).
+- Removed the `require` preamble position check from `value-expansion-test`.
+- Ordinary suite 186/2793 on Clojure 1.11, 1.12, 1.13; Temurin 21
+  value-type suite 82/315; Valhalla suite 82/316. kondo, cljfmt clean.
+- The last green CI run (`290f2a1`) is before this change; acceptance
+  criterion 3 needs a push and a green run of this commit.
