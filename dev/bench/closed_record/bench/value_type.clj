@@ -19,8 +19,8 @@
    [closed-record.bench :refer [bench-op]]
    [closed-record.bench.fork :as fork]
    [closed-record.bench.report :as report]
-   [closed-record.bench.value-class :refer [value-class?]]
    [closed-record.bench.timing-tool :as timing-tool]
+   [closed-record.bench.value-class :refer [value-class?]]
    [closed-record.core :refer [defclosedrecord]])
   (:import
    (java.io File)

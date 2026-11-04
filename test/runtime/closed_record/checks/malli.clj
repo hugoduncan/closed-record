@@ -7,6 +7,7 @@
   (:require
    [clojure.test :refer [deftest is testing]]
    [closed-record.core :refer [defclosedrecord]]
+   [closed-record.probe-support :refer [data-of]]
    [malli.core :as m]
    [malli.error :as me]
    [malli.transform :as mt]))
@@ -18,13 +19,6 @@
 (def ^:private s [:map [:a :int] [:b [:maybe :int]] [:c :int]])
 
 (def ^:private sc (into [:map {:closed true}] (rest s)))
-
-(defn- thrown
-  "Call `f`; return the exception that it throws, or nil."
-  [f]
-  (try (f) nil (catch Throwable e e)))
-
-(defn- data-of [f] (ex-data (thrown f)))
 
 (deftest validation-test
   (testing "open and closed schemas of the declared keys validate"

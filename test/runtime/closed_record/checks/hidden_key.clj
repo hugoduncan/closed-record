@@ -6,7 +6,8 @@
   keys: `__extmap` must have no effect except on `check`."
   (:require
    [clojure.test :refer [deftest is testing]]
-   [closed-record.core :refer [check defclosedrecord]]))
+   [closed-record.core :refer [check defclosedrecord]]
+   [closed-record.probe-support :refer [data-of]]))
 
 (def ^:private test-ns (ns-name *ns*))
 
@@ -26,13 +27,6 @@
   (read-literal "#$P.E{:a 1 :b 2 :z 3}"))
 
 (def ^:private plain (->E 1 2))
-
-(defn- thrown
-  "Call `f`; return the exception that it throws, or nil."
-  [f]
-  (try (f) nil (catch Throwable e e)))
-
-(defn- data-of [f] (ex-data (thrown f)))
 
 (defn- assert-extra-z
   "Assert that `check` of `x` throws `extra-keys` with `#{:z}`."

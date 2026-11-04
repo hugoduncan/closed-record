@@ -5,7 +5,7 @@
    [clojure.test :refer [deftest is testing]]
    [closed-record.checks.support :as support]
    [closed-record.core :refer [check defclosedrecord]]
-   [closed-record.probe-support :refer [thrown]]))
+   [closed-record.probe-support :refer [data-of thrown]]))
 
 (def ^:private test-ns (ns-name *ns*))
 
@@ -54,8 +54,6 @@
   (binding [*ns* (the-ns test-ns)] (f)))
 
 (defn- read-literal [s] (in-test-ns #(read-string s)))
-
-(defn- data-of [f] (ex-data (thrown f)))
 
 (defn- undeclared [k] {:type :closed-record/undeclared-key :record R :key k})
 
