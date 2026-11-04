@@ -356,3 +356,35 @@ Paths:
   properties (hash cache, `locking`, reference `identical?`). The round-5
   and round-6 notes show that no shared check needs a branch for these;
   D-06 serialization is the only branch, and steps.md slice 5 states it.
+
+## Notes for the plan-review design-steps pass
+
+- Six open steps (5 ambiguity, 1 inconsistency). All are plan choices:
+  resolve them in plan.md and steps.md. design.md is stable; change it only
+  if a choice contradicts it. Keep VT-D1 to VT-D10, VT-I2 first, and no
+  `:local/root` in a committed alias.
+- Shared-check step facts:
+  - Reader literal checks build the literal as a string with the class name
+    (`read-literal "#closed_record.defclosedrecord_test.H{…}"`,
+    `defclosedrecord_test.clj` ~line 219), and `literal_test.clj` has a
+    `constant` macro (line 29) for code constants. A shared macro must
+    derive these class names from the calling namespace
+    (`namespace-munge *ns*`), not hard-code them.
+  - Existing helpers to reuse or move: `in-test-ns`
+    (`defclosedrecord_test.clj` line 61, `literal_test.clj` line 13),
+    `eval-in-new-ns` (line 403), `expansion-cause` (line 488).
+- Subprocess helper: `fork/default-child-cmd`
+  (`dev/bench/closed_record/bench/fork.clj` line 19) is the pattern (java
+  from `java.home`, input arguments, `java.class.path`) but fixes
+  `-m closed-record.bench`. The test helper needs a free main and extra
+  class path entries and `-D` properties.
+- run.sh step: keep `run.sh -m <ns>` and the no-argument default working;
+  the JAR lookup (`-Spath -M:bench`) must find exactly one Criterium JAR
+  with the extra aliases too.
+- Slice-3 step: for a local value-mode check before the alias exists, the
+  value-type source is `~/projects/hugoduncan/value-type/value-type-master`
+  at `66d5ff7` (through `-Sdeps` only, not committed).
+- VT-V6 step: reachable value-type errors are `:invalid-field` from
+  `^:non-nil` / `^:nil-restricted` fields (both JVMs) and
+  `:removed-field-access` from a user method that names `__hash` (value
+  output only, so Valhalla expectation only).
