@@ -1,0 +1,343 @@
+# Implementation
+
+## Design review (2026-11-03)
+
+- architectural review added 2 new design steps
+- Context: `ramora/META.md` and `doc/architecture.md` do not exist. The
+  architecture sources are `AGENTS.md`, `ramora/INDEX.md`, the defclosedrecord
+  pages (principles, embodiment, artifact map) and
+  `ramora/development-quality.md`.
+- Plan note, not a design finding: lint setup resolves each alias in
+  `closed-record.lint-dependencies/dependency-bases` with `-Srepro`. The new
+  value-type alias must go in that list, so lint setup (CI quality job and
+  pre-commit) fetches the pinned value-type Git SHA.
+- Plan note: `default-child-cmd` in `dev/bench/closed_record/bench/fork.clj`
+  copies `java.home` and the JVM input arguments to each fork, so a VT-V8 run
+  on Valhalla keeps `--enable-preview` in the child JVMs.
+- `dev/bench/valhalla/` (task 019) also exists. "The existing bench
+  structure" can mean the criterium forks or that directory; left to the
+  ambiguity turn.
+- ambiguity review added 4 new design steps
+- "value-type AOT rules" (VT-V7) resolve to value-type
+  `ramora/defvaluetype-design.md` D7 (cited from
+  `ramora/deftype-star-design.md`): AOT fixes the representation. Not filed.
+- inconsistency review added 1 new design step
+
+## Notes for the design-steps pass
+
+Principles:
+- Resolve each step by editing design.md in place. Do not change VT-D1 to
+  VT-D10 or the scope. Ramora pages get no progress history.
+- VT-I2 comes first: the ordinary expansion, the default `:bench` run and the
+  `:test` alias stay the same and do not load value-type.
+- A representation expectation in the tests is test data, not a library
+  switch (VT-D1). Detection of the JVM capability alone cannot catch silent
+  fallback.
+
+Paths:
+- Gensym sites (VT-I2 comparison step): `src/closed_record/impl/jvm.clj`
+  parameter gensyms `p__` and `this__`, the auto-gensyms of `cached-hash`,
+  and `m#` in `withMeta`. Existing expansion test helpers (`in-test-ns`,
+  `thrown`): `test/runtime/closed_record/defclosedrecord_test.clj` near
+  line 489, `literal_test.clj` line 82.
+- Subprocess JVM patterns (VT-V5, VT-V1 Clojure 1.11 case, VT-V7):
+  `dev/bench/closed_record/bench/fork.clj`, `test/build/build_test.clj`
+  (isolated consumer JVM).
+- Bench: `dev/bench/closed_record/bench.clj` (S-03 exit code),
+  `bench/report.clj`, `dev/bench/valhalla/*.java`, `test/bench/` (no CI job).
+  The `dev/bench/` row in `ramora/defclosedrecord/embodiment/artifacts.md`
+  already omits `memory/`, `timing/` and `valhalla/`.
+- CI runtime matrix: `.github/workflows/ci.yml`, job "Runtime tests", with
+  `matrix` entries that each have a `command`.
+- value-type sources: `~/projects/hugoduncan/value-type/value-type-master/ramora/`
+  `deftype-star-design.md` and `defvaluetype-design.md`.
+
+## Design-steps pass (2026-11-03)
+
+- All 7 design steps resolved in design.md. No `SCOPE_QUESTION:` items.
+- `src/` at the task start equals `ac25942` (last `src/` commit `3a37315` is
+  an ancestor). The fixture can be recorded from the working tree before the
+  first emitter change.
+- Observed: the normalised expansion (`*print-meta*` true, regex
+  `\b([A-Za-z-]+__)(\d+)(__auto__)?\b` → first-appearance index) of
+  `(defclosedrecord P [a ^long b] :load-ns true Object (toString [_] "x"))`
+  is the same string on Clojure 1.11.4, 1.12.6 and 1.13.0-alpha9. The type
+  hash literal in `hasheq` depends on the class name, so fix the namespace.
+- value-type reads `value-type.fallback` once, in the `policy` def of
+  `value-type.impl.runtime` (at load); later changes are unsupported. This is
+  why VT-V5 needs a subprocess.
+- Bench facts for VT-V8:
+  - `dev/bench/timing/run.sh` runs `clojure … -M:bench:corrected-timing "$@"`.
+    `"$@"` comes after `-M`, so extra aliases and `-J` options cannot come
+    through the arguments now.
+  - `fork/default-child-cmd` fixes `-m closed-record.bench`. `fork/parent`
+    prints the six-op S-03 table and exit code through `report/*`. The VT-V8
+    entry needs its own child command and aggregation; reuse
+    `report/per-call-stats` and `fork/in-order`.
+  - The child calls `timing-tool/observe`, which rejects an unknown
+    Criterium collector SHA. VT-V8 children need the corrected overlay of
+    `run.sh` on the class path.
+  - Many `test/runtime` tests (`bench_*_test`, `matrix_budget_test`,
+    `assoc_timing_result_test`) load `dev/bench` namespaces. None may require
+    the VT-V8 entry namespace.
+  - `dev/bench/cases.edn` `:valhalla` is the task-019 probe configuration
+    (Clojure 1.11.4). It is not the VT-V8 configuration.
+
+## Design review, second round (2026-11-03)
+
+- architectural review added 1 new design step
+- The defclosedrecord design pages already name value mode
+  (`decisions/type-structure.md`). Only the embodiment page lags. Format and
+  lint scope already covers all of `test/` and `dev/`
+  (`dev/quality/closed_record/quality_scope.clj`), so new test directories
+  need no scope change.
+- ambiguity review (round 2) added 1 new design step
+- inconsistency review (round 2) added 1 new design step
+- `dev/bench/timing/run.sh` clears the `:bench` main opts (`:corrected-timing`
+  alias) and passes `"$@"` as main args, so `run.sh -m <vt-v8-entry-ns>` can
+  select the VT-V8 parent entry. Only extra aliases and `-J` options need the
+  new way of the Verification section. value-type `66d5ff7` is still not on
+  `origin` (local `master` ahead 119); the Prerequisite stands.
+
+## Notes for the round-2 design-steps pass
+
+- Three open steps: the Public boundary of the defclosedrecord embodiment,
+  the `:class-name` value, and the Intent wording. The earlier principles
+  apply: edit design.md in place, keep VT-D1 to VT-D10 and the scope, and
+  add no progress history to Ramora.
+- The `:class-name` choice is public API. Record it in design.md and in the
+  Public contract of `ramora/value-type-records.md`. This adds precision to
+  the contract and does not change a decision. Make the value agree with the
+  current `ex-data`: the `map->Name` error uses `:record` with the class
+  symbol (`src/closed_record/impl/jvm.clj`, `map-factory`). D-03 is in
+  `ramora/defclosedrecord/decisions/failure-and-validation.md`.
+- Public boundary step: add an item to the Documentation list for
+  `ramora/defclosedrecord/embodiment.md`. It covers the Boundaries "Public"
+  row and the "Public interface" section ("Error data: see D-03"). A pointer
+  to the value-type public contract is enough. Do not add a new D-03 `:type`,
+  because D-03 is about key-set failures.
+- Intent step: use the wording of the Summary in
+  `ramora/value-type-records.md`.
+
+## Design-steps pass, round 2 (2026-11-03)
+
+- All 3 design steps resolved in design.md. No `SCOPE_QUESTION:` items.
+- `:class-name` is the `classname` symbol of `emit`. It carries the metadata
+  of `tname` (`with-meta … (meta tname)`); metadata does not affect `=`, so
+  VT-V1 can compare with a plain symbol. Checked: `(namespace-munge
+  'my-app.geo)` is `my_app.geo`.
+- The Ramora edits that the steps ask for (`:class-name` value in the
+  `ramora/value-type-records.md` Public contract, the defclosedrecord Public
+  row and Public interface section) are items in the Documentation list.
+  The implementation makes them; Ramora is not edited in the design pass.
+
+## Design review, third round (2026-11-03)
+
+- no architectural review feedback
+- Also checked `ramora/release-workflow/` (every CI job gates a release;
+  VT-D10 already accepts the early-access download dependency) and
+  `ramora/development-quality.md`. No design change needed. Scry `--dir`
+  per command (as `:test:build-test --dir test/build`) fits the separate
+  value-type test directories.
+- For the later turns, not architecture: `doc/development.md` says "Clojure
+  jobs use Temurin Java 21". The Valhalla job makes this false; the
+  Documentation item for that file names only the commands.
+- ambiguity review (round 3) added 1 new design step
+- Checked, not filed: a quoted form in a test file gives no `:line`
+  metadata in the printed expansion (`*print-meta*` true), so the VT-V1
+  fixture does not depend on test source positions.
+- inconsistency review (round 3) added 1 new design step
+
+## Notes for the round-3 design-steps pass
+
+- Two open steps: the cause of `:closed-record/value-type-unavailable` when
+  the var is absent, and the Temurin statements in `doc/`. The earlier
+  principles apply: edit design.md in place, keep VT-D1 to VT-D10 and the
+  scope, and add no progress history to Ramora.
+- Cause step: the choice is public contract. Record it in the design.md
+  Public contract, and extend the Documentation item for the
+  `ramora/value-type-records.md` Public contract (as for `:class-name`).
+  Observed on Clojure 1.11.4: with no value-type, `requiring-resolve`
+  throws `java.io.FileNotFoundException` ("Could not locate
+  value_type/core__init.class …"); an absent var gives `nil`. No suite can
+  make the absent-var case without a stub `value-type.core`, which would
+  conflict with the real library; do not require a test for it unless the
+  design adds one on purpose.
+- Doc step paths: `doc/development.md` line 53 (Continuous integration),
+  `doc/tool-installation.md` line 11. Leave `doc/performance.md` line 12:
+  it describes task-019 evidence (Valhalla on macOS arm64), not CI.
+
+## Design-steps pass, round 3 (2026-11-03)
+
+- Both design steps resolved in design.md. No `SCOPE_QUESTION:` items.
+- Cause choice: absent var gives no cause (`ex-cause` `nil`). The design
+  adds the absent-var check on purpose (ordinary suite, subprocess JVM, stub
+  `value-type.core` in a temporary directory). Checked: with a stub that has
+  only `(ns value-type.core)` on the class path, `requiring-resolve` of
+  `value-type.core/defvaluetype*` gives `nil` on each call.
+
+## Design review, fourth round (2026-11-03)
+
+- architectural review added 1 new design step
+- Checked, not filed: the round-3 absent-var subprocess in `test/runtime`
+  fits; the ordinary suite already starts real child JVMs
+  (`bench_fork_test`, `bench_assoc_allocation_run_test`), and the stub never
+  shares a class path with value-type (VT-I2 holds).
+- no ambiguity review feedback (round 4)
+- Checked, not filed: `macroexpand-1` wraps expansion errors in
+  `CompilerException`; the existing tests read `ex-cause`
+  (`expansion-cause`, `defclosedrecord_test.clj`). So the
+  `:closed-record/value-type-unavailable` `ex-info` is the cause of that
+  wrapper, and its own `ex-cause` is the cause of the Public contract.
+  value-type's fallback `Error` is a plain `java.lang.Error`
+  (`value_type/impl/runtime.clj`). `:value-type nil` is an "other value"
+  (`IllegalArgumentException`); use `contains?`, not truthiness.
+- inconsistency review (round 4) added 1 new design step
+
+## Notes for the round-4 design-steps pass
+
+- Two open steps: the artifact-map rows (architecture) and the scry
+  failure uploads (inconsistency). Earlier principles apply: edit design.md
+  in place, keep VT-D1 to VT-D10 and the scope, no progress history in
+  Ramora. Both resolve as edits to the Documentation list and the CI
+  section; no new decision.
+- Artifact map step: extend the existing
+  `ramora/defclosedrecord/embodiment/artifacts.md` Documentation item. Rows:
+  `src/closed_record/impl/jvm.clj` (now "Builds the `deftype*` form and the
+  factories"), the `test/runtime/closed_record/*_test.clj` glob row, and new
+  rows for the expansion fixture and, if in `test/runtime`, the shared
+  VT-V3/VT-V4 checks. The `ci.yml` row ("three alias-based runtime test
+  entries", "structured test-failure uploads") also changes; the existing
+  item names it, so keep its wording consistent with the upload step.
+- Upload step: pattern in `.github/workflows/ci.yml` is a step
+  `if: failure()`, `actions/upload-artifact@v4.6.2`, `name: scry-…`,
+  `path: .scry-results/` (lines ~137-142 runtime matrix). Names now used:
+  `scry-runtime-<version>`, `scry-build`, `scry-release`, `scry-tooling`.
+  One job with two scry steps (Temurin suite and Clojure 1.11 case) shares
+  `.scry-results/`; a second run can overwrite the first. Give each step
+  its own upload, or a distinct results directory if scry allows it.
+- Doc targets: `doc/development.md` Continuous integration, lines ~49-79
+  (artifact list at ~74, "three test commands above" at ~70).
+
+## Design-steps pass, round 4 (2026-11-03)
+
+- Both design steps resolved in design.md. No `SCOPE_QUESTION:` items.
+- Choice: the Temurin 21 value-type suite is a separate job,
+  `Value-type tests (Temurin 21)`, not a runtime-matrix entry. A matrix
+  entry would need a per-entry artifact name and a Clojure 1.11 step that
+  runs in one entry only. The runtime matrix and its sentence in
+  `doc/development.md` stay as they are.
+- scry 0.1.61 facts: the CLI always writes `<cwd>/.scry-results/` and
+  clears it at the start of each run (`results/prepare-results-dir!`). It
+  has no option for another directory. Thus each scry step needs its upload
+  directly after it.
+- The location of the VT-V3/VT-V4 shared check definitions is still a plan
+  choice. They must load without value-type if ordinary tests use them.
+
+## Design review, fifth round (2026-11-03)
+
+- no architectural review feedback
+- Checked, not filed: the separate `Value-type tests (Temurin 21)` job fits
+  VT-D10 ("Temurin 21 jobs") and the release gate (`release.yml` calls all
+  of `ci.yml` through `workflow_call`). The "No other closed-record namespace
+  depends on value-type" boundary in `ramora/value-type-records/embodiment.md`
+  is about library namespaces; test and `dev/bench` namespaces are outside it.
+- Implementation hint: the Documentation item "replace Not implemented with
+  the current embodiment" for `ramora/value-type-records/embodiment.md`
+  covers the whole page. The Elements table rows `ci.yml` (names only the
+  Valhalla job), Tests ("VT-V1 runs in the ordinary `:test` alias"; VT-V1
+  now has three placements) and Verification limits ("Until the job
+  exists") are then false and must change too.
+- ambiguity review (round 5) added 1 new design step
+- Context: the round-trip test is `serializable-test`
+  (`defclosedrecord_test.clj` about line 314). It also checks `meta` and
+  `hash` after the round trip. Ordinary tests that use reference
+  `identical?` (`conj nil`, `dissoc` of an undeclared key, `check`) still
+  hold on value output, because `identical?` then compares fields. They need
+  no differences-table assertion.
+- inconsistency review (round 5) added 1 new design step
+- Checked, not filed: `CHANGELOG.md` `## [Unreleased]` is empty, and the
+  design adds no entry for the option. The release contract
+  (`ramora/release-workflow/contracts-and-flow.md`) needs nonempty
+  Unreleased notes only at release time, and a release is out of scope.
+  The release task must write the note for `:value-type`.
+
+## Notes for the round-5 design-steps pass
+
+- Two open steps: the shared-check selection with serialization on value
+  output (ambiguity), and the `doc/development.md` suite list
+  (inconsistency). Earlier principles apply: edit design.md in place, keep
+  VT-D1 to VT-D10 and the scope, no progress history in Ramora.
+- Selection step: edit Scope, Verification (the VT-V3/VT-V4 bullets). Keep
+  the selection rule a rule, not a list of test names; the plan maps it to
+  tests. Out of scope already excludes serialization of value output, so
+  "skip on value output" needs no new decision. The differences table row
+  ("not promised") is the authority. Consider adding the rule to the Ramora
+  VT-V3 row through the Documentation item for
+  `ramora/value-type-records/invariants-and-verification.md`, as for VT-V1.
+- Ordinary tests outside V-rows: `test/runtime/closed_record/`
+  `defclosedrecord_test.clj` (`serializable-test`, the section "Generated
+  methods not in the V-01 tables", hidden-field check near line 495, which
+  is emitter-level), `hidden_key_test.clj`, `differential_test.clj`
+  (V-02), `property_test.clj` (V-03), `literal_test.clj` (V-04),
+  `compiler_rules_test.clj` (V-13, excluded). V-rows:
+  `ramora/defclosedrecord/qualities.md` (Verification plan).
+- Suite-list step: extend the existing Documentation item for
+  `doc/development.md`; add the `test/` path constraint to the Dependencies
+  section (where the alias and the two directories are defined). Format and
+  lint scope: `dev/quality/closed_record/quality_scope.clj`.
+
+## Design-steps pass, round 5 (2026-11-03)
+
+- Both design steps resolved in design.md. No `SCOPE_QUESTION:` items.
+- Selection rule facts for the plan mapping:
+  - Excluded by the rule: `field_value_test.clj` `field-declaration-test`
+    (labelled V-11, reflects on class fields), `compiler_rules_test.clj`
+    (V-13), `argument-errors-test`, `accepted-options-test` and
+    `load-ns-option-test` (option checks), and the `bench_*`, `assoc_*` and
+    `matrix_budget_test` files.
+  - The hash-cache tests (`assoc-test` "hash caches 0", `metadata-test`
+    "with-meta copies the hash caches") read only `hash` and `.hashCode`,
+    not the fields. Their assertions hold in both representations.
+- Path facts: `deps.edn` `:test` has `:extra-paths ["test/runtime"
+  "dev/bench"]`. The value-type alias adds both new directories
+  to `:extra-paths`, and each command selects its directory with `--dir`. scry discovery
+  without `--dir` scans all of `test/`, as for `test/bench/`.
+
+## Design review, sixth round (2026-11-03)
+
+- no architectural review feedback
+- Checked, not filed: the round-5 shared-check rule fits VT-D1 and VT-I2
+  (definitions load without value-type; the value-type commands add
+  `test/runtime` through `:test`). D-16 Scope
+  (`ramora/defclosedrecord/decisions/verification.md`, "GitHub CI runs all
+  three test aliases … with Temurin Java 21") stays true: it does not say
+  "only", and VT-D10 owns the Valhalla job.
+- no ambiguity review feedback (round 6)
+- Checked, not filed: an invalid `-Dvalue-type.fallback` value makes the
+  `policy` def of `value-type.impl.runtime` throw `IllegalArgumentException`
+  at load. That is a load failure, so it gives
+  `:closed-record/value-type-unavailable` with that cause. It does not pass
+  through. No ordinary test uses `locking` or weak references
+  (`grep test/runtime`), so the identity-property rule adds no `locking`
+  assertion. VT-V4 lists only its own extra checks.
+- no inconsistency review feedback (round 6)
+- Checked, not filed: the value-type suite runs in both jobs. Thus VT-V2,
+  VT-V6 and the VT-V1 subprocess check also run in the Valhalla job. The
+  VT-D10 placement paragraph ("run in Temurin 21 jobs") does not say "only",
+  so it stays true. `doc/development.md` line 53 also names Clojure CLI
+  `1.12.6.1673`. Keep that clause when the Temurin statement is replaced.
+
+## Notes after round 6
+
+- No open design steps. All three round-6 reviews found nothing, so
+  design.md is stable. The next step is `create-task-plan`, not another
+  design-steps pass.
+- The plan must make the choices that design.md leaves to it: the emitter
+  mode shape, the alias and directory names, where the shared VT-V3/VT-V4
+  checks live (they must load without value-type), the fixture forms and
+  file format, and how `run.sh` gets extra aliases and `-J` options.
+  Earlier notes have the facts for each (round-1, 4 and 5 notes).
+- Plan-only items that are not in design.md: add the value-type alias to
+  `dependency-bases` in `dev/quality/closed_record/lint_dependencies.clj`.
+  Keep the Clojure CLI clause at `doc/development.md` line 53.
