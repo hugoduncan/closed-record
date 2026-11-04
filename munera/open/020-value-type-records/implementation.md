@@ -801,3 +801,27 @@ Paths:
   73 tests pass; Valhalla `--enable-preview` all pass except
   `serializable-test` when given `:representation :identity` (expected:
   value output is not serializable). So the `$representation` gate works.
+
+## Slice 5: value-type suite (2026-11-03)
+
+- Files: `test/value-type/closed_record/value_type/` — `expectation`
+  (guard plus `value-class?`/`observed`), 9 `<topic>-test` wrappers of
+  `checks.*`, `representation-test` (VT-V2, VT-V4), `errors-test` (VT-V6),
+  `subprocess-test` (does-not-load, VT-V5), `aot-test` (VT-V7);
+  `test/value-type-clj-1.11/.../clj_1_11_test.clj` (A, B, C each throw with
+  cause).
+- src change: value-mode `representation` has `:preamble` =
+  `(require 'value-type.core)`, spliced first in the `let` (needed for VT-V7
+  class load without source). Ordinary preamble absent; fixture test green.
+- `checks.defclosedrecord/serializable-test`: value branch asserts
+  `(= :value $representation)` (scry fails a test with no assertion).
+- VT-V6 forms are read from text: quoted constants lose symbol metadata.
+- Guard: no property → scry exit 1 (`:scry.cli/runner-error`).
+- Commands (`-J` before `-M`):
+  - Temurin 21: `JAVA_CMD=$HOME/.local/share/mise/installs/java/temurin-21.0.10+7.0.LTS/bin/java clojure -J-Dclosed-record.test.representation=identity -M:test:value-type-test:clj-1.12 -m scry.cli --dir test/value-type`
+    → 81 tests, 300 assertions, exit 0. `openjdk version "21.0.10"`.
+  - Valhalla: `JAVA_CMD=$HOME/.local/share/mise/installs/java/openjdk-27.0.0-jep401ea3+1-1/bin/java clojure -J--enable-preview -J-Dclosed-record.test.representation=value -M:test:value-type-test:clj-1.12 -m scry.cli --dir test/value-type`
+    → 81 tests, 297 assertions, exit 0. `build 27-jep401ea3+1-1`.
+  - Clojure 1.11: `JAVA_CMD=<Temurin 21> clojure -M:test:value-type-test -m scry.cli --dir test/value-type-clj-1.11`
+    → 1 test, 7 assertions.
+- Ordinary suite on 1.11/1.12/1.13: 186 tests, 2793 assertions.

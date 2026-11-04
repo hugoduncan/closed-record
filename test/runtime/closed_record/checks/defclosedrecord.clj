@@ -307,14 +307,16 @@
 
     (deftest serializable-test
   ;; D-06 holds for identity output only; value output promises no
-  ;; serialization.
-      (when (= :identity $representation)
+  ;; serialization, so that branch asserts only the representation (a test
+  ;; with no assertion fails scry).
+      (if (= :identity $representation)
         (let [m (with-meta r {:m 1})
               s (round-trip m)]
           (is (= r s))
           (is (= R (class s)))
           (is (= {:m 1} (meta s)))
-          (is (= (hash r) (hash s))))))
+          (is (= (hash r) (hash s))))
+        (is (= :value $representation))))
 
 ;;; Generated methods not in the V-01 tables (no extra keys)
 

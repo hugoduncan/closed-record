@@ -115,12 +115,16 @@
        c#)))
 
 (defn- representation
-  "The representation description: the four differences between ordinary
-  and value mode (VT-D3, VT-D5, VT-D6, VT-D7). `hash-form` and
-  `with-meta-form` take the method locals and give the method body."
+  "The representation description: the differences between ordinary and
+  value mode (VT-D3, VT-D5, VT-D6, VT-D7). `hash-form` and `with-meta-form`
+  take the method locals and give the method body. `preamble` forms come
+  first in the expansion: value mode loads `value-type.core`, so classes
+  compiled ahead of time initialise without a require of value-type in user
+  code (VT-V7)."
   [value-type?]
   (if value-type?
-    {:type-head 'value-type.core/defvaluetype*
+    {:preamble [`(require '~'value-type.core)]
+     :type-head 'value-type.core/defvaluetype*
      :hidden-fields value-hidden-fields
      :hash-form (fn [_field expr] expr)
      :with-meta-form (fn [tname fields m]
@@ -310,6 +314,7 @@
         map->name (symbol (str "map->" tname))
         methods (generated-methods rep tname cname-str type-hash plain-fields)]
     `(let []
+       ~@(:preamble rep)
        (declare ~->name)
        (declare ~map->name)
        (~(:type-head rep) ~(symbol (name (ns-name *ns*)) (name tname)) ~classname

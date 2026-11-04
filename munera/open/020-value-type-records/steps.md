@@ -128,24 +128,24 @@
 
 ## Slice 5: Value-type suite
 
-- [ ] Create `test/value-type/` with the expectation guard
+- [x] Create `test/value-type/` with the expectation guard
       `closed-record.value-type.expectation`: `representation` reads
       `closed-record.test.representation`, gives `:value`/`:identity`, and
       throws if absent or another value; each suite test namespace calls it
       at load. Verify that scry 0.1.61 exits non-zero on that load error.
-- [ ] VT-V2: expansion inspection for value mode (hidden field layout, hash
+- [x] VT-V2: expansion inspection for value mode (hidden field layout, hash
       forms, `withMeta` form, `defvaluetype*` head) — the VT-I4 check on
       Temurin 21.
-- [ ] VT-V3/VT-V4: one test namespace
+- [x] VT-V3/VT-V4: one test namespace
       `closed-record.value-type.<topic>-test` for each shared check
       namespace, calling `(define-checks {:record-opts [:value-type true]
       :representation (expectation/representation)})`; serialization round
       trip on identity fallback only, no serialization assertion for value
       output.
-- [ ] VT-V4 representation checks: `.isValue`, `identical?` of equal records,
+- [x] VT-V4 representation checks: `.isValue`, `identical?` of equal records,
       absence of the hash fields; compare with the expectation so the
       Valhalla job fails on silent identity fallback.
-- [ ] VT-V6: value-type errors pass through unchanged, as the Ramora VT-V6
+- [x] VT-V6: value-type errors pass through unchanged, as the Ramora VT-V6
       row. Both expectations (value-type checks these at macroexpansion,
       before the policy): a `^:non-nil` field gives `{:value-type/error
       :invalid-field :reason :non-nil-unsupported}`; a `^:nil-restricted`
@@ -155,28 +155,28 @@
       :invalid-field :reason :removed-field-access}`. No `:mutable-field`
       case: closed-record `check-field-metadata` rejects mutable fields
       before `emit` builds the form.
-- [ ] Does-not-load subprocess check: subprocess expands and evaluates a
+- [x] Does-not-load subprocess check: subprocess expands and evaluates a
       no-option and a `:value-type false` definition, asserts
       `value-type.core` not in `(loaded-libs)`.
-- [ ] VT-V5 subprocess check: `-Dvalue-type.fallback=error`, definition
+- [x] VT-V5 subprocess check: `-Dvalue-type.fallback=error`, definition
       throws value-type's `Error`; runs only when the expectation is
       `identity`.
-- [ ] VT-V7: test `closed-record.value-type.aot-test` in the suite (no CI
+- [x] VT-V7: test `closed-record.value-type.aot-test` in the suite (no CI
       step of its own): write a `:value-type true` record namespace to
       `<tmp>/src`; subprocess 1 compiles it to `<tmp>/classes` (both on its
       class path); subprocess 2 (only `<tmp>/classes` added) loads the
       classes and checks behaviour and representation against the
       expectation; follows the value-type AOT rules.
-- [ ] Create `test/value-type-clj-1.11/` with the Clojure 1.11 VT-V1 case:
+- [x] Create `test/value-type-clj-1.11/` with the Clojure 1.11 VT-V1 case:
       every `:value-type true` expansion (not only the first) throws
       `:closed-record/value-type-unavailable` with a cause.
-- [ ] Record the three commands in implementation.md:
+- [x] Record the three commands in implementation.md:
       Temurin 21 suite (`:test` + value-type alias + `:clj-1.12`,
       `-J-Dclosed-record.test.representation=identity`); Valhalla suite (same
       aliases, `JAVA_CMD`=Valhalla JDK, `-J--enable-preview`,
       `…representation=value`); Clojure 1.11 case (`:test` + value-type
       alias, no `:clj-1.12`).
-- [ ] Run all three locally with the `JAVA_CMD` of plan.md, Local JDKs:
+- [x] Run all three locally with the `JAVA_CMD` of plan.md, Local JDKs:
       Temurin `21.0.10+7` for the Temurin 21 suite and the Clojure 1.11
       case; the macOS aarch64 Valhalla `27-jep401ea3+1-1` for the Valhalla
       suite (same build as CI, not the pinned Linux x64 archive). Record the

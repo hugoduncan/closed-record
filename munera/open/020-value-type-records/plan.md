@@ -186,6 +186,12 @@ Key decisions:
   the representation against the expectation. The compile is not in the
   test JVM, because `compile` needs `*compile-path*` on the class path and
   the load must not see the source.
+- **Value-mode preamble** (slice 5, VT-V7): the value-mode expansion starts
+  with `(clojure.core/require 'value-type.core)` before `defvaluetype*`, so
+  AOT classes initialise with no require of value-type in user code. The
+  ordinary expansion has no preamble (VT-I2: fixture unchanged).
+- **Clojure CLI option order**: `-J` options come before `-M`; after `-M`
+  the CLI passes them to `clojure.main` as file arguments.
 - **Local JDKs**: this machine is macOS arm64. Its default `java` is 25,
   which is not a target JVM, so each local value-type suite, Clojure 1.11
   case and VT-V8 command sets `JAVA_CMD`. Subprocess and fork child JVMs use
