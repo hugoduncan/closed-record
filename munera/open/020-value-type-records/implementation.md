@@ -902,3 +902,24 @@ Paths:
 - Local checks after slice 8: fmt, kondo, Vale, API check, lychee clean;
   ordinary suite 186/2793. `src` changed (docstring only), so slice 9 must
   push and read a new CI run.
+
+## Slice 9: quality gate (2026-11-04)
+
+- Local: `bb clj-fmt:check`, `bb clj-kondo:lint` (0 findings), `bb vale`,
+  `bb api-docs --check`, `bb lychee:check` (0 errors) clean. Build tests
+  6/101 pass (stack trace in output is expected test output), `clojure -T:build jar`
+  exit 0, release tests 9/104 pass. No fixes needed.
+- Final push: ref `020-value-type-records`, SHA `d689459711b5cb22cb65afe9a6fab161d1fb1602`
+  (last commit outside the task dir), PR https://github.com/hugoduncan/closed-record/pull/1,
+  run https://github.com/hugoduncan/closed-record/actions/runs/41871685593:
+  all 9 jobs `success` (Build verification, Development quality, Runtime
+  tests 1.11/1.12/1.13, Markdown links, Value-type tests (Temurin 21),
+  Value-type tests (Valhalla), Release tooling verification).
+- Acceptance: 1 VT-V1/VT-V4 tests in both value-type jobs (green); 2 fixture
+  test + does-not-load subprocess (green); 3 run above; 4 `git diff ac25942
+  -- deps.edn` adds only the alias, SHA `8bb7c4f` on GitHub (slice 4);
+  5 both jobs in `ci.yml`, no `continue-on-error`, SHA-256 + `actions/cache`,
+  unique upload names; 6 VT-V8 in this file and `doc/performance.md`
+  "Reproduction and limits"; 7 slice 8 docs, API check clean, no progress
+  history in Ramora value-type pages (grep); 8 local checks above + CI.
+- This commit changes task files only; not pushed (plan.md, Final push).

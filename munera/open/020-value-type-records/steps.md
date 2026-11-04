@@ -318,15 +318,15 @@
 
 ## Slice 9: Quality gate
 
-- [ ] Run format, lint, prose, API freshness and link checks; fix findings.
-- [ ] Run the build and release checks.
-- [ ] Final push (plan.md, CI, Final push): approved at slice 6. Push the
+- [x] Run format, lint, prose, API freshness and link checks; fix findings.
+- [x] Run the build and release checks.
+- [x] Final push (plan.md, CI, Final push): approved at slice 6. Push the
       branch `020-value-type-records`; read
       the run of the pushed commit with the slice-6 `gh run` commands; every
       job has conclusion `success`. After a failure, fix, commit and push to
       the same ref again. Record the date, ref, SHA, pull request URL and
       each run URL with its job conclusions in implementation.md.
-- [ ] Verify all acceptance criteria 1–8 against the design (acceptance
+- [x] Verify all acceptance criteria 1–8 against the design (acceptance
       criterion 3: the green run of the last commit that changes files
       outside `munera/open/020-value-type-records/`); record the
       verification in implementation.md; commit (task files only; not
