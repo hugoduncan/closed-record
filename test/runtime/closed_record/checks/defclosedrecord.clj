@@ -104,7 +104,7 @@
     (let [v (assoc r :a 5)]
       (is (instance? R v))
       (is (= (->R 5 2) v))))
-  (testing "declared key gives hash caches 0 (no copy of cached hashes)"
+  (testing "the hash after assoc of a declared key equals the hash of a new record"
     (let [h (->R 1 2)
           _ [(hash h) (.hashCode ^Object h)]
           v (assoc h :a 5)]
@@ -272,7 +272,7 @@
       (is (= m (meta (with-meta r m)))))
     (testing "assoc of a declared key keeps the metadata"
       (is (= m (meta (assoc (with-meta r m) :a 5)))))
-    (testing "with-meta copies the hash caches"
+    (testing "with-meta keeps the hash"
       (let [x (->R 3 4)
             h (hash x)
             hc (.hashCode ^Object x)

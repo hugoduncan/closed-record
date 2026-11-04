@@ -394,7 +394,7 @@
       the slice-9 verification is stale. Push (approved at slice 6), read the
       run with the slice-6 `gh run` commands, and record the SHA, run URL
       and job conclusions in implementation.md as a new acceptance note.
-- [ ] Rename the two shared-check `testing` labels in
+- [x] Rename the two shared-check `testing` labels in
       `test/runtime/closed_record/checks/defclosedrecord.clj` that name the
       ordinary-mode hash cache: "declared key gives hash caches 0 (no copy
       of cached hashes)" (`assoc-test`) and "with-meta copies the hash
@@ -402,3 +402,5 @@
       value mode has no hash cache (VT-D6). Name the behaviour that both
       modes share (for example "the hash after assoc equals the hash of a
       new record", "with-meta keeps the hash").
+      Done: "the hash after assoc of a declared key equals the hash of a
+      new record", "with-meta keeps the hash".
