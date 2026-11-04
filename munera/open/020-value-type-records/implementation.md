@@ -327,3 +327,17 @@ Paths:
   VT-D10 placement paragraph ("run in Temurin 21 jobs") does not say "only",
   so it stays true. `doc/development.md` line 53 also names Clojure CLI
   `1.12.6.1673`. Keep that clause when the Temurin statement is replaced.
+
+## Notes after round 6
+
+- No open design steps. All three round-6 reviews found nothing, so
+  design.md is stable. The next step is `create-task-plan`, not another
+  design-steps pass.
+- The plan must make the choices that design.md leaves to it: the emitter
+  mode shape, the alias and directory names, where the shared VT-V3/VT-V4
+  checks live (they must load without value-type), the fixture forms and
+  file format, and how `run.sh` gets extra aliases and `-J` options.
+  Earlier notes have the facts for each (round-1, 4 and 5 notes).
+- Plan-only items that are not in design.md: add the value-type alias to
+  `dependency-bases` in `dev/quality/closed_record/lint_dependencies.clj`.
+  Keep the Clojure CLI clause at `doc/development.md` line 53.
