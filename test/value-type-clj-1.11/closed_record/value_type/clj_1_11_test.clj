@@ -4,19 +4,8 @@
   gives `:closed-record/value-type-unavailable` with a cause."
   (:require
    [clojure.test :refer [deftest is testing]]
-   [closed-record.core]))
-
-(defn- expansion-error
-  "The exception of the macroexpansion of `form` in this namespace, without
-  the `CompilerException` wrapper; nil when there is no exception."
-  [form]
-  (binding [*ns* (the-ns 'closed-record.value-type.clj-1-11-test)]
-    (try
-      ;; Expand for the exception only.
-      #_{:clj-kondo/ignore [:unused-value]}
-      (macroexpand-1 form)
-      nil
-      (catch clojure.lang.Compiler$CompilerException t (ex-cause t)))))
+   [closed-record.core]
+   [closed-record.probe-support :refer [expansion-error]]))
 
 (deftest value-type-unavailable-test
   (is (= {:major 1 :minor 11}
@@ -24,6 +13,7 @@
   (doseq [n ['A 'B 'C]]
     (testing (str n)
       (let [e (expansion-error
+               'closed-record.value-type.clj-1-11-test
                (list 'closed-record.core/defclosedrecord n '[x]
                      :value-type true))]
         (is (= {:type :closed-record/value-type-unavailable

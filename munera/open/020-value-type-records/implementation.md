@@ -1361,3 +1361,15 @@ Paths:
 ## Code-shaper review, sixth round (2026-11-04)
 
 - added 2 steps to be addressed
+
+## Code-shaper review follow-ups, sixth round (2026-11-04)
+
+- addressed 2 review steps.
+- `closed-record.probe-support/expansion-error [ns-sym form]`; private
+  copies in `value-type-option-test` and `clj-1-11-test` removed.
+  Artifacts `probe_support.clj` row updated.
+- `closed-record.impl.jvm/representation` docstring states the argument
+  lists of `hash-form` and `with-meta-form`.
+- Counts unchanged: ordinary 186/2792 (Clojure 1.12); Temurin 21 82/314;
+  Clojure 1.11 case 1/7. clj-kondo, cljfmt clean. Not pushed; CI run of
+  this change is pending (acceptance criterion 3).

@@ -118,8 +118,11 @@
 
 (defn- representation
   "The representation description: the differences between ordinary and
-  value mode (VT-D3, VT-D5, VT-D6, VT-D7). `hash-form` and `with-meta-form`
-  take the method locals and give the method body. `preamble` forms come
+  value mode (VT-D3, VT-D5, VT-D6, VT-D7). `(hash-form field expr)` takes
+  the hash cache field symbol and the hash expression, as `cached-hash`, and
+  gives the method body. `(with-meta-form tname fields m)` takes the type
+  name, the declared field symbols and the metadata local, and gives the
+  `withMeta` body. `preamble` forms come
   first in the expansion: value mode loads `value-type.core`, so classes
   compiled ahead of time initialise without a require of value-type in user
   code (VT-V7)."

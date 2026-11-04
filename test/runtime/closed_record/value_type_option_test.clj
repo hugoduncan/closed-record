@@ -8,6 +8,7 @@
    [closed-record.core :refer [defclosedrecord]]
    [closed-record.expansion-fixture :as fixture]
    [closed-record.form-support :as form]
+   [closed-record.probe-support :refer [expansion-error]]
    [closed-record.subprocess :as subprocess])
   (:import
    (java.io FileNotFoundException)))
@@ -24,27 +25,17 @@
                (fixture/expansion
                 (form/with-options form [:value-type false]))))))))
 
-(defn- expansion-error
-  "The exception of the macroexpansion of `form` in this namespace, without
-  the `CompilerException` wrapper; nil when there is no exception."
-  [form]
-  (binding [*ns* (the-ns 'closed-record.value-type-option-test)]
-    (try
-      ;; Expand for the exception only.
-      #_{:clj-kondo/ignore [:unused-value]}
-      (macroexpand-1 form)
-      nil
-      (catch clojure.lang.Compiler$CompilerException t (ex-cause t)))))
-
 (deftest invalid-option-value-test
   (doseq [v [nil 1 :yes "true" 'true?]]
     (testing (pr-str v)
       (let [e (expansion-error
+               'closed-record.value-type-option-test
                `(defclosedrecord ~'Bad [~'a] :value-type ~v))]
         (is (instance? IllegalArgumentException e))))))
 
 (deftest value-type-unavailable-test
   (let [e (expansion-error
+           'closed-record.value-type-option-test
            `(defclosedrecord ~'Point [~'x] :value-type true :no-print true))]
     (is (= {:type :closed-record/value-type-unavailable
             :class-name 'closed_record.value_type_option_test.Point}
