@@ -1373,3 +1373,7 @@ Paths:
 - Counts unchanged: ordinary 186/2792 (Clojure 1.12); Temurin 21 82/314;
   Clojure 1.11 case 1/7. clj-kondo, cljfmt clean. Not pushed; CI run of
   this change is pending (acceptance criterion 3).
+
+## Code-shaper review, seventh round (2026-11-04)
+
+- added 2 steps to be addressed

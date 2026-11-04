@@ -850,3 +850,27 @@
       metadata local. State each argument list. Keep the fixture strings.
       Done: docstring states `(hash-form field expr)` and
       `(with-meta-form tname fields m)`.
+
+## Code-shaper review follow-ups, seventh round
+
+- [ ] Push the branch and get a green CI run of `371b3a9`. The sixth-round
+      follow-ups changed `src/closed_record/impl/jvm.clj` (`representation`
+      docstring), `test/runtime` (`closed-record.probe-support/expansion-error`,
+      `value-type-option-test`) and `test/value-type-clj-1.11`
+      (`clj-1-11-test`); they have run only locally.
+      `origin/020-value-type-records` is still at `8bd6cea`, so the
+      acceptance criterion 3 evidence is stale. Push (approved at slice 6),
+      read the run with the slice-6 `gh run` commands, and record the SHA,
+      run URL and job conclusions in implementation.md as a new acceptance
+      note.
+- [ ] Remove the last copy of the `expansion-error` contract.
+      `closed-record.value-type-option-test/absent-var-test` builds a child
+      script with an inline `(try (macroexpand-1 '(…)) nil (catch Throwable
+      t (ex-cause t)))` in `my-app.geo`; this is the contract of
+      `closed-record.probe-support/expansion-error`. The child class path
+      contains the test JVM class path (`closed-record.subprocess/run`), so
+      `test/runtime` is on it. In the script, require
+      `closed-record.probe-support` and call
+      `(closed-record.probe-support/expansion-error 'my-app.geo '(…))`.
+      Keep the printed `{:data … :cause …}` result and the test and
+      assertion counts.
