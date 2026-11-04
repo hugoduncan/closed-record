@@ -18,6 +18,8 @@ Historical work records stay in Munera and Git history.
 
 - [defclosedrecord design](defclosedrecord.md): architecture of `defclosedrecord`.
   Contains purpose, context, principles, decisions, embodiment, invariants and qualities.
+- [Value-type records design](value-type-records.md): the `:value-type` option.
+  Selection, value-type delegation, hidden fields without hash cache, invariants and verification.
 - [Release workflow design](release-workflow.md): release architecture.
   Covers simple scry-style deployment, manual verification/publication, and recovery.
 - [Development quality checks](development-quality.md): shared command and scope

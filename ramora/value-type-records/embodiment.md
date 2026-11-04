@@ -1,0 +1,48 @@
+# Value-type records embodiment
+
+## Status
+
+Implemented. The tests use value-type at the Git SHA of the
+`:value-type-test` alias (VT-R3).
+
+## Elements that change
+
+| Element | Change |
+|---|---|
+| `closed-record.core` | The docstring of `defclosedrecord` describes the option. |
+| `closed-record.impl.jvm` | `check-options` accepts `:value-type` and checks its value. The option is removed from the type options. One representation description holds the mode differences. In value mode: resolve `defvaluetype*` (VT-D4), a `require` of `value-type.core` first in the expansion, the VT-D5 layout, hash methods with no cache (VT-D6), and `withMeta` with no hash fields (VT-D7). |
+| `.github/workflows/ci.yml` | Job `Value-type tests (Temurin 21)`: the value-type suite (identity) and the Clojure 1.11 case. Job `Value-type tests (Valhalla)` (VT-D10): the value-type suite (value output). Each scry step uploads `.scry-results/` on failure: `scry-value-type-temurin-21`, `scry-value-type-clj-1.11`, `scry-value-type-valhalla`. |
+| `deps.edn` | A test alias with value-type at a pinned Git SHA (VT-R3). The base `:deps` do not change. |
+| Tests | VT-V1 to VT-V7. VT-V1 has three placements: the ordinary suite `test/runtime` (expansion fixture, option errors, absent-var subprocess); the value-type suite `test/value-type` (does-not-load subprocess); `test/value-type-clj-1.11` (Clojure 1.11 case). The VT-V3 shared checks are in `test/runtime/closed_record/checks/` and load without value-type. The value-type suite requires the property `closed-record.test.representation`. |
+| `dev/bench` | VT-V8: entry namespace `closed-record.bench.value-type`, which no other namespace requires. `dev/bench/timing/run.sh` reads `BENCH_ALIASES` and `BENCH_JVM_OPTS`. |
+| `doc/` and `README.md` | The option, the differences table, the runtime dependency and the hash cost. |
+
+## Permitted dependencies
+
+These are added to the defclosedrecord
+[permitted dependencies](../defclosedrecord/embodiment.md), in value mode only:
+
+- `impl.jvm` → `value-type.core/defvaluetype*`, through `requiring-resolve`
+  at expansion time.
+- Generated code → `value-type.core` (a `require`), `defvaluetype*` and the
+  public and run-time names that its expansion uses.
+
+No other closed-record namespace depends on value-type.
+
+## Generated type in value mode
+
+```text
+(require 'value-type.core)
+(value-type.core/defvaluetype* ns/Name ns.Name
+  [declared-field* __meta __extmap ^int __hash ^int __hasheq]
+  :implements [... as the ordinary type ...]   ; not IType (K-08)
+  ...)
+```
+
+## Verification limits
+
+- CI verifies value output on one Valhalla build (`27-jep401ea3+1-1`) and on
+  Linux x64 only.
+- Identity fallback is verified on Temurin 21 only.
+- VT-V8 is manual and informational. Its results apply only to the machine
+  and the JDK of the run (`doc/performance.md`).

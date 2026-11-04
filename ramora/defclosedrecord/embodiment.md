@@ -34,7 +34,7 @@ commands, output paths, the Git version rule, and history requirements.
 
 | Side | Contents |
 |---|---|
-| Public | `defclosedrecord`, `check`, generated `->Name` and `map->Name`, the `ex-data` of D-03. |
+| Public | `defclosedrecord` (with the `:value-type` option), `check`, generated `->Name` and `map->Name`, the `ex-data` of D-03, the `:closed-record/value-type-unavailable` `ex-data` of the [value-type records public contract](../value-type-records.md#public-contract). |
 | Internal | `closed-record.runtime`, `closed-record.impl.*`, the `ClosedRecord` protocol, `closed-record.runtime/key-error`, the fields `__meta __extmap __hash __hasheq`. |
 
 Permitted dependencies:
@@ -45,6 +45,9 @@ Permitted dependencies:
 - Generated code → `closed-record.runtime/ClosedRecord`, `clojure.lang`, public `clojure.core` vars and JDK classes
   (`java.lang`, `java.util`, `java.io`).
 - Generated code → the public runtime helper `closed-record.runtime/key-error` (D-21).
+- With `:value-type true` only: `impl.jvm` and generated code → value-type, as the
+  [value-type records embodiment](../value-type-records/embodiment.md#permitted-dependencies) permits.
+  Without the option, no namespace loads value-type.
 
 Forbidden dependencies:
 
@@ -63,9 +66,16 @@ Forbidden dependencies:
 ```
 
 - Generated vars: `->Name` and `map->Name`.
-- Error data: see [D-03](decisions/failure-and-validation.md#d-03-failure-signal).
+- Option `:value-type true`: see the [value-type records design](../value-type-records.md).
+- Error data: see [D-03](decisions/failure-and-validation.md#d-03-failure-signal). For
+  `:closed-record/value-type-unavailable`, see the
+  [value-type records public contract](../value-type-records.md#public-contract).
 
 ## Generated type
+
+This section, Method behaviour and State describe the ordinary mode. For the
+differences with `:value-type true`, see the
+[value-type records embodiment](../value-type-records/embodiment.md#generated-type-in-value-mode).
 
 ```text
 deftype* ns/Name ns.Name
@@ -127,7 +137,8 @@ The expansion has the shape of the `defrecord` expansion: `declare` of `->Name` 
 ## Allocation
 
 - Macro expansion time: argument checks and emitter selection by host. The checks reject reserved names, duplicate
-  fields, fields with `:volatile-mutable` or `:unsynchronized-mutable` metadata, and options other than `:no-print`
-  and `:load-ns`. The last two checks are the same as `defrecord`.
+  fields, fields with `:volatile-mutable` or `:unsynchronized-mutable` metadata, and options other than `:no-print`, `:load-ns`
+  and `:value-type`. The last two checks are the same as `defrecord`. The option check also accepts `:value-type`
+  with the value `true` or `false`. With `true`, the emitter resolves `value-type.core/defvaluetype*`.
 - Class load time: the compiler generates the class, the constructors and `create`.
 - Run time: key checks in `assoc`, `without`, `cons` and `map->Name`.

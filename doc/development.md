@@ -11,6 +11,10 @@ Test suites share the `test/` parent directory:
 - `test/release/`: release tooling tests.
 - `test/tooling/`: development tool tests.
 - `test/bench/`: measurement tests with separate dependency and JVM requirements.
+- `test/value-type/`: `:value-type true` tests. They need the
+  `:value-type-test` alias, Clojure 1.12 and a representation property.
+- `test/value-type-clj-1.11/`: the `:value-type true` failure on Clojure
+  1.11. It needs the `:value-type-test` alias without `:clj-1.12`.
 
 Each suite has a separate source path. Select the suite directory explicitly;
 The default scry discovery scans all of `test/`.
@@ -23,6 +27,23 @@ Run the tests on Clojure 1.12 and on Clojure 1.13:
 
     clojure -M:test:clj-1.12 -m scry.cli --dir test/runtime
     clojure -M:test:clj-1.13 -m scry.cli --dir test/runtime
+
+Run the value-type tests on Temurin 21 (identity fallback). Put `-J` options
+before `-M`:
+
+    clojure -J-Dclosed-record.test.representation=identity -M:test:value-type-test:clj-1.12 -m scry.cli --dir test/value-type
+
+Run them on a Valhalla early-access JDK (value output). `JAVA_CMD` selects the
+JDK:
+
+    JAVA_CMD=<Valhalla java> clojure -J--enable-preview -J-Dclosed-record.test.representation=value -M:test:value-type-test:clj-1.12 -m scry.cli --dir test/value-type
+
+The property `closed-record.test.representation` (`identity` or `value`) is
+the expected representation. Without it, the suite fails.
+
+Run the Clojure 1.11 value-type case:
+
+    clojure -M:test:value-type-test -m scry.cli --dir test/value-type-clj-1.11
 
 Start a REPL. The nREPL server writes the port to `.nrepl-port`:
 
@@ -50,7 +71,9 @@ metrics, experimental runtime requirements, and saved evidence.
 
 [CI](../.github/workflows/ci.yml) runs on pushes to `master` and pull requests
 against any branch, including forks. All jobs use Ubuntu and read-only repository permissions.
-Clojure jobs use Temurin Java 21 and Clojure CLI `1.12.6.1673`.
+All Clojure jobs use Clojure CLI `1.12.6.1673`. The Valhalla value-type job
+uses the Valhalla early-access JDK `27-jep401ea3+1-1` (Linux x64), with a
+SHA-256 check of the archive. The other Clojure jobs use Temurin Java 21.
 The separate Markdown links job uses Babashka and lychee, not Java or Clojure CLI.
 The [release workflow](releases.md) calls CI, so a CI failure stops a release.
 
@@ -68,12 +91,17 @@ pre-commit `4.6.0`, and runs the focused tooling tests.
 
 Formatting differences, lint warnings, lint errors, prose warnings and errors,
 and stale API output fail the job.
-The runtime matrix runs the three test commands above; `deps.edn` owns
+The runtime matrix runs the three `test/runtime` commands above; `deps.edn` owns
 the Clojure versions. A separate job runs the build tests and JAR command
-below once, with full Git history. A separate job runs the release tests. Performance benchmarks remain manual.
+below once, with full Git history. A separate job runs the release tests.
+The job `Value-type tests (Temurin 21)` runs the Temurin 21 value-type command
+and the Clojure 1.11 value-type command. The job `Value-type tests (Valhalla)`
+runs the Valhalla value-type command. Performance benchmarks remain manual.
 
 Failed tests upload `.scry-results/` as `scry-runtime-1.11`,
-`scry-runtime-1.12`, `scry-runtime-1.13`, `scry-build`, `scry-release`, or `scry-tooling`. These artifacts
+`scry-runtime-1.12`, `scry-runtime-1.13`, `scry-value-type-temurin-21`,
+`scry-value-type-clj-1.11`, `scry-value-type-valhalla`, `scry-build`,
+`scry-release`, or `scry-tooling`. These artifacts
 contain structured failure data. Missing result files produce a warning;
 the test failure still fails the job. CI does not publish releases or
 configure branch protection.

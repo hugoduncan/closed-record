@@ -1,0 +1,9 @@
+(ns closed-record.value-type.rejected-key-message-test
+  "Value-type run of `closed-record.checks.rejected-key-message` (VT-V3, VT-V4)."
+  (:require
+   [closed-record.checks.support :refer [define-checks]]
+   [closed-record.value-type.expectation :as expectation]))
+
+(define-checks 'closed-record.checks.rejected-key-message
+  {:record-opts [:value-type true]
+   :representation (expectation/representation)})

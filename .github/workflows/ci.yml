@@ -143,6 +143,91 @@ jobs:
           include-hidden-files: true
           if-no-files-found: warn
 
+  value-type-temurin-21:
+    name: Value-type tests (Temurin 21)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4.7.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: DeLaGuardo/setup-clojure@13.4
+        with:
+          cli: '1.12.6.1673'
+      - name: Run value-type tests
+        id: tests
+        run: clojure -J-Dclosed-record.test.representation=identity -M:test:value-type-test:clj-1.12 -m scry.cli --dir test/value-type
+      - name: Upload value-type test failures
+        if: ${{ failure() && steps.tests.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: scry-value-type-temurin-21
+          path: .scry-results/
+          include-hidden-files: true
+          if-no-files-found: warn
+      - name: Run Clojure 1.11 value-type tests
+        id: clj-1-11
+        if: ${{ !cancelled() }}
+        run: clojure -M:test:value-type-test -m scry.cli --dir test/value-type-clj-1.11
+      - name: Upload Clojure 1.11 value-type test failures
+        if: ${{ failure() && steps.clj-1-11.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: scry-value-type-clj-1.11
+          path: .scry-results/
+          include-hidden-files: true
+          if-no-files-found: warn
+
+  value-type-valhalla:
+    name: Value-type tests (Valhalla)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VALHALLA_ARCHIVE: openjdk-27-jep401ea3+1-1_linux-x64_bin.tar.gz
+      VALHALLA_SHA256: b8bdd7b181c6a5ea2dd9959255e222cd9d9a9f42cca4f2400991b9b2ff7ffb7d
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+      - name: Cache Valhalla archive
+        uses: actions/cache@v4.2.3
+        with:
+          path: ${{ runner.temp }}/valhalla-archive
+          key: valhalla-${{ env.VALHALLA_SHA256 }}
+      - name: Install Valhalla 27-jep401ea3+1-1
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive_dir="$RUNNER_TEMP/valhalla-archive"
+          mkdir -p "$archive_dir" "$RUNNER_TEMP/valhalla"
+          if [ ! -f "$archive_dir/$VALHALLA_ARCHIVE" ]; then
+            curl --fail --location --show-error --silent \
+              "https://download.java.net/java/early_access/valhalla/27/1/$VALHALLA_ARCHIVE" \
+              -o "$archive_dir/$VALHALLA_ARCHIVE"
+          fi
+          (cd "$archive_dir" && echo "$VALHALLA_SHA256  $VALHALLA_ARCHIVE" | sha256sum --check)
+          tar -xzf "$archive_dir/$VALHALLA_ARCHIVE" -C "$RUNNER_TEMP/valhalla" --strip-components=1
+          "$RUNNER_TEMP/valhalla/bin/java" -version
+          echo "JAVA_CMD=$RUNNER_TEMP/valhalla/bin/java" >> "$GITHUB_ENV"
+      - uses: DeLaGuardo/setup-clojure@13.4
+        with:
+          cli: '1.12.6.1673'
+      - name: Run value-type tests
+        id: tests
+        run: clojure -J--enable-preview -J-Dclosed-record.test.representation=value -M:test:value-type-test:clj-1.12 -m scry.cli --dir test/value-type
+      - name: Upload value-type test failures
+        if: ${{ failure() && steps.tests.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: scry-value-type-valhalla
+          path: .scry-results/
+          include-hidden-files: true
+          if-no-files-found: warn
+
   build:
     name: Build verification
     runs-on: ubuntu-latest
