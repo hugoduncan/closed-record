@@ -1324,3 +1324,17 @@ Paths:
 ## Code-shaper review, fourth round (2026-11-04)
 
 - added 2 steps to be addressed
+
+## Code-shaper review follow-ups, fourth round (2026-11-04)
+
+- addressed 2 review steps.
+- New `closed-record.bench.value-class/value-class?` (no dependencies;
+  `dev/bench` is on `:test` and `:bench`); `closed-record.bench.value-type`
+  and `closed-record.value-type.expectation` refer it. `fork`, `report`,
+  `legacy-transport`, `timing-tool`, `closed-record.bench` unchanged.
+  Artifacts `dev/bench/` row updated.
+- `errors-test` private `thrown` renamed `eval-error`.
+- Counts unchanged: ordinary 186/2792 (Clojure 1.12); Temurin 21 82/314;
+  Valhalla 80/314; Clojure 1.11 case 1/7. VT-V8 namespace loads on
+  Valhalla, `V` is a value class. clj-kondo, cljfmt clean. Not pushed; CI
+  run of this change is pending (acceptance criterion 3).

@@ -20,7 +20,7 @@
   (first (remove #(instance? Compiler$CompilerException %)
                  (take-while some? (iterate ex-cause t)))))
 
-(defn- thrown
+(defn- eval-error
   "The `first-cause` of the evaluation of `form`, or nil."
   [form]
   (try (eval form) nil (catch Throwable t (first-cause t))))
@@ -34,9 +34,9 @@
   (binding [*ns* (the-ns 'closed-record.value-type.errors-test)]
     (let [form (read-string text)
           vt-form (support/type-form (macroexpand-1 form))]
-      {:closed-record (thrown form)
+      {:closed-record (eval-error form)
        :value-type-form vt-form
-       :value-type (when vt-form (thrown vt-form))})))
+       :value-type (when vt-form (eval-error vt-form))})))
 
 (defn- check-pass-through
   "Assert that the closed-record error is the value-type error with

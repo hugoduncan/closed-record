@@ -1,7 +1,9 @@
 (ns closed-record.value-type.expectation
   "The expected representation of the value-type suite. The JVM system
   property `closed-record.test.representation` gives it. The property is
-  test data only: it does not select the representation.")
+  test data only: it does not select the representation."
+  (:require
+   [closed-record.bench.value-class :refer [value-class?]]))
 
 (defn representation
   "`:value` or `:identity`, from the property
@@ -16,14 +18,6 @@
                            " value or identity, not " (pr-str p))
                       {:property "closed-record.test.representation"
                        :value p})))))
-
-(defn value-class?
-  "True when `c` is a value class. False on a JVM without `Class.isValue`."
-  [^Class c]
-  (try
-    (boolean (.invoke (.getMethod Class "isValue" (make-array Class 0))
-                      c (object-array 0)))
-    (catch NoSuchMethodException _ false)))
 
 (defn observed
   "The observed representation of class `c`: `:value` or `:identity`."

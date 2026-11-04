@@ -19,6 +19,7 @@
    [closed-record.bench :refer [bench-op]]
    [closed-record.bench.fork :as fork]
    [closed-record.bench.report :as report]
+   [closed-record.bench.value-class :refer [value-class?]]
    [closed-record.bench.timing-tool :as timing-tool]
    [closed-record.core :refer [defclosedrecord]])
   (:import
@@ -31,14 +32,6 @@
 (def ops
   "The measured operations, in result order."
   ["(hash x)" "(= x y)"])
-
-(defn- value-class?
-  "True when `c` is a value class. False on a JVM without `Class.isValue`."
-  [^Class c]
-  (try
-    (boolean (.invoke (.getMethod Class "isValue" (make-array Class 0))
-                      c (object-array 0)))
-    (catch NoSuchMethodException _ false)))
 
 (defn- run
   "Bench `ops` for `V` and `P` with `limit-s` seconds for each run, in the run
