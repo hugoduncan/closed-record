@@ -130,3 +130,15 @@ Paths:
   `ramora/value-type-records.md` Public contract, the defclosedrecord Public
   row and Public interface section) are items in the Documentation list.
   The implementation makes them; Ramora is not edited in the design pass.
+
+## Design review, third round (2026-11-03)
+
+- no architectural review feedback
+- Also checked `ramora/release-workflow/` (every CI job gates a release;
+  VT-D10 already accepts the early-access download dependency) and
+  `ramora/development-quality.md`. No design change needed. Scry `--dir`
+  per command (as `:test:build-test --dir test/build`) fits the separate
+  value-type test directories.
+- For the later turns, not architecture: `doc/development.md` says "Clojure
+  jobs use Temurin Java 21". The Valhalla job makes this false; the
+  Documentation item for that file names only the commands.
