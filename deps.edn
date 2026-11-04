@@ -29,5 +29,6 @@
           :main-opts ["-m" "closed-record.bench"]}
   :nrepl {:extra-deps {nrepl/nrepl {:mvn/version "1.8.0"}}
           :main-opts ["-m" "nrepl.cmdline"]}
+  :enable-preview {:jvm-opts ["--enable-preview"]}
   :clj-1.12 {:override-deps {org.clojure/clojure {:mvn/version "1.12.6"}}}
   :clj-1.13 {:override-deps {org.clojure/clojure {:mvn/version "1.13.0-alpha9"}}}}}
