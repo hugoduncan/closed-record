@@ -50,19 +50,24 @@
     (testing "the option is not passed to defvaluetype*"
       (is (not-any? #{:value-type} tform)))))
 
+(defn- field-names
+  [^Class c]
+  (set (map #(.getName ^java.lang.reflect.Field %) (.getDeclaredFields c))))
+
 (deftest representation-test
   ;; VT-V4: compare the observed representation with the expectation.
   (let [x (->VP 1 2)
-        y (->VP 1 2)]
+        y (->VP 1 2)
+        fields (field-names VP)]
     (is (= expected (expectation/observed VP)))
     (if (= :value expected)
       (testing "value output"
         (is (identical? x y))
-        (is (thrown? NoSuchFieldException (.getDeclaredField VP "__hash")))
-        (is (thrown? NoSuchFieldException (.getDeclaredField VP "__hasheq"))))
+        (is (not (contains? fields "__hash")))
+        (is (not (contains? fields "__hasheq"))))
       (testing "identity output"
         (is (not (identical? x y)))
-        (is (some? (.getDeclaredField VP "__hash")))))
+        (is (contains? fields "__hash"))))
     (is (= x y))
     (is (= (hash x) (hash y)))))
 
