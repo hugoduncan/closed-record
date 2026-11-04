@@ -354,3 +354,20 @@
       `.waitFor` with a limit, then `destroyForcibly` and a failed result
       that holds the output so far). Now a child JVM that does not exit
       blocks the suite and the CI job until the GitHub job limit.
+
+## Implementation review follow-ups, second round
+
+- [ ] Update the `test/runtime/closed_record/checks/support.clj` row of
+      `ramora/defclosedrecord/embodiment/artifacts.md`. It names only
+      `expand` and says it replaces `$ns`, `$P` and `$representation`.
+      After the first follow-ups, `$ns` and `$representation` do not exist:
+      the entry point is the macro `define-checks` (it reads the check
+      source and evaluates only its `ns` form), and the placeholder var
+      `closed-record.checks.support/representation` gives the
+      representation.
+- [ ] Remove the temporary files that the tests and VT-V8 make. The
+      `absent-var-test` stub directory (`value_type_option_test.clj`), the
+      `aot-test` source and class directory, and the VT-V8 fork result
+      files (`run-fork` in `closed-record.bench.value-type`) stay in the
+      temporary directory after each run. Delete them in a `finally`
+      (after the child exits or the result is read).

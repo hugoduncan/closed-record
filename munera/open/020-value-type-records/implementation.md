@@ -952,3 +952,7 @@ Paths:
   187/2797 on Clojure 1.11, 1.12, 1.13.
 - Runs: Temurin 21 suite 81/308, Valhalla suite 81/309, Clojure 1.11 case
   1/7; fmt, kondo, Vale, API check, lychee clean. Not pushed.
+
+## Implementation review, second round (2026-11-04)
+
+- added 2 steps to be addressed
