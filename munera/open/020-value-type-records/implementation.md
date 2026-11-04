@@ -248,3 +248,10 @@ Paths:
   Valhalla job), Tests ("VT-V1 runs in the ordinary `:test` alias"; VT-V1
   now has three placements) and Verification limits ("Until the job
   exists") are then false and must change too.
+- ambiguity review (round 5) added 1 new design step
+- Context: the round-trip test is `serializable-test`
+  (`defclosedrecord_test.clj` about line 314). It also checks `meta` and
+  `hash` after the round trip. Ordinary tests that use reference
+  `identical?` (`conj nil`, `dissoc` of an undeclared key, `check`) still
+  hold on value output, because `identical?` then compares fields. They need
+  no differences-table assertion.

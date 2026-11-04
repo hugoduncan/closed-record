@@ -130,3 +130,19 @@
   fail in `upload-artifact` v4). Add the new names, and the runtime-matrix
   sentence if a matrix entry is used, to the Documentation item for
   `doc/development.md`.
+- [ ] Ambiguity: state which ordinary tests the shared VT-V3/VT-V4 checks
+  include, and the expectation for serialization on value output. The
+  ordinary suite does not map one-to-one to V-01 to V-15.
+  `test/runtime/closed_record/defclosedrecord_test.clj` has
+  `serializable-test` (labelled D-06, an `ObjectOutputStream` round trip)
+  and a section "Generated methods not in the V-01 tables" (`isEmpty`,
+  zero fields, `containsValue`, ...). The differences table says
+  serialization is "as `defrecord`" on identity fallback and "not
+  promised" on value output, and Out of scope excludes serialization of
+  value output. The design rule for identity properties (hash cache,
+  `locking`, reference `identical?`) does not cover serialization, and "not
+  promised" cannot be asserted. State the selection rule (for example: all
+  behaviour tests of the ordinary runtime suite except V-11, V-13 and the
+  emitter or expansion tests), and state that the serialization check runs
+  on identity fallback and does not run on value output (or another stated
+  expectation).
