@@ -575,3 +575,22 @@ Paths:
   runtime". The artifact-map rows that steps.md names exist as stated
   (`jvm.clj` line 7, `*_test.clj` glob line 8, `dev/bench/` line 16,
   `ci.yml` line 22, `deps.edn` line 25).
+
+## Notes for the plan-review round-4 design-steps pass
+
+- Two open steps (post-slice-6 CI evidence, value-type embodiment page
+  rows). Both are plan choices: resolve them in plan.md and steps.md.
+  design.md stays unchanged; AC3 says only "pass in CI" and names no
+  commit. Keep the slice-6 stop-and-ask rule and "merge is the user's
+  decision".
+- CI evidence step: the commits after slice 6 that the CI jobs test are
+  `src/closed_record/core.cljc` (docstring, slice 8), `dev/bench/` and
+  `dev/bench/timing/run.sh` (slice 7; no CI job runs them), and any slice-9
+  fix. The quality job (`ci.yml` job `quality`) runs format, lint, Vale,
+  API freshness and `test/tooling`; job `links` runs lychee. Locally the
+  same checks are `bb clj-fmt:check`, `bb clj-kondo:lint`, `bb vale`,
+  `bb api-docs --check`, `bb lychee:check`. Option (a) reuses the slice-6
+  ref and the `gh run …` commands of plan.md, CI.
+- Embodiment step: page `ramora/value-type-records/embodiment.md`. Edit the
+  existing slice-8 item; do not add a new step for each row. Ramora rule:
+  no progress history (state the current embodiment only).
