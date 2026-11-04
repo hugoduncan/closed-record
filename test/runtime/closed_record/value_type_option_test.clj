@@ -48,15 +48,12 @@
         stub (io/file dir "value_type" "core.clj")
         script (pr-str
                 '(do
-                   (require 'closed-record.core)
-                   (in-ns 'my-app.geo)
-                   (clojure.core/refer-clojure)
-                   (let [e (try
-                             (macroexpand-1
-                              '(closed-record.core/defclosedrecord
-                                 Point [x] :value-type true))
-                             nil
-                             (catch Throwable t (ex-cause t)))]
+                   (require 'closed-record.core 'closed-record.probe-support)
+                   (create-ns 'my-app.geo)
+                   (let [e (closed-record.probe-support/expansion-error
+                            'my-app.geo
+                            '(closed-record.core/defclosedrecord
+                               Point [x] :value-type true))]
                      (prn {:data (ex-data e)
                            :cause (some-> (ex-cause e) class .getName)}))))]
     (try
