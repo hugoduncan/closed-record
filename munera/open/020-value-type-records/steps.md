@@ -797,3 +797,29 @@
       and gives the exception itself. Two functions with the same name and
       different contracts in one suite make the tests harder to read.
       Done: `eval-error`.
+
+## Code-shaper review follow-ups, fifth round
+
+- [ ] Push the branch and get a green CI run of `b8f5974`. The
+      fourth-round follow-ups changed `dev/bench`
+      (`closed-record.bench.value-class`, `closed-record.bench.value-type`)
+      and `test/value-type` (`expectation`, `errors-test`); they have run
+      only locally. `origin/020-value-type-records` is still at the
+      third-round commits, so the acceptance criterion 3 evidence is stale.
+      Push (approved at slice 6), read the run with the slice-6 `gh run`
+      commands, and record the SHA, run URL and job conclusions in
+      implementation.md as a new acceptance note.
+- [ ] Use one `thrown` and one `data-of` in the shared check namespaces.
+      `closed-record.checks.defclosedrecord` refers
+      `closed-record.probe-support/thrown`, but `closed-record.checks.malli`
+      and `closed-record.checks.hidden-key` (files of this task) keep
+      private copies with the same body and docstring, and all three define
+      the same private `data-of` (`(ex-data (thrown f))`). Add `data-of` to
+      `closed-record.probe-support`, refer `thrown` and `data-of` from the
+      three check namespaces, and remove the copies. Check for refer clashes
+      in the wrapper test namespaces (as in the third round). Keep test and
+      assertion counts.
+- [ ] Sort the `:require` vector of `closed-record.bench.value-type`:
+      `closed-record.bench.value-class` is before
+      `closed-record.bench.timing-tool`; the other entries and the other
+      namespaces are in alphabetical order.

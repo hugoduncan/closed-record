@@ -1338,3 +1338,7 @@ Paths:
   Valhalla 80/314; Clojure 1.11 case 1/7. VT-V8 namespace loads on
   Valhalla, `V` is a value class. clj-kondo, cljfmt clean. Not pushed; CI
   run of this change is pending (acceptance criterion 3).
+
+## Code-shaper review, fifth round (2026-11-04)
+
+- added 3 steps to be addressed
