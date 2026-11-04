@@ -480,7 +480,7 @@
 
 ## Test review follow-ups, third round
 
-- [ ] Push the branch and get a green CI run of `f99ce54`. The test-review
+- [x] Push the branch and get a green CI run of `f99ce54`. The test-review
       follow-ups (`fa5d2d6`, `f99ce54`) changed
       `test/value-type/closed_record/value_type/representation_test.clj`
       (new `options-test`) and removed `subprocess_test.clj`; the new
@@ -489,3 +489,5 @@
       slice 6), read the run with the slice-6 `gh run` commands, and record
       the SHA, run URL and job conclusions in implementation.md as a new
       acceptance note (criterion 3).
+      Done 2026-11-04: pushed `14a3e33` (contains `f99ce54`; later commit
+      changes task files only), run 41885774931, all 9 jobs `success`.

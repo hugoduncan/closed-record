@@ -1083,3 +1083,16 @@ Paths:
 ## Test review, third round (2026-11-04)
 
 - added 1 step to be addressed
+
+## Test review follow-ups, third round (2026-11-04)
+
+- addressed 1 review step.
+- Acceptance note (criterion 3): 2026-11-04, ref `020-value-type-records`,
+  pushed `14a3e33` (contains `f99ce54`, the last commit that changes files
+  outside the task directory; `14a3e33` changes task files only).
+  PR https://github.com/hugoduncan/closed-record/pull/1.
+  Run https://github.com/hugoduncan/closed-record/actions/runs/41885774931:
+  `success`. Jobs: Value-type tests (Valhalla), Value-type tests
+  (Temurin 21), Build verification, Markdown links, Development quality,
+  Release tooling verification, Runtime tests (Clojure 1.11, 1.12, 1.13):
+  all `success`.
