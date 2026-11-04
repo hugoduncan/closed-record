@@ -2,18 +2,18 @@
 
 ## Slice 1: Expansion fixture
 
-- [ ] Create `test/runtime/closed_record/expansion_fixture.clj`
+- [x] Create `test/runtime/closed_record/expansion_fixture.clj`
       (`closed-record.expansion-fixture`, the fixed namespace) with `forms`:
       the fixture `defclosedrecord` forms (cover `:no-print`, `:load-ns`,
       field tags, Java interfaces and methods, destructured method
       parameters), and `with-option`; list the form names in
       implementation.md.
-- [ ] Write the gensym normalisation function (replace `prefix__N` /
+- [x] Write the gensym normalisation function (replace `prefix__N` /
       `prefix__N__auto__` with `prefix__G<i>` / `prefix__G<i>__auto__` by order
       of first appearance) and the printed-form comparison (`*print-meta*`
       true) as `expansion` in the same namespace; verify two expansions of
       the same form normalise to equal strings.
-- [ ] Add the private `strip-positions` helper (plan.md, Position
+- [x] Add the private `strip-positions` helper (plan.md, Position
       metadata): remove `:line`, `:column` and `:file` from every list,
       vector, map and set of the input form; keep other metadata; no
       `clojure.walk`. `expansion` applies it before `macroexpand-1`, so
@@ -22,17 +22,17 @@
       `:file`; field tags and list type hints stay; a form and the same
       text read with `read-string` (no position metadata) give the same
       string.
-- [ ] Add `record!`; verify `src/` matches `ac25942`; record
+- [x] Add `record!`; verify `src/` matches `ac25942`; record
       `test/runtime/closed_record/expansion_fixture.edn` (EDN sorted map of
       form name to normalised printed expansion) from the unchanged emitter
       with `clojure -M:test -e "(require 'closed-record.expansion-fixture)
       (closed-record.expansion-fixture/record!)"`.
-- [ ] Add the VT-V1 fixture test in
+- [x] Add the VT-V1 fixture test in
       `test/runtime/closed_record/value_type_option_test.clj`: no-option and
       `:value-type false` expansions equal the fixture (the
       `:value-type false` assertion stays pending until slice 2 accepts the
       option; note this in the test or add it in slice 2).
-- [ ] Run the ordinary runtime suite; commit.
+- [x] Run the ordinary runtime suite; commit.
 
 ## Slice 2: Option and error contract
 

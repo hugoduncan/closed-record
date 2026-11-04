@@ -683,3 +683,19 @@ Paths:
   `["test/runtime" "dev/bench"]`, so the fixture EDN resolves as a
   resource and the slice-7 "does not load value-type via dev/bench" check
   is necessary; `:clj-1.12` is 1.12.6, `:clj-1.13` is 1.13.0-alpha9.
+
+## Slice 1: expansion fixture (2026-11-03)
+
+- Fixture forms (`closed-record.expansion-fixture/forms`): `:plain`,
+  `:tagged` (`^long ^double ^String ^objects`), `:no-print`, `:load-ns`,
+  `:methods` (both options, `Object`, `Comparable` with a `^String` list
+  hint, `Supplier`), `:destructured` (`BiFunction`, vector and map params).
+  Java interfaces only.
+- Recorded from `src/` equal to `ac25942` (no diff). Same strings on
+  Clojure 1.11.4, 1.12.6, 1.13.0-alpha9.
+- `record!` writes the cljfmt-clean layout (`{k\n "…"\n k …}`), so a
+  re-record needs no `clj-fmt:fix`.
+- Public helpers: `expansion`, `with-option`, `normalise`, `fixture`
+  (reads the resource). `strip-positions` is private.
+- `value_type_option_test.clj` has the no-option assertion only; slice 2
+  adds the `:value-type false` assertion when `check-options` accepts it.
