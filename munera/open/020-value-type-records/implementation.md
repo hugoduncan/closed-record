@@ -611,3 +611,16 @@ Paths:
   Elements `ci.yml` and Tests rows, Verification limits. The Permitted
   dependencies and Generated type sections hold as written; check them
   against the code at slice 8.
+
+## Plan review, fifth round (2026-11-03)
+
+- ambiguity review (plan round 5) added 1 new design step
+- Context for the step: quoted lists in a loaded file carry `:line` and
+  `:column`; vectors and maps do not. Checked with a temporary namespace on
+  the `:test` class path: the top form and plain symbols print no position,
+  but a method body list does. `read-string` uses no line-numbering reader,
+  so its forms carry no position metadata. `cljfmt` scope covers all of
+  `test/` (`quality_scope.clj`).
+- Checked, not filed: `fork/in-order` returns `[p r]` for thunks
+  `p-run r-run`, so VT-V8 passes the `V` thunk first to get `[op v p]`.
+  `run.sh` JAR lookup with `-Spath -M:bench…` accepts extra aliases.

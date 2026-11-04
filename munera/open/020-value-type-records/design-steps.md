@@ -313,3 +313,22 @@
   limits text "Until the job exists". Carry this note into the slice-8
   step of steps.md (the active surface), as round 2 did for the earlier
   notes.
+- [ ] Plan ambiguity: state how the expansion fixture treats the reader
+  position metadata of its input forms. plan.md (Expansion fixture first)
+  puts `forms` as quoted forms in
+  `test/runtime/closed_record/expansion_fixture.clj` and compares printed
+  expansions with `*print-meta*` true. The reader gives each list in a
+  source file `:line` and `:column` metadata. The emitter copies user
+  method bodies into the expansion, so this metadata is in the printed
+  string. Observed (Clojure 1.11.4, current emitter): a quoted
+  `(defclosedrecord P [a b] Object (toString [_] (str (inc a))) …)` in a
+  loaded file gives `^{:line 2 :column …}` three times in the printed
+  `macroexpand-1`. (The round-3 note "a quoted form … gives no `:line`
+  metadata" checked a form with no nested list.) Thus an edit that moves a
+  form in that file (a new form, or a `cljfmt` fix in slice 9) changes the
+  fixture strings with no emitter change. A record again after slice 3 then
+  records the changed emitter, not `ac25942`, so VT-I2 has no reference.
+  Choose and state in plan.md and steps.md (slice 1): for example, remove
+  `:line` and `:column` (and `:file`) from the input forms before
+  expansion, or keep each form as a string and read it with `read-string`
+  (no position metadata). Also state that `with-option` keeps this rule.
