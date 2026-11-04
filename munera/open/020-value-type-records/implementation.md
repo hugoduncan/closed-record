@@ -699,3 +699,20 @@ Paths:
   (reads the resource). `strip-positions` is private.
 - `value_type_option_test.clj` has the no-option assertion only; slice 2
   adds the `:value-type false` assertion when `check-options` accepts it.
+
+## Slice 2: option and error contract (2026-11-03)
+
+- `check-options`: `:value-type` valid only as `true`/`false`/absent;
+  explicit `nil` throws too. `emit` dissocs `:value-type` before splicing
+  opts into `deftype*`.
+- `resolve-value-type` (private, `impl.jvm`) is called in `emit` only when
+  `:value-type true`; it returns the var, but slice 2 discards it and still
+  emits `deftype*`. Slice 3 uses it for the head. `:class-name` is
+  `classname` with its metadata removed.
+- Macroexpansion wraps the error in `Compiler$CompilerException`; tests
+  unwrap with `ex-cause`. Tests that check `:class-name` must bind `*ns*`
+  (scry runs with `*ns*` = `user`).
+- `closed-record.subprocess/run` `[args & {:keys [jvm-opts class-path]}]`
+  → `{:exit :out :err}`; absent-var test passes a `-e` script, reads the
+  printed EDN.
+- Suite green on 1.11.4, 1.12.6, 1.13.0-alpha9 (186 tests, 2793 assertions).

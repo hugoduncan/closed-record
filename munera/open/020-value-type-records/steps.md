@@ -36,30 +36,30 @@
 
 ## Slice 2: Option and error contract
 
-- [ ] Extend `check-options` in `closed-record.impl.jvm`: accept
+- [x] Extend `check-options` in `closed-record.impl.jvm`: accept
       `:value-type`; `true`/`false`/absent valid; other values throw
       `IllegalArgumentException` at macroexpansion; option not passed to
       `deftype*`.
-- [ ] Implement value-mode resolution: `requiring-resolve` of
+- [x] Implement value-mode resolution: `requiring-resolve` of
       `value-type.core/defvaluetype*` only when `:value-type true` (VT-D4);
       throw → `ex-info {:type :closed-record/value-type-unavailable
       :class-name classname}` with the thrown exception as cause; `nil` →
       same `ex-info` with no cause; `classname` is the qualified class-name
       symbol.
-- [ ] Add ordinary-suite VT-V1 tests: invalid option values throw
+- [x] Add ordinary-suite VT-V1 tests: invalid option values throw
       `IllegalArgumentException`; `:value-type true` without value-type throws
       `:closed-record/value-type-unavailable` with the `requiring-resolve`
       exception as cause; `:class-name` is the expected symbol.
-- [ ] Add the subprocess-JVM test helper `closed-record.subprocess`
+- [x] Add the subprocess-JVM test helper `closed-record.subprocess`
       (`test/runtime/closed_record/subprocess.clj`): `clojure.main` with
       given arguments; java binary of `java.home`, JVM input arguments of
       the test JVM, extra JVM options, extra class path entries before the
       test JVM class path; gives `{:exit :out :err}`.
-- [ ] Add the absent-var subprocess test: temporary directory with a stub
+- [x] Add the absent-var subprocess test: temporary directory with a stub
       `value_type/core.clj` containing only `(ns value-type.core)`; assert
       the error has no cause (`ex-cause` nil).
-- [ ] Complete the fixture test's `:value-type false` assertion if deferred.
-- [ ] Run the ordinary runtime suite on Clojure 1.11, 1.12 and 1.13; commit.
+- [x] Complete the fixture test's `:value-type false` assertion if deferred.
+- [x] Run the ordinary runtime suite on Clojure 1.11, 1.12 and 1.13; commit.
 
 ## Slice 3: Emitter value mode
 

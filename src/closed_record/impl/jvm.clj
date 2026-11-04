@@ -36,9 +36,29 @@
 
 (defn- check-options
   [opts]
-  (when-let [bad (seq (remove #{:no-print :load-ns} (keys opts)))]
+  (when-let [bad (seq (remove #{:no-print :load-ns :value-type} (keys opts)))]
     (throw (IllegalArgumentException.
-            ^String (apply print-str "Unsupported option(s) -" bad)))))
+            ^String (apply print-str "Unsupported option(s) -" bad))))
+  (when-not (contains? #{::absent true false} (:value-type opts ::absent))
+    (throw (IllegalArgumentException.
+            (str ":value-type must be true or false, not "
+                 (pr-str (:value-type opts)))))))
+
+(defn- resolve-value-type
+  "Resolve `value-type.core/defvaluetype*` (VT-D4). Throw ex-info
+  `:closed-record/value-type-unavailable` when it does not resolve: with the
+  `requiring-resolve` exception as cause, or with no cause when the var is
+  absent."
+  [classname]
+  (let [data {:type :closed-record/value-type-unavailable
+              :class-name classname}
+        msg (str "value-type.core/defvaluetype* is not available for "
+                 classname)
+        v (try
+            (requiring-resolve 'value-type.core/defvaluetype*)
+            (catch Throwable t
+              (throw (ex-info msg data t))))]
+    (or v (throw (ex-info msg data)))))
 
 (defn- maybe-destructured
   "Replace each non-symbol method parameter with a gensym, and destructure
@@ -255,8 +275,11 @@
   [tname fields opts impls]
   (check-field-metadata fields)
   (check-options opts)
-  (let [classname (with-meta (symbol (str (namespace-munge *ns*) "." tname))
+  (let [value-type? (true? (:value-type opts))
+        opts (dissoc opts :value-type)
+        classname (with-meta (symbol (str (namespace-munge *ns*) "." tname))
                     (meta tname))
+        _ (when value-type? (resolve-value-type (with-meta classname nil)))
         cname-str (str classname)
         plain-fields (mapv #(with-meta % nil) fields)
         type-hash (hash classname)
