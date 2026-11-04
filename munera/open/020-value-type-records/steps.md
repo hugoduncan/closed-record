@@ -591,7 +591,7 @@
 
 ## Test review follow-ups, tenth round
 
-- [ ] Push the branch and get a green CI run of `e77b873`. The ninth-round
+- [x] Push the branch and get a green CI run of `e77b873`. The ninth-round
       follow-up changed
       `test/value-type/closed_record/value_type/subprocess_test.clj`
       (VT-V5 child result `{:defined true}` or `{:causes [...]}`); it has
@@ -600,7 +600,9 @@
       `5aa9556`. Push (approved at slice 6), read the run with the slice-6
       `gh run` commands, and record the SHA, run URL and job conclusions in
       implementation.md as a new acceptance note (criterion 3).
-- [ ] Make the identity branch of
+      Done 2026-11-04: pushed `688b02b` (contains `e77b873` and the
+      second item), run 41889615136, all 9 jobs `success`.
+- [x] Make the identity branch of
       `closed-record.value-type.representation-test/representation-test`
       fail with a clear message when the hash field is absent.
       `(is (some? (.getDeclaredField VP "__hash")))` cannot fail:
@@ -611,3 +613,5 @@
       "__hash"))`), and use the same form for the value branch
       (`__hash` and `__hasheq` absent) so both branches are consistent.
       Keep test and assertion counts in implementation.md current.
+      Done: `field-names` helper; `contains?` in both branches.
+      Value-type suite 82/314 (Temurin 21), 81/315 (Valhalla).

@@ -1190,3 +1190,19 @@ Paths:
 ## Test review, tenth round (2026-11-04)
 
 - added 2 steps to be addressed
+
+## Test review follow-ups, tenth round (2026-11-04)
+
+- addressed 2 review steps.
+- `representation-test/representation-test`: a `field-names` helper gives
+  the declared field names of `VP`; both branches use `contains?`, so a
+  missing (identity) or present (value) hash field gives a failure, not a
+  test error. Value-type suite 82/314 (Temurin 21), 81/315 (Valhalla);
+  counts unchanged. kondo, cljfmt clean.
+- Acceptance note (criterion 3): 2026-11-04, ref `020-value-type-records`,
+  SHA `688b02b` (contains `e77b873`), PR
+  https://github.com/hugoduncan/closed-record/pull/1, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41889615136:
+  Build verification, Value-type tests (Temurin 21), Value-type tests
+  (Valhalla), Release tooling verification, Development quality, Markdown
+  links, Runtime tests (Clojure 1.11, 1.12, 1.13): all `success`.
