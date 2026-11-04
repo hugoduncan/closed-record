@@ -491,3 +491,15 @@
       acceptance note (criterion 3).
       Done 2026-11-04: pushed `14a3e33` (contains `f99ce54`; later commit
       changes task files only), run 41885774931, all 9 jobs `success`.
+
+## Test review follow-ups, fourth round
+
+- [ ] Make `closed-record.value-type.errors-test/value-type-form` find the
+      `defvaluetype*` form at any depth of the expansion (for example with
+      `tree-seq`, as `representation-test/type-form` does). Now it looks
+      only at the direct children of the expansion, so the test depends on
+      the `(let [] …)` wrapper, an implementation decision that VT-V6 does
+      not state. If the wrapper changes, `value-type-form` gives nil,
+      `(eval nil)` throws nothing, and the test fails with a misleading
+      class, message and `ex-data` mismatch. Assert that the form is found
+      before the comparison.

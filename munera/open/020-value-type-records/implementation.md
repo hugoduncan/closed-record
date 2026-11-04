@@ -1096,3 +1096,7 @@ Paths:
   (Temurin 21), Build verification, Markdown links, Development quality,
   Release tooling verification, Runtime tests (Clojure 1.11, 1.12, 1.13):
   all `success`.
+
+## Test review, fourth round (2026-11-04)
+
+- added 1 step to be addressed
