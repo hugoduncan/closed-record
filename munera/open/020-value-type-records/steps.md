@@ -667,3 +667,39 @@
       matrix runs the three test commands above": the section now has six
       test commands above (three runtime, three value-type). Name the three
       `test/runtime` commands.
+
+## Code-shaper review follow-ups
+
+- [ ] Give shared checks one entry point that takes values. Now the macro
+      `closed-record.checks.support/define-checks` quotes its arguments and
+      only calls the public `load-checks`, so `:representation` is a form
+      that `transform` puts into the check code and that is evaluated at
+      each use. Thus each of the 9 value-type wrappers
+      (`test/value-type/closed_record/value_type/<topic>_test.clj`) must
+      also call `(expectation/representation)` alone at load for the guard.
+      Make `load-checks` (or a function `define-checks`) the only entry
+      point: it takes the representation value (`:identity` or `:value`),
+      and `transform` puts that keyword in place of
+      `support/representation`. Remove the macro, the `(if (seq? src-sym)
+      …)` unquote and the separate guard calls (the evaluated opts map is
+      the guard). Update the `support.clj` docstring and the `checks/*.clj`,
+      `support.clj` and `*_test.clj` rows of
+      `ramora/defclosedrecord/embodiment/artifacts.md`. Keep test and
+      assertion counts.
+- [ ] Remove the duplicate form walker in `test/runtime`.
+      `closed-record.expansion-fixture/strip-positions` and
+      `closed-record.checks.support/transform` each rebuild lists, map
+      entries (before vectors), vectors, maps and sets and copy metadata,
+      with the same branch order. `support/with-record-opts` and
+      `fixture/with-option` both insert options after the field vector.
+      Put one metadata-keeping walker (and one option-insert function) in
+      one support namespace, and use it from both, so a fix to the walk
+      (for example a new collection type) applies to both. Keep the
+      fixture strings and test counts.
+- [ ] In `closed-record.impl.jvm/emit`, make the value-type availability
+      check a `check-*` function, as `check-field-metadata` and
+      `check-options` are. Now `resolve-value-type` returns the var, `emit`
+      discards it through a `_` binding in the `let`, and the name says
+      "resolve". Rename it (for example `check-value-type`), give nil, and
+      call it as a statement; keep the ex-info contract (VT-D4) and the
+      `:class-name` value.

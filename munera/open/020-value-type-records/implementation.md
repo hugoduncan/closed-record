@@ -1254,3 +1254,7 @@ Paths:
 ## Documentation review, second round (2026-11-04)
 
 - no new actionable issues
+
+## Code-shaper review (2026-11-04)
+
+- added 3 steps to be addressed
