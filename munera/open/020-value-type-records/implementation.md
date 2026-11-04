@@ -624,3 +624,9 @@ Paths:
 - Checked, not filed: `fork/in-order` returns `[p r]` for thunks
   `p-run r-run`, so VT-V8 passes the `V` thunk first to get `[op v p]`.
   `run.sh` JAR lookup with `-Spath -M:bench…` accepts extra aliases.
+- no inconsistency review feedback (plan round 5)
+- Checked, not filed: `emit` gives `(vec fields)` with metadata to the
+  type form (only the factories get `plain-fields`), so the VT-V6
+  `^:non-nil` and `^:nil-restricted` cases reach `defvaluetype*`. No
+  ordinary test file name collides with `aot` or `expectation` under
+  `closed-record.value-type.*`.
