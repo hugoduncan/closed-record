@@ -635,3 +635,35 @@
       Done 2026-11-04: `b642eb2`; ordinary 186/2792, Temurin 21 82/314
       (test runs), Valhalla 80/314 (test not defined); run 41890869170,
       all 9 jobs `success`.
+
+## Documentation review follow-ups
+
+- [ ] Add a `CHANGELOG.md` `## [Unreleased]` note for the `:value-type`
+      option (user-visible accretion). The release contract
+      (`ramora/release-workflow/contracts-and-flow.md`) says "Maintain an
+      Unreleased section", and the README section "Value-type records"
+      describes an option that the Clojars release `0.1.190` does not have.
+      Then update `mementum/state.md` ("The release task must add a
+      `CHANGELOG.md` note for the option").
+- [ ] Make the user documentation agree with the VT-R4 mitigation
+      (`ramora/value-type-records/invariants-and-verification.md`): it says
+      the user documentation states "the value-type size results", but
+      `README.md` and `doc/performance.md` "Value-type records" state only
+      the hash cost. Add the value-type size result (value objects measured
+      as larger than identity objects, with its source) to
+      `doc/performance.md`, or change the VT-R4 mitigation to the text that
+      the documentation has.
+- [ ] Correct the VT-V2 row of
+      `ramora/value-type-records/invariants-and-verification.md`: "the
+      option is not passed to `deftype*`" must name `defvaluetype*`, as
+      the test `representation-test/value-expansion-test` ("the option is
+      not passed to defvaluetype*") and VT-D3 state.
+- [ ] Update the `test/runtime/closed_record/checks/*.clj` row of
+      `ramora/defclosedrecord/embodiment/artifacts.md`: "the D-06
+      serialization check asserts only for identity output" is stale after
+      `b642eb2`. The check namespace defines `serializable-test` only for
+      identity output.
+- [ ] In `doc/development.md`, Continuous integration, replace "The runtime
+      matrix runs the three test commands above": the section now has six
+      test commands above (three runtime, three value-type). Name the three
+      `test/runtime` commands.

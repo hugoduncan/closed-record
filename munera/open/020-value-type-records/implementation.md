@@ -1230,3 +1230,7 @@ Paths:
 ## Test review, twelfth round (2026-11-04)
 
 - no new actionable issues
+
+## Documentation review (2026-11-04)
+
+- added 5 steps to be addressed
