@@ -2,7 +2,7 @@
 title: Tests of eval'ed forms and compiler-generated types
 status: active
 category: testing
-tags: [scry, eval, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site, equality, hash, withMeta, extmap, iterator, test.check, property, keyword-invoke, map-views]
+tags: [scry, eval, expansion-fixture, shared-checks, subprocess, value-type, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site, equality, hash, withMeta, extmap, iterator, test.check, property, keyword-invoke, map-views]
 related: [mementum/knowledge/dev-tooling.md, test/closed_record/compiler_rules_test.clj, test/closed_record/defclosedrecord_test.clj, test/closed_record/literal_test.clj, test/closed_record/field_value_test.clj, test/closed_record/equality_test.clj, test/closed_record/hidden_key_test.clj, test/closed_record/property_test.clj, test/closed_record/differential_test.clj, test/closed_record/malli_test.clj, ramora/defclosedrecord/invariants.md]
 depends-on: [mementum/knowledge/dev-tooling.md]
 ---
@@ -175,6 +175,34 @@ place of a model map, and compares the two values after the start and after each
 - `(.containsValue x nil)` is false on both types, also when a field is nil (`defrecord` uses
   `(some #{v} (vals x))`). It is not a difference.
 - `defrecord` `hash` is also type hash XOR `mapHasheq`. Compare `hash` only inside each type (D-07).
+
+## Expansion fixtures and shared checks over an option
+
+Observed in task 020 (`:value-type`; Clojure 1.11.4, 1.12.6, 1.13.0-alpha9). Patterns:
+`test/runtime/closed_record/expansion_fixture.clj`, `checks/support.clj`, `form_support.clj`, `subprocess.clj`.
+
+- 🎯 "The expansion does not change": two expansions are never `=` (gensyms). Record a fixture of printed
+  `macroexpand-1` strings (`*print-meta*` true, so tags and mutable metadata count) from the unchanged emitter,
+  before the first emitter change. Normalise `prefix__N` and `prefix__N__auto__` to `prefix__G<i>` (`<i>` = order of
+  first appearance). An intended expansion change records the fixture again in the same commit.
+- ❌ The emitter copies user method bodies into the expansion, so reader `:line`/`:column`/`:file` of quoted input
+  forms enter the fixture. A moved form (new form, `cljfmt` fix) then changes it. Remove these keys from the input
+  first. ❌ `clojure.walk` drops list metadata on Clojure 1.11.4: use `closed-record.form-support/walk-form`.
+- 🔁 Run one behaviour suite under a type option: a check namespace holds plain top-level forms (linted, never
+  loaded). The function `define-checks` reads its source, evaluates only the `ns` form, reads the rest in that
+  namespace (syntax-quote resolves there), inserts the options after each field vector and evaluates in the caller.
+  Quoted body vectors (not linted) and per-topic macros were tried and removed.
+- ❌ Forms that come from another file report the caller file with the line of the source file. Bind
+  `Compiler/SOURCE` and `Compiler/SOURCE_PATH` to the check file during `eval`.
+- 🎯 A test that applies to one mode only: `(when mode? (deftest ...))`. Not an `if` with an assertion that cannot
+  fail, and not a `when` in the body (scry fails a test with no assertion).
+- ❌ An assertion must be able to fail: `(is (some? (.getDeclaredField c n)))` throws, never false. Use
+  `(contains? field-names n)`. A child JVM prints one EDN shape for each outcome, so a contract violation is a failure,
+  not a read error.
+- 💡 Use a child JVM (`java.home` binary, JVM input arguments, test class path) for a setting that a library reads
+  once at load, for "does not load library X" (in the suite without X it cannot fail), and for AOT compile/load.
+- 💡 When the result can silently fall back (value class → identity class), the expected mode comes from the job (a
+  test system property), not from capability detection.
 
 ## Expansion-time errors
 
