@@ -842,7 +842,13 @@ Paths:
   additions only).
 - Not yet run in CI: push needs user approval (gate).
 
-<!-- IMPLEMENTATION_BLOCKER: START -->
-- blocker: Slice 6 push gate: the first push to GitHub needs user approval (plan.md, CI, Push).
-- required-human-action: Approve `git push origin master:refs/heads/020-value-type-records` and `gh pr create --base master --head 020-value-type-records` (or name another ref), and approve the slice-9 final push to the same ref.
-<!-- IMPLEMENTATION_BLOCKER: END -->
+## Slice 6: push gate resolved (2026-11-03)
+
+- User decision: continue on a branch other than `master`; that branch may
+  be pushed freely. The task now works on the branch
+  `020-value-type-records` in the worktree
+  `/Users/duncan/projects/hugoduncan/closed-record/020-value-type-records`,
+  created from local `master` at `213ccbd`. The slice-9 push is approved too.
+- `master` is not pushed and gets no more task commits.
+- `ci.yml` triggers on `pull_request` (and pushes to `master`), so CI
+  evidence needs the pull request of plan.md (CI, Push).

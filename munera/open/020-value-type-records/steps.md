@@ -205,12 +205,14 @@
 - [x] Verify: no `continue-on-error`; artifact names unique in the workflow;
       runtime matrix unchanged; release workflow runs the new jobs through
       `workflow_call` with no change.
-- [ ] **Stop and ask the user before the first push** (plan.md, CI,
-      Push). Proposed: `git push origin
-      master:refs/heads/020-value-type-records` and `gh pr create --base
-      master --head 020-value-type-records`; use another ref if the user
-      names one. Also ask for approval of the slice-9 final push to the
-      same ref (plan.md, CI, Final push).
+- [x] **Stop and ask the user before the first push** (plan.md, CI,
+      Push). Done 2026-11-03: the user approved free pushes of the branch
+      `020-value-type-records` (worktree
+      `/Users/duncan/projects/hugoduncan/closed-record/020-value-type-records`),
+      including the slice-9 push. Not `master`.
+- [ ] Push and open the pull request: `git push -u origin
+      020-value-type-records`, then `gh pr create --base master --head
+      020-value-type-records` (once).
 - [ ] Read the run of the pushed commit (`gh run list --workflow ci.yml
       --branch <ref> --commit <sha>`, `gh run watch <id> --exit-status`,
       `gh run view <id> --json jobs`); every job, including both new jobs,
@@ -318,8 +320,8 @@
 
 - [ ] Run format, lint, prose, API freshness and link checks; fix findings.
 - [ ] Run the build and release checks.
-- [ ] Final push (plan.md, CI, Final push): if the user did not approve it
-      at slice 6, stop and ask. Push local `master` to the slice-6 ref; read
+- [ ] Final push (plan.md, CI, Final push): approved at slice 6. Push the
+      branch `020-value-type-records`; read
       the run of the pushed commit with the slice-6 `gh run` commands; every
       job has conclusion `success`. After a failure, fix, commit and push to
       the same ref again. Record the date, ref, SHA, pull request URL and

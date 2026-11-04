@@ -302,26 +302,24 @@ Key decisions:
     extracted pinned JDK. The Clojure CLI uses `JAVA_CMD` for dependency
     resolution and for the test JVM. `-J--enable-preview` applies only to
     the test JVM.
-  - Push (gate): acceptance criterion 3 needs the jobs to pass in CI. Local
-    `master` is ahead of `origin/master` by many commits, and tasks 014 and
-    017 do not push only for evidence. Thus slice 6 stops and asks the user
-    before the first push, as at the slice-4 gate. The proposed ref is a
-    new branch `020-value-type-records` with a pull request to `master`
-    (`ci.yml` runs on `pull_request`): `git push origin
-    master:refs/heads/020-value-type-records`, then `gh pr create --base
-    master --head 020-value-type-records`. If the user names another ref
-    (for example `master`), use it. A fix after a failed run is a new commit
-    on local `master`, pushed to the same ref. The question at slice 6 also
-    asks for approval of the slice-9 push to the same ref (Final push). A
-    merge of the pull request is the user's decision and is not part of
-    this task.
+  - Push: acceptance criterion 3 needs the jobs to pass in CI. User
+    decision (2026-11-03): the work continues on the branch
+    `020-value-type-records`, in the worktree
+    `/Users/duncan/projects/hugoduncan/closed-record/020-value-type-records`,
+    and that branch may be pushed with no further approval. Local `master`
+    does not get task commits and is not pushed. `ci.yml` runs on
+    `pull_request`, not on a push to another branch. Thus push with
+    `git push -u origin 020-value-type-records`, then open the pull request
+    with `gh pr create --base master --head 020-value-type-records` once. A
+    fix after a failed run is a new commit on the branch, pushed to the same
+    ref. A merge of the pull request is the user's decision and is not part
+    of this task.
   - Final push (slice 9): slices 7 to 9 change files that CI checks (the
     `src` docstring, `doc/`, Ramora, `dev/bench`, quality fixes). Thus the
     slice-6 run is not the acceptance criterion 3 evidence. After the
-    local quality, build and release checks of slice 9 pass, push local
-    `master` to the slice-6 ref and read the run with the CI result
-    commands. If the user did not approve this push at slice 6, stop and
-    ask first. A fix after a failed run is a new commit, pushed to the same
+    local quality, build and release checks of slice 9 pass, push the
+    branch `020-value-type-records` and read the run with the CI result
+    commands. The user approved this push (Push). A fix after a failed run is a new commit, pushed to the same
     ref. The acceptance criterion 3 evidence is the green run of the last
     commit that changes files outside
     `munera/open/020-value-type-records/`. The commit that records the run
@@ -392,7 +390,7 @@ Key decisions:
    Clojure 1.11 VT-V1 case. Local runs on Temurin 21 and Valhalla.
 6. **CI** — the two required jobs, archive pin and cache, failure uploads,
    release workflow verified unchanged (`workflow_call` picks up new jobs);
-   push (**gate: requires user approval**) and CI result.
+   push of branch `020-value-type-records` (approved) and CI result.
 7. **VT-V8 bench** — entry namespace, `run.sh` environment variables,
    manual Valhalla run; results in `implementation.md` and `doc/performance.md`; default
    `:bench` run and the `test/bench` launcher test verified unchanged.
