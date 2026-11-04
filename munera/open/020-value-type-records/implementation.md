@@ -193,3 +193,28 @@ Paths:
   (`value_type/impl/runtime.clj`). `:value-type nil` is an "other value"
   (`IllegalArgumentException`); use `contains?`, not truthiness.
 - inconsistency review (round 4) added 1 new design step
+
+## Notes for the round-4 design-steps pass
+
+- Two open steps: the artifact-map rows (architecture) and the scry
+  failure uploads (inconsistency). Earlier principles apply: edit design.md
+  in place, keep VT-D1 to VT-D10 and the scope, no progress history in
+  Ramora. Both resolve as edits to the Documentation list and the CI
+  section; no new decision.
+- Artifact map step: extend the existing
+  `ramora/defclosedrecord/embodiment/artifacts.md` Documentation item. Rows:
+  `src/closed_record/impl/jvm.clj` (now "Builds the `deftype*` form and the
+  factories"), the `test/runtime/closed_record/*_test.clj` glob row, and new
+  rows for the expansion fixture and, if in `test/runtime`, the shared
+  VT-V3/VT-V4 checks. The `ci.yml` row ("three alias-based runtime test
+  entries", "structured test-failure uploads") also changes; the existing
+  item names it, so keep its wording consistent with the upload step.
+- Upload step: pattern in `.github/workflows/ci.yml` is a step
+  `if: failure()`, `actions/upload-artifact@v4.6.2`, `name: scry-…`,
+  `path: .scry-results/` (lines ~137-142 runtime matrix). Names now used:
+  `scry-runtime-<version>`, `scry-build`, `scry-release`, `scry-tooling`.
+  One job with two scry steps (Temurin suite and Clojure 1.11 case) shares
+  `.scry-results/`; a second run can overwrite the first. Give each step
+  its own upload, or a distinct results directory if scry allows it.
+- Doc targets: `doc/development.md` Continuous integration, lines ~49-79
+  (artifact list at ~74, "three test commands above" at ~70).
