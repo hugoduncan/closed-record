@@ -95,3 +95,13 @@
   of design.md: no cause (`ex-cause` is `nil`) in this case, or a cause that
   the emitter makes (state its class and message). A missing library and a
   load failure throw, and that exception is the cause.
+- [ ] Inconsistency: the CI section adds the `Value-type tests (Valhalla)`
+  job, which runs Clojure on the Valhalla JDK. After this change, two
+  statements in `doc/` are false: `doc/development.md` (Continuous
+  integration: "Clojure jobs use Temurin Java 21") and
+  `doc/tool-installation.md` (Java and Clojure CLI: "CI uses Temurin Java
+  21"). The Documentation item for `doc/development.md` names only the
+  commands, and no item names `doc/tool-installation.md`, but acceptance
+  criterion 7 requires current documentation. Add both statements to the
+  Documentation list: the Valhalla job uses the pinned Valhalla build, and
+  the other Clojure jobs use Temurin Java 21.
