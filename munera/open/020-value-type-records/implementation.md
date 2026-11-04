@@ -454,3 +454,28 @@ Paths:
   (`DeLaGuardo/setup-clojure@13.4`, `cli: '1.12.6.1673'`). The Clojure CLI
   script uses `JAVA_CMD` for dependency resolution and for the program, so
   the Valhalla job can work without Temurin. State the choice.
+
+## Plan-review design-steps pass, round 2 (2026-11-03)
+
+- All 3 plan steps resolved in plan.md and steps.md. design.md unchanged.
+  No step of steps.md is done; this pass changes the plan only.
+- VT-V8 choice: own parent loop, child result and table in
+  `closed-record.bench.value-type`; no change to any other `dev/bench`
+  namespace. The S-03 parts that do not fit: `report/header` (fixed, has
+  "Result"), private `report/mean-interval` (t quantile for 5 forks) and
+  `report/stats-error`. Thus VT-V8 shows the min–max range of fork means,
+  not a t interval. `report/ratio` takes any two `{:mean …}` maps.
+- `closed-record.bench/bench-op` is a public macro; its syntax-quote
+  resolves to `criterium.bench/bench` and `report/per-call-stats`, so
+  requiring `closed-record.bench` loads what it needs. That direction of
+  require is allowed (only the reverse is forbidden).
+- `test/bench` launcher test: `--dir test/bench` does not put the
+  directory on the class path (scry error "Could not locate
+  closed_record/timing_launcher_test…"); the `-Sdeps` `:bench-test` alias
+  does. Do not use `-M:bench` with scry: its `:main-opts` run
+  `closed-record.bench` first. Run left only ignored `target/timing-run.*`
+  directories.
+- Clojure CLI 1.12.6.1673 script (`libexec/bin/clojure`): `JAVA_CMD`
+  defaults to `type -p java` and is used for `make-classpath2` (resolution)
+  and the program JVM. CI pins: `.github/workflows/ci.yml` lines 21-27,
+  127-133, 155-161, 185-191.

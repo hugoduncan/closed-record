@@ -137,16 +137,68 @@ Key decisions:
   (`dev/bench/closed_record/bench/value_type.clj`) that no other namespace
   requires, with its own child command (as `default-child-cmd`, with
   `-m closed-record.bench.value-type <fork> <result-file>`), measuring both record kinds in the same child JVM. Use the criterium fork
-  harness, not `dev/bench/valhalla/` probes. `default-child-cmd` already
-  copies `java.home` and JVM input arguments to forks, so `--enable-preview`
-  propagates.
+  harness, not `dev/bench/valhalla/` probes. The VT-V8 child command copies
+  `java.home`, the JVM input arguments and `java.class.path` to the forks,
+  as `default-child-cmd` does, so `--enable-preview` and the corrected
+  Criterium overlay of `run.sh` propagate.
+  - Changed `dev/bench` namespaces: none. `fork/parent`,
+    `report/fork-stats`, `report/table`, `report/exit-code`,
+    `report/decode-result` and `legacy-transport` accept only the six S-03
+    `report/ops` and apply the S-03 pass rule, and `fork/run-fork` is
+    private. Thus the entry namespace has its own parent loop, child result
+    and report, as the `assoc-timing` family has
+    (`dev/bench/closed_record/bench/assoc_timing_*.clj`). `fork`, `report`,
+    `legacy-transport`, `timing-tool` and `closed-record.bench` do not
+    change, so the default `:bench` run and its tests do not change (VT-I2).
+    The entry namespace uses these public vars: `fork/in-order`,
+    `report/per-call-stats`, `report/fork-count` (5), `report/ratio`,
+    `timing-tool/observe`, `timing-tool/declaration`,
+    `timing-tool/validate-observation` and the macro
+    `closed-record.bench/bench-op`.
+  - Records: `(defclosedrecord V [a b c] :value-type true)` (value output)
+    and `(defclosedrecord P [a b c])` (ordinary). `ops` is
+    `["(hash x)" "(= x y)"]`. `x` and `y` are two equal instances made with
+    `->V` or `->P`.
+  - Child (`-main <fork> <result-file>`): if `V` is not a value class
+    (reflective call of `Class.isValue`; on a JVM without that method, not
+    a value class), throw, so the child exits non-zero. Then call
+    `timing-tool/observe`, bench each op for `V` and `P` in the
+    `fork/in-order` order with 5 s for each run (as `closed-record.bench`),
+    and write the EDN
+    `{:schema-version 1 :timing-tool <observation> :results [[op v p] …]}`.
+    `v` and `p` are `report/per-call-stats` maps `{:mean :low :high}`, ns
+    for one call.
+  - Parent (`-main` with no arguments): get the declaration
+    `(timing-tool/declaration (timing-tool/observe))` before the first
+    launch. Run `report/fork-count` children one after the other (forks
+    0 to 4), each with a new temporary result file and `inheritIO`. A
+    child result is valid when: the exit is 0; the file exists; the EDN
+    reads; `:schema-version` is 1; `timing-tool/validate-observation` of
+    the declaration and `:timing-tool` does not throw; `:results` is a
+    vector of two `[op v p]` entries in `ops` order, where `v` and `p` are
+    maps with exactly the keys `:mean :low :high` and number values.
+  - Output: one table on stdout with the columns `Operation`,
+    `V mean [min, max] ns`, `P mean [min, max] ns`, `V / P` and `Forks`.
+    The mean is the mean of the five fork `:mean` values (ns for one call).
+    `min` and `max` are the range of the fork means, not a confidence
+    interval. `V / P` is `report/ratio` of the two means. The table has no
+    pass rule and no result column.
+  - Exit code: 0 when all five children are valid; 2 at the first child
+    that is not valid (stderr `fork <n> failed: <reason>`, no table); 64 for
+    a wrong argument count (stderr usage). No exit code 1, because no pass
+    rule applies.
+  - No automated test loads the entry namespace, because a test in
+    `test/runtime` or `test/bench` must not load value-type (design,
+    Dependencies). The manual VT-V8 run is its check.
   - `dev/bench/timing/run.sh` gets two environment variables. The arguments
     do not change: `"$@"` are main arguments, and no arguments give
     `-m closed-record.bench`.
     - `BENCH_ALIASES`: alias keywords that `run.sh` appends to `:bench`, for
       example `:value-type-test:clj-1.12`. Default empty. The Criterium JAR
       lookup (`clojure -Srepro -Spath -M:bench$BENCH_ALIASES`) and the run
-      use the same aliases, so the JAR comes from the same class path.
+      (`-M:bench$BENCH_ALIASES:corrected-timing`) use the same aliases, so
+      the JAR comes from the same class path. `:corrected-timing` stays
+      last, because it clears the main options.
     - `BENCH_JVM_OPTS`: Clojure CLI `-J` options, separated by spaces, for
       example `-J--enable-preview`. Default empty. Only the run gets them.
       An option that contains a space is not supported.
@@ -154,9 +206,26 @@ Key decisions:
       use the same binary through `java.home`.
   - VT-V8 command:
     `JAVA_CMD=<valhalla-jdk>/bin/java BENCH_ALIASES=:value-type-test:clj-1.12 BENCH_JVM_OPTS=-J--enable-preview sh dev/bench/timing/run.sh -m closed-record.bench.value-type`.
+  - `run.sh` check: `test/bench/closed_record/timing_launcher_test.clj`
+    calls `run.sh -e …` through `clojure.java.shell`, so the child shell
+    gets the environment of the test JVM. `test/bench` has no alias, and
+    `:bench` has main options (`-m closed-record.bench`) that would run
+    first. Thus the command adds `test/bench` with a `-Sdeps` alias and
+    selects only the launcher test (it starts `run.sh` as a process and
+    needs no Criterium on its own class path), with both variables unset:
+    `env -u BENCH_ALIASES -u BENCH_JVM_OPTS clojure -Sdeps '{:aliases {:bench-test {:extra-paths ["test/bench"]}}}' -M:test:bench-test -m scry.cli --dir test/bench --ns closed-record.timing-launcher-test`.
+    Checked before the change: 1 test, 4 assertions pass.
 - **CI**: two new required jobs per VT-D10, with the pinned Valhalla archive
   (SHA-256 check, `actions/cache` keyed on the SHA-256) and per-step scry
   failure uploads with unique names.
+  - Clojure CLI: both new jobs install Clojure CLI `1.12.6.1673` with
+    `DeLaGuardo/setup-clojure@13.4`, as the other Clojure jobs do.
+  - Java: the Temurin 21 job uses `actions/setup-java@v4.7.1` (Temurin,
+    `'21'`), as the runtime matrix does. The Valhalla job has no
+    `setup-java` step. It sets `JAVA_CMD` to the `bin/java` of the
+    extracted pinned JDK. The Clojure CLI uses `JAVA_CMD` for dependency
+    resolution and for the test JVM. `-J--enable-preview` applies only to
+    the test JVM.
 
 ## Risks
 
@@ -185,6 +254,10 @@ Key decisions:
 - **scry load errors**: the expectation guard fails the suite through a
   namespace load error. Verify in slice 5 that scry 0.1.61 then exits
   non-zero.
+- **Valhalla JDK for dependency resolution**: in the Valhalla job, the
+  Clojure CLI runs tools.deps on the early-access JDK (`JAVA_CMD`). If that
+  fails, record the facts in implementation.md and stop for a user
+  decision.
 
 ## Slice order
 
@@ -212,7 +285,7 @@ Key decisions:
    release workflow verified unchanged (`workflow_call` picks up new jobs).
 7. **VT-V8 bench** — entry namespace, `run.sh` environment variables,
    manual Valhalla run; results in `implementation.md` and `doc/performance.md`; default
-   `:bench` run verified unchanged.
+   `:bench` run and the `test/bench` launcher test verified unchanged.
 8. **Documentation** — docstring, README, `doc/development.md`,
    `doc/tool-installation.md`, `doc/API.md` regeneration, Ramora value-type
    pages, defclosedrecord embodiment and artifact map, `mementum/state.md`.

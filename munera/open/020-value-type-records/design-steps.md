@@ -216,7 +216,7 @@
   emitter can reach (`^:non-nil` or `^:nil-restricted` field; optionally a
   user method that reads `__hash`, which gives `:removed-field-access` on
   value output only). Remove the `:mutable-field` case.
-- [ ] Plan ambiguity: state how the VT-V8 entry runs the forks and reports
+- [x] Plan ambiguity: state how the VT-V8 entry runs the forks and reports
   the result. Plan and steps say only "its own child command" and "via the
   criterium fork harness". The harness parent and transport are fixed to
   S-03: `fork/parent` prints `report/table` of `report/fork-stats` and
@@ -231,7 +231,7 @@
   namespaces change, if any (for example `run-fork` made public, or `ops`
   as a parameter). A change to `fork`, `report` or `legacy-transport` must
   keep the default `:bench` run and its tests unchanged (VT-I2).
-- [ ] Plan inconsistency: the `run.sh` change has no test step. The
+- [x] Plan inconsistency: the `run.sh` change has no test step. The
   plan-review design-steps notes in implementation.md say that
   `test/bench/closed_record/timing_launcher_test.clj` calls
   `run.sh -e …` (arguments as main arguments) and "run `test/bench` after
@@ -242,7 +242,7 @@
   `clojure -M:test:bench -m scry.cli --dir test/bench`, after checking the
   aliases that the suite needs) with `BENCH_ALIASES` and `BENCH_JVM_OPTS`
   unset.
-- [ ] Plan inconsistency: the Clojure CLI version of the new CI jobs.
+- [x] Plan inconsistency: the Clojure CLI version of the new CI jobs.
   `doc/development.md` line 53 says "Clojure jobs use Temurin Java 21 and
   Clojure CLI `1.12.6.1673`". The "Notes after round 6" in
   implementation.md say to keep the Clojure CLI clause when the Temurin

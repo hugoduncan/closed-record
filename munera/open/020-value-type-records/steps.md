@@ -160,8 +160,10 @@
 
 ## Slice 6: CI
 
-- [ ] Add required job `Value-type tests (Temurin 21)` to `ci.yml`: suite
-      step with expectation `identity`; upload step `if: failure()` on its
+- [ ] Add required job `Value-type tests (Temurin 21)` to `ci.yml`:
+      `actions/setup-java@v4.7.1` (Temurin `'21'`) and
+      `DeLaGuardo/setup-clojure@13.4` with `cli: '1.12.6.1673'`, as the
+      runtime matrix; suite step with expectation `identity`; upload step `if: failure()` on its
       own outcome, name `scry-value-type-temurin-21`, `path: .scry-results/`,
       `include-hidden-files: true`, `if-no-files-found: warn`,
       `actions/upload-artifact@v4.6.2`; then the Clojure 1.11 VT-V1 step with
@@ -171,7 +173,10 @@
       `openjdk-27-jep401ea3+1-1_linux-x64_bin.tar.gz` from
       `download.java.net`, verify SHA-256
       `b8bdd7b181c6a5ea2dd9959255e222cd9d9a9f42cca4f2400991b9b2ff7ffb7d`,
-      cache with the SHA-256 as key; run the Valhalla suite command (it
+      cache with the SHA-256 as key; `DeLaGuardo/setup-clojure@13.4` with
+      `cli: '1.12.6.1673'`; no `setup-java` step: set `JAVA_CMD` to the
+      `bin/java` of the extracted JDK (used for dependency resolution and
+      the test JVM); run the Valhalla suite command (it
       includes VT-V7 for value output); upload `scry-value-type-valhalla`.
 - [ ] Verify: no `continue-on-error`; artifact names unique in the workflow;
       runtime matrix unchanged; release workflow runs the new jobs through
@@ -181,15 +186,30 @@
 ## Slice 7: VT-V8 bench
 
 - [ ] Add the VT-V8 entry namespace `closed-record.bench.value-type`
-      (`dev/bench/closed_record/bench/value_type.clj`) with its own child
-      command (`-m closed-record.bench.value-type <fork> <result-file>`), measuring value-output and ordinary records in the same child
-      JVM via the criterium fork harness; verify no other namespace requires
-      it.
+      (`dev/bench/closed_record/bench/value_type.clj`) as plan.md, VT-V8
+      bench, states: records `V` (`:value-type true`) and `P`; `ops`
+      `(hash x)` and `(= x y)`; own child command
+      (`-m closed-record.bench.value-type <fork> <result-file>`); child
+      throws if `V` is not a value class, then writes
+      `{:schema-version 1 :timing-tool … :results [[op v p] …]}`; own
+      parent loop over `report/fork-count` forks with the child result
+      validation (including `timing-tool/validate-observation`); table
+      `Operation`, `V mean [min, max] ns`, `P mean [min, max] ns`, `V / P`,
+      `Forks`, no pass rule; exit 0, 2 (child not valid) or 64 (usage).
+      Verify that no other namespace requires it, and that `fork`,
+      `report`, `legacy-transport`, `timing-tool` and `closed-record.bench`
+      do not change (`git diff`).
 - [ ] Extend `dev/bench/timing/run.sh` with `BENCH_ALIASES` (appended to
       `:bench` in the JAR lookup and the run) and `BENCH_JVM_OPTS` (`-J`
-      options, run only), both default empty; arguments unchanged; verify
-      the default run (no arguments: Clojure 1.11.4, V-11, S-03 pass
-      rule and exit code) is unchanged.
+      options, run only), both default empty; `:corrected-timing` stays the
+      last alias; arguments unchanged; verify the default run (no
+      arguments: Clojure 1.11.4, V-11, S-03 pass rule and exit code) is
+      unchanged.
+- [ ] Run the `test/bench` launcher test with both variables unset:
+      `env -u BENCH_ALIASES -u BENCH_JVM_OPTS clojure -Sdeps '{:aliases
+      {:bench-test {:extra-paths ["test/bench"]}}}' -M:test:bench-test -m
+      scry.cli --dir test/bench --ns closed-record.timing-launcher-test`
+      (1 test, 4 assertions before the change); it must pass.
 - [ ] Verify the `:test` alias does not load value-type through `dev/bench`.
 - [ ] Run VT-V8 manually: `JAVA_CMD=<valhalla-jdk>/bin/java
       BENCH_ALIASES=:value-type-test:clj-1.12
@@ -210,7 +230,8 @@
 - [ ] Update `doc/development.md`: suite commands for both JVMs and the
       Clojure 1.11 case; test suite list with both new directories and their
       requirements; CI section (Valhalla job JDK, other jobs Temurin 21,
-      which jobs run which commands); the three new failure artifact names.
+      which jobs run which commands; keep the clause that all Clojure jobs
+      use Clojure CLI `1.12.6.1673`); the three new failure artifact names.
 - [ ] Update `doc/tool-installation.md`: replace "CI uses Temurin Java 21"
       with the Valhalla/Temurin statement; keep the pinned local Temurin
       archive.
