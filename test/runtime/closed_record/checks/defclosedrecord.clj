@@ -4,7 +4,8 @@
   (:require
    [clojure.test :refer [deftest is testing]]
    [closed-record.checks.support :as support]
-   [closed-record.core :refer [check defclosedrecord]]))
+   [closed-record.core :refer [check defclosedrecord]]
+   [closed-record.probe-support :refer [thrown]]))
 
 (def ^:private test-ns (ns-name *ns*))
 
@@ -53,11 +54,6 @@
   (binding [*ns* (the-ns test-ns)] (f)))
 
 (defn- read-literal [s] (in-test-ns #(read-string s)))
-
-(defn- thrown
-  "Call `f`; return the exception that it throws, or nil."
-  [f]
-  (try (f) nil (catch Throwable e e)))
 
 (defn- data-of [f] (ex-data (thrown f)))
 

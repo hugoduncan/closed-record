@@ -7,10 +7,15 @@
    [closed-record.core]))
 
 (defn- expansion-error
+  "The exception of the macroexpansion of `form` in this namespace, without
+  the `CompilerException` wrapper; nil when there is no exception."
   [form]
   (binding [*ns* (the-ns 'closed-record.value-type.clj-1-11-test)]
     (try
-      (when (macroexpand-1 form) nil)
+      ;; Expand for the exception only.
+      #_{:clj-kondo/ignore [:unused-value]}
+      (macroexpand-1 form)
+      nil
       (catch clojure.lang.Compiler$CompilerException t (ex-cause t)))))
 
 (deftest value-type-unavailable-test

@@ -5,6 +5,7 @@
   (:require
    [clojure.test :refer [deftest is testing]]
    [closed-record.core :refer [defclosedrecord]]
+   [closed-record.probe-support :refer [eval-in-new-ns thrown]]
    [closed-record.value-type.expectation :as expectation]
    [closed-record.value-type.support :as support]))
 
@@ -65,22 +66,6 @@
         (is (contains? fields "__hash"))))
     (is (= x y))
     (is (= (hash x) (hash y)))))
-
-(defn- thrown
-  "Call `f`; return the exception that it throws, or nil."
-  [f]
-  (try (f) nil (catch Throwable e e)))
-
-(defn- eval-in-new-ns
-  "Evaluate `form` in a new namespace from `create-ns` (not a loaded lib)."
-  [form]
-  (let [ns-sym (gensym "closed-record.value-type.load-ns-probe")]
-    (try
-      (binding [*ns* (create-ns ns-sym)]
-        (refer-clojure)
-        (eval form))
-      (finally
-        (remove-ns ns-sym)))))
 
 (deftest options-test
   ;; Design, Public contract: the option works together with :no-print and
