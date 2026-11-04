@@ -5,7 +5,8 @@
   (:require
    [clojure.java.io :as io]
    [clojure.string :as str]
-   [closed-record.core]))
+   [closed-record.core]
+   [closed-record.form-support :as form]))
 
 (def forms
   "Fixture form name to quoted `defclosedrecord` form."
@@ -39,30 +40,16 @@
       java.util.function.BiFunction
       (apply [_ [x y] {:keys [z]}] (list a x y z)))})
 
-(defn with-option
-  "Insert the option pair `k v` after the field vector of `form`."
-  [form k v]
-  (let [[head tname fields & more] form]
-    (apply list head tname fields k v more)))
-
 (defn- strip-positions
   "Remove `:line`, `:column` and `:file` from the metadata of `form` and of
-  every list, vector, map and set in it. Keep all other metadata."
+  every element in it. Keep all other metadata."
   [form]
-  (let [rebuilt (cond
-                  (seq? form) (apply list (map strip-positions form))
-                  (map-entry? form) (vec (map strip-positions form))
-                  (vector? form) (vec (map strip-positions form))
-                  (map? form) (into (empty form)
-                                    (map (fn [[k v]]
-                                           [(strip-positions k)
-                                            (strip-positions v)]))
-                                    form)
-                  (set? form) (into (empty form) (map strip-positions) form)
-                  :else form)]
-    (if (instance? clojure.lang.IObj rebuilt)
-      (with-meta rebuilt (not-empty (dissoc (meta form) :line :column :file)))
-      rebuilt)))
+  (form/walk-form
+   (fn [x]
+     (if (instance? clojure.lang.IObj x)
+       (with-meta x (not-empty (dissoc (meta x) :line :column :file)))
+       x))
+   form))
 
 (def ^:private gensym-pattern
   #"\b([A-Za-z_-]+__)(\d+)(__auto__)?\b")

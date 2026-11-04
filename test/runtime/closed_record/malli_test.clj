@@ -1,6 +1,7 @@
 (ns closed-record.malli-test
   "Ordinary-mode run of `closed-record.checks.malli`."
   (:require
-   [closed-record.checks.malli :refer [define-checks]]))
+   [closed-record.checks.support :refer [define-checks]]))
 
-(define-checks {:record-opts [] :representation :identity})
+(define-checks 'closed-record.checks.malli
+  {:record-opts [] :representation :identity})

@@ -48,21 +48,23 @@
             (str ":value-type must be true or false, not "
                  (pr-str (:value-type opts)))))))
 
-(defn- resolve-value-type
-  "Resolve `value-type.core/defvaluetype*` (VT-D4). Throw ex-info
-  `:closed-record/value-type-unavailable` when it does not resolve: with the
-  `requiring-resolve` exception as cause, or with no cause when the var is
-  absent."
-  [classname]
-  (let [data {:type :closed-record/value-type-unavailable
-              :class-name classname}
-        msg (str "value-type.core/defvaluetype* is not available for "
-                 classname)
-        v (try
-            (requiring-resolve 'value-type.core/defvaluetype*)
-            (catch Throwable t
-              (throw (ex-info msg data t))))]
-    (or v (throw (ex-info msg data)))))
+(defn- check-value-type
+  "When `value-type?`, check that `value-type.core/defvaluetype*` resolves
+  (VT-D4). Throw ex-info `:closed-record/value-type-unavailable` when it
+  does not: with the `requiring-resolve` exception as cause, or with no
+  cause when the var is absent. `:class-name` is `classname`, the qualified
+  class name symbol."
+  [value-type? classname]
+  (when value-type?
+    (let [data {:type :closed-record/value-type-unavailable
+                :class-name classname}
+          msg (str "value-type.core/defvaluetype* is not available for "
+                   classname)
+          v (try
+              (requiring-resolve 'value-type.core/defvaluetype*)
+              (catch Throwable t
+                (throw (ex-info msg data t))))]
+      (when-not v (throw (ex-info msg data))))))
 
 (defn- maybe-destructured
   "Replace each non-symbol method parameter with a gensym, and destructure
@@ -116,8 +118,11 @@
 
 (defn- representation
   "The representation description: the differences between ordinary and
-  value mode (VT-D3, VT-D5, VT-D6, VT-D7). `hash-form` and `with-meta-form`
-  take the method locals and give the method body. `preamble` forms come
+  value mode (VT-D3, VT-D5, VT-D6, VT-D7). `(hash-form field expr)` takes
+  the hash cache field symbol and the hash expression, as `cached-hash`, and
+  gives the method body. `(with-meta-form tname fields m)` takes the type
+  name, the declared field symbols and the metadata local, and gives the
+  `withMeta` body. `preamble` forms come
   first in the expansion: value mode loads `value-type.core`, so classes
   compiled ahead of time initialise without a require of value-type in user
   code (VT-V7)."
@@ -129,7 +134,8 @@
      :hash-form (fn [_field expr] expr)
      :with-meta-form (fn [tname fields m]
                        `(new ~tname ~@fields ~m ~'__extmap))}
-    {:type-head 'deftype*
+    {:preamble []
+     :type-head 'deftype*
      :hidden-fields hidden-fields
      :hash-form cached-hash
      :with-meta-form (fn [tname fields m]
@@ -302,30 +308,30 @@
   (check-field-metadata fields)
   (check-options opts)
   (let [value-type? (true? (:value-type opts))
-        rep (representation value-type?)
-        opts (dissoc opts :value-type)
         classname (with-meta (symbol (str (namespace-munge *ns*) "." tname))
-                    (meta tname))
-        _ (when value-type? (resolve-value-type (with-meta classname nil)))
-        cname-str (str classname)
-        plain-fields (mapv #(with-meta % nil) fields)
-        type-hash (hash classname)
-        ->name (symbol (str "->" tname))
-        map->name (symbol (str "map->" tname))
-        methods (generated-methods rep tname cname-str type-hash plain-fields)]
-    `(let []
-       ~@(:preamble rep)
-       (declare ~->name)
-       (declare ~map->name)
-       (~(:type-head rep) ~(symbol (name (ns-name *ns*)) (name tname)) ~classname
-                          ~(into (vec fields) (:hidden-fields rep))
-                          :implements ~(vec (distinct (concat base-interfaces
-                                                              [protocol-interface]
-                                                              (user-interfaces impls))))
-                          ~@(mapcat identity opts)
-                          ~@methods
-                          ~@(user-methods impls))
-       (import ~classname)
-       ~(positional-factory ->name classname cname-str plain-fields)
-       ~(map-factory map->name classname cname-str plain-fields)
-       ~classname)))
+                    (meta tname))]
+    (check-value-type value-type? classname)
+    (let [rep (representation value-type?)
+          opts (dissoc opts :value-type)
+          cname-str (str classname)
+          plain-fields (mapv #(with-meta % nil) fields)
+          type-hash (hash classname)
+          ->name (symbol (str "->" tname))
+          map->name (symbol (str "map->" tname))
+          methods (generated-methods rep tname cname-str type-hash plain-fields)]
+      `(let []
+         ~@(:preamble rep)
+         (declare ~->name)
+         (declare ~map->name)
+         (~(:type-head rep) ~(symbol (name (ns-name *ns*)) (name tname)) ~classname
+                            ~(into (vec fields) (:hidden-fields rep))
+                            :implements ~(vec (distinct (concat base-interfaces
+                                                                [protocol-interface]
+                                                                (user-interfaces impls))))
+                            ~@(mapcat identity opts)
+                            ~@methods
+                            ~@(user-methods impls))
+         (import ~classname)
+         ~(positional-factory ->name classname cname-str plain-fields)
+         ~(map-factory map->name classname cname-str plain-fields)
+         ~classname))))

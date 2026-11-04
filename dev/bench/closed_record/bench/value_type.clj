@@ -20,6 +20,7 @@
    [closed-record.bench.fork :as fork]
    [closed-record.bench.report :as report]
    [closed-record.bench.timing-tool :as timing-tool]
+   [closed-record.bench.value-class :refer [value-class?]]
    [closed-record.core :refer [defclosedrecord]])
   (:import
    (java.io File)
@@ -31,14 +32,6 @@
 (def ops
   "The measured operations, in result order."
   ["(hash x)" "(= x y)"])
-
-(defn- value-class?
-  "True when `c` is a value class. False on a JVM without `Class.isValue`."
-  [^Class c]
-  (try
-    (boolean (.invoke (.getMethod Class "isValue" (make-array Class 0))
-                      c (object-array 0)))
-    (catch NoSuchMethodException _ false)))
 
 (defn- run
   "Bench `ops` for `V` and `P` with `limit-s` seconds for each run, in the run
@@ -102,20 +95,22 @@
   "Run child `n`. Return `{:result r}` or `{:error text}`."
   [declared n]
   (let [file (File/createTempFile (str "closed-record-vt-fork-" n "-") ".edn")
-        _ (.delete file)
-        exit (-> (ProcessBuilder. ^java.util.List (child-cmd n (str file)))
-                 (.inheritIO)
-                 (.start)
-                 (.waitFor))]
-    (cond
-      (not= 0 exit) {:error (str "exit " exit)}
-      (not (.exists file)) {:error (str "missing result file " file)}
-      :else
-      (let [r (try (edn/read-string (slurp file))
-                   (catch Exception e {::read-error (ex-message e)}))]
-        (if-let [e (or (::read-error r) (result-error declared r))]
-          {:error e}
-          {:result r})))))
+        _ (.delete file)]
+    (try
+      (let [exit (-> (ProcessBuilder. ^java.util.List (child-cmd n (str file)))
+                     (.inheritIO)
+                     (.start)
+                     (.waitFor))]
+        (cond
+          (not= 0 exit) {:error (str "exit " exit)}
+          (not (.exists file)) {:error (str "missing result file " file)}
+          :else
+          (let [r (try (edn/read-string (slurp file))
+                       (catch Exception e {::read-error (ex-message e)}))]
+            (if-let [e (or (::read-error r) (result-error declared r))]
+              {:error e}
+              {:result r}))))
+      (finally (.delete file)))))
 
 (defn- fmt [pattern & args]
   (String/format java.util.Locale/ROOT pattern (to-array args)))

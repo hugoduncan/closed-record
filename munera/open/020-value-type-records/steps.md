@@ -331,3 +331,550 @@
       outside `munera/open/020-value-type-records/`); record the
       verification in implementation.md; commit (task files only; not
       pushed).
+
+## Implementation review follow-ups
+
+- [x] Restore clj-kondo coverage of the shared checks. Each
+      `closed-record.checks.<topic>` holds its tests as a quoted `body`
+      vector (about 1500 lines), so clj-kondo does not lint them, and each
+      check ns turns off `unused-namespace` and `unused-referred-var`. The
+      ordinary test files now hold only a `define-checks` call, so the
+      ordinary suite lost lint coverage too. Make the bodies real code that
+      clj-kondo lints. For example: keep the check forms as plain top-level
+      forms in a source file, and let `define-checks` read them from the
+      resource and apply `support/expand`; then remove the quoted vectors
+      and the clj-kondo `:off` metadata. Keep test and assertion counts
+      (186/2793 ordinary; 81 value-type).
+- [x] Make VT-V6 check "pass through unchanged". `errors-test/root-ex-data`
+      searches the whole cause chain, so the test also passes if
+      closed-record wraps the value-type error. Assert that the first cause
+      that is not a `Compiler$CompilerException` is the value-type
+      `ex-info` (same `ex-data` and message).
+- [x] Add a timeout to `closed-record.subprocess/run` (for example
+      `.waitFor` with a limit, then `destroyForcibly` and a failed result
+      that holds the output so far). Now a child JVM that does not exit
+      blocks the suite and the CI job until the GitHub job limit.
+
+## Implementation review follow-ups, second round
+
+- [x] Update the `test/runtime/closed_record/checks/support.clj` row of
+      `ramora/defclosedrecord/embodiment/artifacts.md`. It names only
+      `expand` and says it replaces `$ns`, `$P` and `$representation`.
+      After the first follow-ups, `$ns` and `$representation` do not exist:
+      the entry point is the macro `define-checks` (it reads the check
+      source and evaluates only its `ns` form), and the placeholder var
+      `closed-record.checks.support/representation` gives the
+      representation.
+- [x] Remove the temporary files that the tests and VT-V8 make. The
+      `absent-var-test` stub directory (`value_type_option_test.clj`), the
+      `aot-test` source and class directory, and the VT-V8 fork result
+      files (`run-fork` in `closed-record.bench.value-type`) stay in the
+      temporary directory after each run. Delete them in a `finally`
+      (after the child exits or the result is read).
+
+## Implementation review follow-ups, third round
+
+- [x] Update the `test/runtime/closed_record/subprocess.clj` and
+      `test/runtime/closed_record/*_test.clj` rows of
+      `ramora/defclosedrecord/embodiment/artifacts.md`. The `subprocess.clj`
+      row names only `run`; it does not name `temp-dir` and `delete-tree`
+      (no symbolic links followed), which the absent-var, AOT tests use.
+      The `*_test.clj` row says `subprocess_test.clj` checks only the time
+      limit; it also has `delete-tree-test`.
+
+## Implementation review follow-ups, fourth round
+
+- [x] Push the branch and get a green CI run of the current code. The last
+      CI run (`d689459`) comes before the three follow-up rounds, which
+      changed `test/runtime`, `test/value-type` and `dev/bench`
+      (`define-checks` rewrite, VT-V6 pass-through check, subprocess time
+      limit and temporary-file deletion). Branch `020-value-type-records` is
+      7 commits ahead of `origin`. Acceptance criterion 3 needs the green run
+      of the last commit that changes files outside the task directory, so
+      the slice-9 verification is stale. Push (approved at slice 6), read the
+      run with the slice-6 `gh run` commands, and record the SHA, run URL
+      and job conclusions in implementation.md as a new acceptance note.
+      Done 2026-11-04: `acd056f`, run 41880383270, all 9 jobs `success`.
+- [x] Rename the two shared-check `testing` labels in
+      `test/runtime/closed_record/checks/defclosedrecord.clj` that name the
+      ordinary-mode hash cache: "declared key gives hash caches 0 (no copy
+      of cached hashes)" (`assoc-test`) and "with-meta copies the hash
+      caches" (`metadata-test`). The value-type suite also runs them, and
+      value mode has no hash cache (VT-D6). Name the behaviour that both
+      modes share (for example "the hash after assoc equals the hash of a
+      new record", "with-meta keeps the hash").
+      Done: "the hash after assoc of a declared key equals the hash of a
+      new record", "with-meta keeps the hash".
+
+## Implementation review follow-ups, fifth round
+
+- [x] Make shared-check failures report the correct source location.
+      `define-checks` keeps the `:line` metadata of the forms that it reads
+      from `closed-record.checks.<topic>`, but the compiler uses the file of
+      the caller. Thus a failure gives the file of the wrapper test
+      namespace and a line of the check file. Observed: a failing `is` on
+      line 7 of a check file gives `FAIL in (zz-test) (zz_test.clj:7)`, and
+      the wrapper file has 3 lines. Make the file and the line agree (for
+      example, compile the expanded forms with the check source path, as
+      `Compiler/load` with the check file name does, or report the check
+      file in the failure). Keep test and assertion counts. Verify with a
+      failing assertion in a temporary check namespace (not committed).
+      Done: `define-checks` expands to `load-checks`, which evaluates each
+      form with `Compiler/SOURCE` and `SOURCE_PATH` of the check file.
+      Temporary check: `FAIL in (zz-test) (zz.clj:7)`.
+
+## Implementation review follow-ups, sixth round
+
+- [x] Push the branch and get a green CI run of `9a026d6`. The fifth-round
+      follow-up changed `test/runtime/closed_record/checks/support.clj`
+      (`load-checks`), which the ordinary and both value-type suites use.
+      The last green run (`acd056f`, run 41880383270) comes before it, and
+      the branch is 3 commits ahead of `origin`. Acceptance criterion 3
+      needs the green run of the last commit that changes files outside the
+      task directory. Push (approved at slice 6), read the run with the
+      slice-6 `gh run` commands, and record the SHA, run URL and job
+      conclusions in implementation.md as a new acceptance note.
+      Done 2026-11-04: pushed `290f2a1` (contains `9a026d6`; later commits
+      change task files only), run 41883488159, all 9 jobs `success`.
+
+## Test review follow-ups
+
+- [x] Remove `test/runtime/closed_record/subprocess_test.clj`. It tests
+      `closed-record.subprocess`, which is test support code (a test of a
+      test). The absent-var, does-not-load, VT-V5 and AOT tests use the
+      helper; a time-out or a left directory shows there. Update the
+      `*_test.clj` row of `ramora/defclosedrecord/embodiment/artifacts.md`
+      (it names `subprocess_test.clj`).
+- [x] Cover "the option works together with `:no-print` and `:load-ns`"
+      (design, Public contract) for `:value-type true`. No test defines a
+      value-type record with these options: `accepted-options-test` and
+      `load-ns-option-test` are not shared, and the ordinary-suite
+      `value-type-unavailable-test` checks only the error. Add a value-type
+      suite test: a record with `:value-type true :no-print true` and one
+      with `:value-type true :load-ns true` are working types (factories,
+      `=`) with the expected representation; `:load-ns true` makes class
+      initialisation require the namespace, as `load-ns-option-test` checks.
+      Done: `representation-test/options-test`.
+- [x] Remove the position check of the `require` preamble in
+      `closed-record.value-type.representation-test/value-expansion-test`
+      ("the expansion loads value-type.core first", `(nth expansion 2)`).
+      The preamble is an implementation decision of slice 5, not a VT-V2
+      item (Ramora VT-V2 row); `aot-test` covers its behaviour (classes
+      load without the source). A test that fixes its place in the `let`
+      prevents a change of that decision.
+
+## Test review follow-ups, second round
+
+- [x] Remove the two method-body shape checks of
+      `closed-record.value-type.representation-test/value-expansion-test`:
+      "hash forms compute on each call" (`hashCode` body ends in a
+      `APersistentMap/mapHash` call, `hasheq` names `mapHasheq`) and
+      "withMeta calls the constructor …" (body `=` `(new Q a b m __extmap)`).
+      They are not VT-V2 items (Ramora VT-V2 row) and fix the form of the
+      emitted code, so a change of that form (for example a helper call or
+      `Q.`) fails them. The behaviour has other tests: "no generated
+      reference to `__hash` or `__hasheq`" (no cache, VT-D6, VT-D7) and the
+      shared `hash`, `assoc` and `metadata` checks (values). Keep test
+      counts in implementation.md current.
+      Done: value-type suite 82/312 (Temurin 21), 82/313 (Valhalla).
+
+## Test review follow-ups, third round
+
+- [x] Push the branch and get a green CI run of `f99ce54`. The test-review
+      follow-ups (`fa5d2d6`, `f99ce54`) changed
+      `test/value-type/closed_record/value_type/representation_test.clj`
+      (new `options-test`) and removed `subprocess_test.clj`; the new
+      `options-test` has run only locally. The last green run (`290f2a1`,
+      run 41883488159) comes before these commits. Push (approved at
+      slice 6), read the run with the slice-6 `gh run` commands, and record
+      the SHA, run URL and job conclusions in implementation.md as a new
+      acceptance note (criterion 3).
+      Done 2026-11-04: pushed `14a3e33` (contains `f99ce54`; later commit
+      changes task files only), run 41885774931, all 9 jobs `success`.
+
+## Test review follow-ups, fourth round
+
+- [x] Make `closed-record.value-type.errors-test/value-type-form` find the
+      `defvaluetype*` form at any depth of the expansion (for example with
+      `tree-seq`, as `representation-test/type-form` does). Now it looks
+      only at the direct children of the expansion, so the test depends on
+      the `(let [] …)` wrapper, an implementation decision that VT-V6 does
+      not state. If the wrapper changes, `value-type-form` gives nil,
+      `(eval nil)` throws nothing, and the test fails with a misleading
+      class, message and `ex-data` mismatch. Assert that the form is found
+      before the comparison.
+      Done: `tree-seq` search; `check-pass-through` asserts the form is
+      found. Value-type suite 82/314 (Temurin 21), 82/316 (Valhalla).
+
+## Test review follow-ups, fifth round
+
+- [x] Push the branch and get a green CI run of `4405d9d`. The fourth-round
+      follow-up changed
+      `test/value-type/closed_record/value_type/errors_test.clj`
+      (`value-type-form` with `tree-seq`, new "the expansion has a
+      defvaluetype* form" assertion); it has run only locally. The last
+      green run (`14a3e33`, run 41885774931) comes before it, and
+      `origin/020-value-type-records` is still at `14a3e33`. Push (approved
+      at slice 6), read the run with the slice-6 `gh run` commands, and
+      record the SHA, run URL and job conclusions in implementation.md as a
+      new acceptance note (criterion 3).
+      Done 2026-11-04: pushed `9f657a9` (contains `4405d9d`; later commit
+      changes task files only), run 41887056544, all 9 jobs `success`.
+
+## Test review follow-ups, seventh round
+
+- [x] In `closed-record.value-type.clj-1-11-test/value-type-unavailable-test`,
+      replace `(is (= "1.11.4" (clojure-version)))` with a check of the
+      major and minor version (`(select-keys *clojure-version* [:major
+      :minor])` is `{:major 1 :minor 11}`). The test is about Clojure 1.11,
+      not one patch release. A bump of the base `org.clojure/clojure` in
+      `deps.edn` (for example to 1.11.5) now fails it with no change of
+      behaviour.
+- [x] Remove `(is (symbol? (:class-name (ex-data e))))` from
+      `closed-record.value-type-option-test/value-type-unavailable-test`. The
+      `=` assertion before it compares the `ex-data` with a map that holds
+      the symbol `closed_record.value_type_option_test.Point`, so it already
+      checks that `:class-name` is a symbol.
+- [x] Simplify the "the option is not passed to defvaluetype*" assertion of
+      `closed-record.value-type.representation-test/value-expansion-test`:
+      `(flatten (map #(if (coll? %) [] [%]) tform))` gives the elements of
+      `tform` that are not collections, so `(is (not-any? #{:value-type}
+      tform))` checks the same thing and is easier to read.
+      Done: ordinary suite 186/2792; value-type suite 82/314 (Temurin 21),
+      82/316 (Valhalla); Clojure 1.11 case 1/7.
+
+## Test review follow-ups, eighth round
+
+- [x] Push the branch and get a green CI run of `1bc278a`. The
+      seventh-round follow-up changed
+      `test/runtime/closed_record/value_type_option_test.clj`,
+      `test/value-type-clj-1.11/closed_record/value_type/clj_1_11_test.clj`
+      (new version check) and
+      `test/value-type/closed_record/value_type/representation_test.clj`;
+      they have run only locally. The last green run (`9f657a9`, run
+      41887056544) comes before it, and `origin/020-value-type-records` is
+      still at `9f657a9`. Push (approved at slice 6), read the run with the
+      slice-6 `gh run` commands, and record the SHA, run URL and job
+      conclusions in implementation.md as a new acceptance note
+      (criterion 3).
+      Done 2026-11-04: pushed `5aa9556` (contains `1bc278a` and the
+      second item), run 41888528663, all 9 jobs `success`.
+- [x] Remove the assertion `(is (= :value expected))` of the value branch of
+      `closed-record.value-type.subprocess-test/error-policy-test`
+      ("value output: the policy does not apply"). `expectation/representation`
+      gives only `:value` or `:identity`, so in the else branch of
+      `(if (= :identity expected) …)` the assertion cannot fail. It adds an
+      assertion to the counts and no signal. Use `(when (= :identity
+      expected) …)`, with a comment that VT-V5 applies to identity output
+      only, and keep test and assertion counts in implementation.md current.
+      Done: scry fails a test with no assertion ("unknown", exit 1), so a
+      `when` body fails the Valhalla suite; the `deftest` is in a `when`
+      instead, with the comment. Value-type suite 82/314 (Temurin 21),
+      81/315 (Valhalla).
+
+## Test review follow-ups, ninth round
+
+- [x] Make `closed-record.value-type.subprocess-test/error-policy-test`
+      (VT-V5) fail with a clear message when the `error` policy does not
+      apply. When the definition succeeds, the child prints `:defined`, and
+      `(last (edn/read-string out))` throws `IllegalArgumentException`
+      ("Don't know how to create ISeq from: clojure.lang.Keyword"). Thus
+      the contract violation that VT-V5 checks gives a test error, not a
+      failure that names the policy. Compare the printed value with a form
+      that is valid in both cases (for example, the child prints
+      `{:causes [...]}` or `{:defined true}`, and the test asserts that
+      `(peek (:causes r))` is `"java.lang.Error"`). Keep test and assertion
+      counts in implementation.md current.
+      Done: child prints `{:defined true}` or `{:causes [...]}`; failure
+      message "the error policy does not apply: …". Value-type suite
+      82/314 (Temurin 21); Valhalla unchanged (test not defined).
+
+## Test review follow-ups, tenth round
+
+- [x] Push the branch and get a green CI run of `e77b873`. The ninth-round
+      follow-up changed
+      `test/value-type/closed_record/value_type/subprocess_test.clj`
+      (VT-V5 child result `{:defined true}` or `{:causes [...]}`); it has
+      run only locally. The last green run (`5aa9556`, run 41888528663)
+      comes before it, and `origin/020-value-type-records` is still at
+      `5aa9556`. Push (approved at slice 6), read the run with the slice-6
+      `gh run` commands, and record the SHA, run URL and job conclusions in
+      implementation.md as a new acceptance note (criterion 3).
+      Done 2026-11-04: pushed `688b02b` (contains `e77b873` and the
+      second item), run 41889615136, all 9 jobs `success`.
+- [x] Make the identity branch of
+      `closed-record.value-type.representation-test/representation-test`
+      fail with a clear message when the hash field is absent.
+      `(is (some? (.getDeclaredField VP "__hash")))` cannot fail:
+      `getDeclaredField` never gives nil, it throws
+      `NoSuchFieldException`, so a missing field gives a test error, not a
+      failure. Use a check that gives a boolean for both cases (for example
+      `(is (contains? (set (map #(.getName %) (.getDeclaredFields VP)))
+      "__hash"))`), and use the same form for the value branch
+      (`__hash` and `__hasheq` absent) so both branches are consistent.
+      Keep test and assertion counts in implementation.md current.
+      Done: `field-names` helper; `contains?` in both branches.
+      Value-type suite 82/314 (Temurin 21), 81/315 (Valhalla).
+
+## Test review follow-ups, eleventh round
+
+- [x] Remove the value branch assertion of the shared
+      `closed-record.checks.defclosedrecord/serializable-test`
+      (`(is (= :value support/representation))`). The representation form
+      gives only `:identity` or `:value`, so in the else branch of
+      `(if (= :identity support/representation) …)` it cannot fail. It adds
+      an assertion to the Valhalla counts and no signal. This is the same
+      defect as the eighth-round VT-V5 step; use the same solution for
+      consistency: define the `deftest` only when the representation is
+      `:identity` (`(when (= :identity support/representation) (deftest …))`,
+      with a comment that D-06 applies to identity output only). Check that
+      `define-checks` replaces the placeholder in the `when` test, and that
+      the ordinary suite and the Temurin 21 suite still run the test. Keep
+      test and assertion counts in implementation.md current, and get a
+      green CI run of the change (acceptance criterion 3).
+      Done 2026-11-04: `b642eb2`; ordinary 186/2792, Temurin 21 82/314
+      (test runs), Valhalla 80/314 (test not defined); run 41890869170,
+      all 9 jobs `success`.
+
+## Documentation review follow-ups
+
+- [x] Add a `CHANGELOG.md` `## [Unreleased]` note for the `:value-type`
+      option (user-visible accretion). The release contract
+      (`ramora/release-workflow/contracts-and-flow.md`) says "Maintain an
+      Unreleased section", and the README section "Value-type records"
+      describes an option that the Clojars release `0.1.190` does not have.
+      Then update `mementum/state.md` ("The release task must add a
+      `CHANGELOG.md` note for the option").
+- [x] Make the user documentation agree with the VT-R4 mitigation
+      (`ramora/value-type-records/invariants-and-verification.md`): it says
+      the user documentation states "the value-type size results", but
+      `README.md` and `doc/performance.md` "Value-type records" state only
+      the hash cost. Add the value-type size result (value objects measured
+      as larger than identity objects, with its source) to
+      `doc/performance.md`, or change the VT-R4 mitigation to the text that
+      the documentation has.
+- [x] Correct the VT-V2 row of
+      `ramora/value-type-records/invariants-and-verification.md`: "the
+      option is not passed to `deftype*`" must name `defvaluetype*`, as
+      the test `representation-test/value-expansion-test` ("the option is
+      not passed to defvaluetype*") and VT-D3 state.
+- [x] Update the `test/runtime/closed_record/checks/*.clj` row of
+      `ramora/defclosedrecord/embodiment/artifacts.md`: "the D-06
+      serialization check asserts only for identity output" is stale after
+      `b642eb2`. The check namespace defines `serializable-test` only for
+      identity output.
+- [x] In `doc/development.md`, Continuous integration, replace "The runtime
+      matrix runs the three test commands above": the section now has six
+      test commands above (three runtime, three value-type). Name the three
+      `test/runtime` commands.
+
+## Code-shaper review follow-ups
+
+- [x] Give shared checks one entry point that takes values. Now the macro
+      `closed-record.checks.support/define-checks` quotes its arguments and
+      only calls the public `load-checks`, so `:representation` is a form
+      that `transform` puts into the check code and that is evaluated at
+      each use. Thus each of the 9 value-type wrappers
+      (`test/value-type/closed_record/value_type/<topic>_test.clj`) must
+      also call `(expectation/representation)` alone at load for the guard.
+      Make `load-checks` (or a function `define-checks`) the only entry
+      point: it takes the representation value (`:identity` or `:value`),
+      and `transform` puts that keyword in place of
+      `support/representation`. Remove the macro, the `(if (seq? src-sym)
+      …)` unquote and the separate guard calls (the evaluated opts map is
+      the guard). Update the `support.clj` docstring and the `checks/*.clj`,
+      `support.clj` and `*_test.clj` rows of
+      `ramora/defclosedrecord/embodiment/artifacts.md`. Keep test and
+      assertion counts.
+      Done: function `define-checks` takes the representation value; macro,
+      `load-checks` and guard calls removed.
+- [x] Remove the duplicate form walker in `test/runtime`.
+      `closed-record.expansion-fixture/strip-positions` and
+      `closed-record.checks.support/transform` each rebuild lists, map
+      entries (before vectors), vectors, maps and sets and copy metadata,
+      with the same branch order. `support/with-record-opts` and
+      `fixture/with-option` both insert options after the field vector.
+      Put one metadata-keeping walker (and one option-insert function) in
+      one support namespace, and use it from both, so a fix to the walk
+      (for example a new collection type) applies to both. Keep the
+      fixture strings and test counts.
+      Done: `closed-record.form-support` (`walk-form`, `with-options`).
+- [x] In `closed-record.impl.jvm/emit`, make the value-type availability
+      check a `check-*` function, as `check-field-metadata` and
+      `check-options` are. Now `resolve-value-type` returns the var, `emit`
+      discards it through a `_` binding in the `let`, and the name says
+      "resolve". Rename it (for example `check-value-type`), give nil, and
+      call it as a statement; keep the ex-info contract (VT-D4) and the
+      `:class-name` value.
+      Done: `check-value-type [opts tname]`.
+
+## Code-shaper review follow-ups, second round
+
+- [x] In `closed-record.impl.jvm`, compute the option facts once in `emit`.
+      Now `check-value-type` and `emit` each compute the class name symbol
+      (`(symbol (str (namespace-munge *ns*) "." tname))`) and each test
+      `(true? (:value-type opts))`. Compute `value-type?` and `classname`
+      once in `emit`, and give them to `check-value-type` (for example
+      `(check-value-type value-type? classname)`), so the `:class-name` of
+      the error and the class of the expansion have one source. Also give
+      the two `representation` maps the same keys: the ordinary map has no
+      `:preamble`; add `:preamble []`. Keep the fixture strings, the ex-info
+      contract (VT-D4) and test counts.
+      Done: `emit` computes `value-type?` and `classname` once, calls
+      `(check-value-type value-type? classname)` as a statement; ordinary
+      map has `:preamble []`.
+- [x] Remove the duplicate `defvaluetype*` form finder of the value-type
+      suite. `closed-record.value-type.representation-test/type-form` and
+      `closed-record.value-type.errors-test/value-type-form` both find the
+      first `value-type.core/defvaluetype*` form with the same
+      `tree-seq seq? seq` filter. Put one function in one value-type suite
+      support namespace (for example `closed-record.value-type.expectation`
+      or a new `closed-record.value-type.support`) and use it from both
+      tests, so a change of the expansion shape needs one fix. Keep test
+      and assertion counts.
+      Done: `closed-record.value-type.support/type-form`.
+
+## Code-shaper review follow-ups, third round
+
+- [x] Push the branch and get a green CI run of `994806a`. The two
+      code-shaper follow-up rounds (`5e82df5`, `994806a`) changed
+      `src/closed_record/impl/jvm.clj` (`check-value-type`, option facts
+      once in `emit`, `:preamble []`), `test/runtime` (`define-checks`
+      function, `closed-record.form-support`) and `test/value-type`
+      (wrappers, `closed-record.value-type.support`); they have run only
+      locally. `origin/020-value-type-records` is still at `a90e160`, so
+      the acceptance criterion 3 evidence is stale. Push (approved at
+      slice 6), read the run with the slice-6 `gh run` commands, and record
+      the SHA, run URL and job conclusions in implementation.md as a new
+      acceptance note.
+      Done 2026-11-04: pushed `a92e82e` (contains `994806a` and the other
+      two items), run 41895033444, all 9 jobs `success`.
+- [x] Remove the copy of the `:load-ns` probe helpers.
+      `closed-record.value-type.representation-test` defines `thrown` and
+      `eval-in-new-ns` with the same body and docstring as
+      `closed-record.defclosedrecord-test` (only the gensym prefix differs).
+      The design selection rule keeps option checks out of the shared
+      checks, so keep both tests, but put `eval-in-new-ns` and `thrown` in
+      one test support namespace on `test/runtime` (the value-type suite
+      has `test/runtime` on its class path) and use it from both tests.
+      Keep test and assertion counts.
+      Done: `closed-record.probe-support`
+      (`test/runtime/closed_record/probe_support.clj`); the shared check
+      `closed-record.checks.defclosedrecord` refers its `thrown` too (its
+      own copy clashed with the refer in `defclosedrecord-test`).
+- [x] Give the two `expansion-error` helpers one contract and a clear body.
+      In `closed-record.value-type.clj-1-11-test`, `(when (macroexpand-1
+      form) nil)` always gives nil, so the `when` hides the intent; in
+      `closed-record.value-type-option-test` the helper of the same name
+      gives the expansion when there is no exception. Use the same
+      contract in both (for example, nil when there is no exception, with
+      `(do (macroexpand-1 form) nil)`), and the same docstring.
+      Done: both bind their namespace, give nil when there is no exception,
+      same docstring; `(macroexpand-1 form) nil` in the `try` with a
+      clj-kondo `:unused-value` ignore (`do` is redundant there).
+
+## Code-shaper review follow-ups, fourth round
+
+- [x] Remove the copy of `value-class?`.
+      `closed-record.value-type.expectation/value-class?` and the private
+      `closed-record.bench.value-type/value-class?` have the same body and
+      docstring (reflective `Class.isValue`). `Class.isValue` is an
+      early-access Valhalla API, so a change of it needs two fixes. Put
+      one function in one namespace without dependencies on `dev/bench`
+      (on the class path of `:test` and `:bench`; for example
+      `closed-record.bench.value-class`), and use it from both. Do not
+      change the existing `dev/bench` namespaces (plan.md, VT-V8 bench).
+      Update the `dev/bench/` row of
+      `ramora/defclosedrecord/embodiment/artifacts.md`. Keep test and
+      assertion counts.
+      Done: `closed-record.bench.value-class`
+      (`dev/bench/closed_record/bench/value_class.clj`).
+- [x] Rename the private `thrown` of
+      `closed-record.value-type.errors-test` (for example `eval-error`).
+      It takes a form, evaluates it and gives the first cause that is not a
+      `Compiler$CompilerException`. `closed-record.probe-support/thrown`,
+      which `representation-test` in the same suite uses, takes a function
+      and gives the exception itself. Two functions with the same name and
+      different contracts in one suite make the tests harder to read.
+      Done: `eval-error`.
+
+## Code-shaper review follow-ups, fifth round
+
+- [x] Push the branch and get a green CI run of `b8f5974`. The
+      fourth-round follow-ups changed `dev/bench`
+      (`closed-record.bench.value-class`, `closed-record.bench.value-type`)
+      and `test/value-type` (`expectation`, `errors-test`); they have run
+      only locally. `origin/020-value-type-records` is still at the
+      third-round commits, so the acceptance criterion 3 evidence is stale.
+      Push (approved at slice 6), read the run with the slice-6 `gh run`
+      commands, and record the SHA, run URL and job conclusions in
+      implementation.md as a new acceptance note.
+      Done 2026-11-04: pushed `8bd6cea` (contains `b8f5974` and the other
+      two items), run 41896541516, all 9 jobs `success`.
+- [x] Use one `thrown` and one `data-of` in the shared check namespaces.
+      `closed-record.checks.defclosedrecord` refers
+      `closed-record.probe-support/thrown`, but `closed-record.checks.malli`
+      and `closed-record.checks.hidden-key` (files of this task) keep
+      private copies with the same body and docstring, and all three define
+      the same private `data-of` (`(ex-data (thrown f))`). Add `data-of` to
+      `closed-record.probe-support`, refer `thrown` and `data-of` from the
+      three check namespaces, and remove the copies. Check for refer clashes
+      in the wrapper test namespaces (as in the third round). Keep test and
+      assertion counts.
+      Done: `data-of` in `closed-record.probe-support`; private copies
+      removed; no refer clashes (wrappers call only `define-checks`).
+- [x] Sort the `:require` vector of `closed-record.bench.value-type`:
+      `closed-record.bench.value-class` is before
+      `closed-record.bench.timing-tool`; the other entries and the other
+      namespaces are in alphabetical order.
+
+## Code-shaper review follow-ups, sixth round
+
+- [x] Remove the copy of `expansion-error`.
+      `closed-record.value-type-option-test` and
+      `closed-record.value-type.clj-1-11-test` define private
+      `expansion-error` with the same body, docstring and clj-kondo ignore;
+      only the bound namespace differs. Both suites have `test/runtime` on
+      the class path (`:test` alias). Put one function in
+      `closed-record.probe-support` that takes the namespace symbol and the
+      form (for example `(expansion-error ns-sym form)`), and use it from
+      both tests. Update the `probe_support.clj` row of
+      `ramora/defclosedrecord/embodiment/artifacts.md`. Keep test and
+      assertion counts.
+      Done: `closed-record.probe-support/expansion-error [ns-sym form]`.
+- [x] Correct the `representation` docstring in
+      `closed-record.impl.jvm`. It says that `hash-form` and
+      `with-meta-form` "take the method locals"; `hash-form` takes the
+      cache field symbol and the hash expression (`cached-hash` contract),
+      and `with-meta-form` takes the type name, the field symbols and the
+      metadata local. State each argument list. Keep the fixture strings.
+      Done: docstring states `(hash-form field expr)` and
+      `(with-meta-form tname fields m)`.
+
+## Code-shaper review follow-ups, seventh round
+
+- [x] Push the branch and get a green CI run of `371b3a9`. The sixth-round
+      follow-ups changed `src/closed_record/impl/jvm.clj` (`representation`
+      docstring), `test/runtime` (`closed-record.probe-support/expansion-error`,
+      `value-type-option-test`) and `test/value-type-clj-1.11`
+      (`clj-1-11-test`); they have run only locally.
+      `origin/020-value-type-records` is still at `8bd6cea`, so the
+      acceptance criterion 3 evidence is stale. Push (approved at slice 6),
+      read the run with the slice-6 `gh run` commands, and record the SHA,
+      run URL and job conclusions in implementation.md as a new acceptance
+      note.
+      Done 2026-11-04: pushed `7534b9c` (contains `371b3a9` and the
+      second item), run 41898125462, all 9 jobs `success`.
+- [x] Remove the last copy of the `expansion-error` contract.
+      `closed-record.value-type-option-test/absent-var-test` builds a child
+      script with an inline `(try (macroexpand-1 '(…)) nil (catch Throwable
+      t (ex-cause t)))` in `my-app.geo`; this is the contract of
+      `closed-record.probe-support/expansion-error`. The child class path
+      contains the test JVM class path (`closed-record.subprocess/run`), so
+      `test/runtime` is on it. In the script, require
+      `closed-record.probe-support` and call
+      `(closed-record.probe-support/expansion-error 'my-app.geo '(…))`.
+      Keep the printed `{:data … :cause …}` result and the test and
+      assertion counts.
+      Done: the child requires `closed-record.probe-support`, creates
+      `my-app.geo` and calls `expansion-error`.

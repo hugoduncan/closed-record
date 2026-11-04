@@ -3,18 +3,15 @@
   that are not shared."
   (:require
    [clojure.test :refer [deftest is testing]]
-   [closed-record.checks.defclosedrecord :refer [define-checks]]
-   [closed-record.core :refer [defclosedrecord]]))
+   [closed-record.checks.support :refer [define-checks]]
+   [closed-record.core :refer [defclosedrecord]]
+   [closed-record.probe-support :refer [eval-in-new-ns thrown]]))
 
 (defprotocol Measure
   (measure [x]))
 
-(defn- thrown
-  "Call `f`; return the exception that it throws, or nil."
-  [f]
-  (try (f) nil (catch Throwable e e)))
-
-(define-checks {:record-opts [] :representation :identity})
+(define-checks 'closed-record.checks.defclosedrecord
+  {:record-opts [] :representation :identity})
 
 (defclosedrecord NP [a] :no-print true)
 
@@ -38,17 +35,6 @@
   (testing "two options, then a spec"
     (is (= 6 (measure (->NPS 2 3))))
     (is (= (->NPS 2 3) (map->NPS {:a 2 :b 3})))))
-
-(defn- eval-in-new-ns
-  "Evaluate `form` in a new namespace from `create-ns` (not a loaded lib)."
-  [form]
-  (let [ns-sym (gensym "closed-record.load-ns-probe")]
-    (try
-      (binding [*ns* (create-ns ns-sym)]
-        (refer-clojure)
-        (eval form))
-      (finally
-        (remove-ns ns-sym)))))
 
 (deftest load-ns-option-test
   (testing ":load-ns true makes class initialisation require the namespace"

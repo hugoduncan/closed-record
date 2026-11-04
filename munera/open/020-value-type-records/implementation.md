@@ -923,3 +923,474 @@ Paths:
   "Reproduction and limits"; 7 slice 8 docs, API check clean, no progress
   history in Ramora value-type pages (grep); 8 local checks above + CI.
 - This commit changes task files only; not pushed (plan.md, Final push).
+
+## Implementation review (2026-11-04)
+
+- added 3 steps to be addressed
+
+## Review follow-ups (2026-11-04)
+
+- addressed 3 review steps.
+- Shared checks: each `closed-record.checks.<topic>` now holds plain
+  top-level forms; no suite loads it. `closed-record.checks.support/define-checks`
+  (`(define-checks 'closed-record.checks.<topic> opts)`) reads the source,
+  evaluates only the `ns` form (aliases, refers), reads the rest in that
+  namespace (syntax-quote resolves as before) and applies `expand`. Quoted
+  `body` vectors, per-topic macros and clj-kondo `:off` metadata removed.
+  `$ns` → `(ns-name *ns*)` at load; `'($ns/constant …)` → `'(constant …)`
+  (expanded with `*ns*` bound); `$representation` → placeholder var
+  `support/representation`. clj-kondo 0 findings; an injected error in a
+  check file is reported. Counts kept: shared checks 186/2793 ordinary,
+  81 value-type.
+- VT-V6: `errors-test` asserts the first cause that is not a
+  `Compiler$CompilerException` is an `ExceptionInfo` with the same class,
+  message and `ex-data` as the error of the `defvaluetype*` form alone.
+- `closed-record.subprocess/run`: `:timeout-ms` (default 300000); on time
+  out `destroyForcibly`, `{:exit nil :timed-out true :out :err}` with the
+  output so far. Both streams read in futures. New
+  `closed-record.subprocess-test` (1 test, 4 assertions): ordinary suite now
+  187/2797 on Clojure 1.11, 1.12, 1.13.
+- Runs: Temurin 21 suite 81/308, Valhalla suite 81/309, Clojure 1.11 case
+  1/7; fmt, kondo, Vale, API check, lychee clean. Not pushed.
+
+## Implementation review, second round (2026-11-04)
+
+- added 2 steps to be addressed
+
+## Review follow-ups, second round (2026-11-04)
+
+- addressed 2 review steps.
+- Artifacts row of `checks/support.clj`: names `define-checks` (reads the
+  source, evaluates only the `ns` form), `expand` (`$P` only) and the
+  placeholder var `support/representation`.
+- Temporary files: new `closed-record.subprocess/temp-dir` and
+  `delete-tree` (does not follow symbolic links). `absent-var-test` and
+  `aot-test` delete their directory in a `finally`; VT-V8 `run-fork`
+  deletes the result file in a `finally`. New `delete-tree-test`: ordinary
+  suite 188/2799 on Clojure 1.11, 1.12, 1.13. Temurin 21 suite 81/308,
+  Valhalla suite 81/309, Clojure 1.11 case 1/7, VT-V8 run exit 0; no new
+  `closed-record-{stub,aot,vt-fork}` entries in `$TMPDIR` after the runs.
+  fmt, kondo, Vale clean. Not pushed.
+
+## Implementation review, third round (2026-11-04)
+
+- added 1 step to be addressed
+
+## Review follow-ups, third round (2026-11-04)
+
+- addressed 1 review step: artifacts rows of `subprocess.clj` (names
+  `temp-dir` and `delete-tree`, no symbolic links followed, used by the
+  absent-var and AOT tests) and `*_test.clj` (`subprocess_test.clj` also
+  checks `delete-tree`).
+
+## Implementation review, fourth round (2026-11-04)
+
+- added 2 steps to be addressed
+
+## Review follow-ups, fourth round (2026-11-04)
+
+- addressed 2 review steps.
+- Renamed shared-check labels (VT-D6, both modes): "the hash after assoc
+  of a declared key equals the hash of a new record" (`assoc-test`),
+  "with-meta keeps the hash" (`metadata-test`). Ordinary suite 188/2799;
+  Temurin 21 value-type suite 81/308. kondo, cljfmt clean.
+- Acceptance note (criterion 3, replaces the slice-9 note): 2026-11-04,
+  ref `020-value-type-records`, SHA
+  `acd056ffd97f958289d46e16d08a6f2fc6483252` (last commit that changes
+  files outside the task directory), PR
+  https://github.com/hugoduncan/closed-record/pull/1, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41880383270:
+  Build verification, Markdown links, Value-type tests (Temurin 21),
+  Value-type tests (Valhalla), Runtime tests (Clojure 1.11, 1.12, 1.13),
+  Release tooling verification, Development quality: all `success`.
+
+## Implementation review, fifth round (2026-11-04)
+
+- added 1 step to be addressed
+
+## Review follow-ups, fifth round (2026-11-04)
+
+- addressed 1 review step.
+- Shared-check source location: `define-checks` now expands to
+  `(load-checks 'src 'opts)`. `load-checks` evaluates each transformed form
+  in the calling namespace with `Compiler/SOURCE` (`<topic>.clj`) and
+  `Compiler/SOURCE_PATH` (`closed_record/checks/<topic>.clj`) bound, so
+  the class `SourceFile`, the `deftest` `:file` and the `:line` all name
+  the check source. `expand` removed (no users). Temporary check namespace
+  (not committed), failing `is` on line 7: before `zz_test.clj:7`, after
+  `zz.clj:7` (clojure.test and scry `.scry-results` `:file "zz.clj"
+  :line 7`).
+- Ordinary suite 188/2799 on Clojure 1.11, 1.12, 1.13; Temurin 21
+  value-type suite 81/308; Valhalla suite 81/309. kondo, cljfmt clean.
+- The last green CI run (`acd056f`) is before this change; acceptance
+  criterion 3 needs a push and a green run of this commit.
+
+## Implementation review, sixth round (2026-11-04)
+
+- added 1 step to be addressed
+
+## Review follow-ups, sixth round (2026-11-04)
+
+- addressed 1 review step.
+- Acceptance note (criterion 3, replaces the fourth-round note):
+  2026-11-04, ref `020-value-type-records`, pushed SHA
+  `290f2a1b598b51893ee1c0e69399e375126bdbab`; it contains
+  `9a026d6` (last commit that changes files outside the task directory;
+  `290f2a1` and `d9867a2` change task files only). PR
+  https://github.com/hugoduncan/closed-record/pull/1, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41883488159:
+  Build verification, Markdown links, Value-type tests (Temurin 21),
+  Value-type tests (Valhalla), Runtime tests (Clojure 1.11, 1.12, 1.13),
+  Release tooling verification, Development quality: all `success`.
+
+## Implementation review, seventh round (2026-11-04)
+
+- no new steps
+
+## Test review (2026-11-04)
+
+- added 3 steps to be addressed
+
+## Test review follow-ups (2026-11-04)
+
+- addressed 3 review steps.
+- Removed `subprocess_test.clj` and its `artifacts.md` mention.
+- `closed-record.value-type.representation-test/options-test`:
+  `:value-type true` with `:no-print true` and with `:load-ns true`
+  (factories, `=`, representation against the expectation; `:load-ns`
+  class initialisation in a new namespace gives
+  `ExceptionInInitializerError`).
+- Removed the `require` preamble position check from `value-expansion-test`.
+- Ordinary suite 186/2793 on Clojure 1.11, 1.12, 1.13; Temurin 21
+  value-type suite 82/315; Valhalla suite 82/316. kondo, cljfmt clean.
+- The last green CI run (`290f2a1`) is before this change; acceptance
+  criterion 3 needs a push and a green run of this commit.
+
+## Test review, second round (2026-11-04)
+
+- added 1 step to be addressed
+
+## Test review follow-ups, second round (2026-11-04)
+
+- addressed 1 review step.
+- Removed the "hash forms compute on each call" and "withMeta calls the
+  constructor" checks and the unused `method` helper from
+  `value-expansion-test`.
+- Value-type suite: Temurin 21 82/312; Valhalla 82/313. kondo, cljfmt clean.
+- The last green CI run (`290f2a1`) is before this change and the first
+  test-review change; acceptance criterion 3 needs a push and a green run.
+
+## Test review, third round (2026-11-04)
+
+- added 1 step to be addressed
+
+## Test review follow-ups, third round (2026-11-04)
+
+- addressed 1 review step.
+- Acceptance note (criterion 3): 2026-11-04, ref `020-value-type-records`,
+  pushed `14a3e33` (contains `f99ce54`, the last commit that changes files
+  outside the task directory; `14a3e33` changes task files only).
+  PR https://github.com/hugoduncan/closed-record/pull/1.
+  Run https://github.com/hugoduncan/closed-record/actions/runs/41885774931:
+  `success`. Jobs: Value-type tests (Valhalla), Value-type tests
+  (Temurin 21), Build verification, Markdown links, Development quality,
+  Release tooling verification, Runtime tests (Clojure 1.11, 1.12, 1.13):
+  all `success`.
+
+## Test review, fourth round (2026-11-04)
+
+- added 1 step to be addressed
+
+## Test review follow-ups, fourth round (2026-11-04)
+
+- addressed 1 review step.
+- `errors-test/value-type-form` searches the expansion with `tree-seq`;
+  `check-pass-through` asserts that the `defvaluetype*` form is found, and
+  evaluates it only when it is found.
+- Value-type suite: Temurin 21 82/314; Valhalla 82/316. kondo, cljfmt clean.
+- The last green CI run (`14a3e33`) is before this change; acceptance
+  criterion 3 needs a push and a green run.
+
+## Test review, fifth round (2026-11-04)
+
+- added 1 step to be addressed
+
+## Test review follow-ups, fifth round (2026-11-04)
+
+- addressed 1 review step.
+- Acceptance note (criterion 3): 2026-11-04, ref `020-value-type-records`,
+  pushed `9f657a9` (contains `4405d9d`, the last commit that changes files
+  outside the task directory; `9f657a9` changes task files only).
+  PR https://github.com/hugoduncan/closed-record/pull/1.
+  Run https://github.com/hugoduncan/closed-record/actions/runs/41887056544:
+  `success`. Jobs: Build verification, Value-type tests (Temurin 21),
+  Runtime tests (Clojure 1.11, 1.12, 1.13), Markdown links, Release tooling
+  verification, Value-type tests (Valhalla), Development quality: all
+  `success`.
+
+## Test review, sixth round (2026-11-04)
+
+- no new steps
+
+## Test review, seventh round (2026-11-04)
+
+- added 3 steps to be addressed
+
+## Test review follow-ups, seventh round (2026-11-04)
+
+- addressed 3 review steps.
+- Clojure 1.11 case checks `{:major 1 :minor 11}`, not the patch release;
+  removed the redundant `symbol?` assertion; the option check is
+  `(not-any? #{:value-type} tform)`.
+- Ordinary suite 186/2792 (one assertion less); value-type suite 82/314
+  (Temurin 21), 82/316 (Valhalla); Clojure 1.11 case 1/7. kondo, cljfmt
+  clean.
+- The last green CI run (`9f657a9`) is before this change; acceptance
+  criterion 3 needs a push and a green run.
+
+## Test review, eighth round (2026-11-04)
+
+- added 2 steps to be addressed
+
+## Test review follow-ups, eighth round (2026-11-04)
+
+- addressed 2 review steps.
+- `subprocess-test/error-policy-test` (VT-V5) is defined only for identity
+  output (`deftest` in `(when (= :identity expected) …)`). A `when` in the
+  test body fails: scry counts a test with no assertion as "unknown" and
+  exits 1 (Valhalla run, checked).
+- Value-type suite 82/314 (Temurin 21), 81/315 (Valhalla). kondo, cljfmt
+  clean.
+- Acceptance note (criterion 3): 2026-11-04, ref `020-value-type-records`,
+  SHA `5aa9556` (contains `1bc278a`), PR
+  https://github.com/hugoduncan/closed-record/pull/1, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41888528663:
+  Build verification, Value-type tests (Temurin 21), Value-type tests
+  (Valhalla), Release tooling verification, Development quality, Markdown
+  links, Runtime tests (Clojure 1.11, 1.12, 1.13): all `success`.
+
+## Test review, ninth round (2026-11-04)
+
+- added 1 step to be addressed
+
+## Test review follow-ups, ninth round (2026-11-04)
+
+- addressed 1 review step.
+- `subprocess-test/error-policy-test` (VT-V5): the child prints
+  `{:defined true}` or `{:causes [class names]}`; the test asserts
+  `(peek (:causes r))` is `"java.lang.Error"`, with the message
+  "the error policy does not apply: <out>". Checked (not committed): no
+  policy gives a failure with `{:defined true}`; an invalid policy gives a
+  failure with the cause chain. No test error in either case.
+- Value-type suite 82/314 (Temurin 21); Valhalla 81/315 (test not
+  defined). kondo, cljfmt clean.
+- The last green CI run (`5aa9556`) is before this change; acceptance
+  criterion 3 needs a push and a green run.
+
+## Test review, tenth round (2026-11-04)
+
+- added 2 steps to be addressed
+
+## Test review follow-ups, tenth round (2026-11-04)
+
+- addressed 2 review steps.
+- `representation-test/representation-test`: a `field-names` helper gives
+  the declared field names of `VP`; both branches use `contains?`, so a
+  missing (identity) or present (value) hash field gives a failure, not a
+  test error. Value-type suite 82/314 (Temurin 21), 81/315 (Valhalla);
+  counts unchanged. kondo, cljfmt clean.
+- Acceptance note (criterion 3): 2026-11-04, ref `020-value-type-records`,
+  SHA `688b02b` (contains `e77b873`), PR
+  https://github.com/hugoduncan/closed-record/pull/1, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41889615136:
+  Build verification, Value-type tests (Temurin 21), Value-type tests
+  (Valhalla), Release tooling verification, Development quality, Markdown
+  links, Runtime tests (Clojure 1.11, 1.12, 1.13): all `success`.
+
+## Test review, eleventh round (2026-11-04)
+
+- added 1 step to be addressed
+
+## Test review follow-ups, eleventh round (2026-11-04)
+
+- addressed 1 review step.
+- Shared `serializable-test` is in a `(when (= :identity
+  support/representation) …)` with a comment (D-06: identity output only),
+  as VT-V5. `transform` replaces the placeholder at any depth, so the `when`
+  test gets the representation form. Ordinary suite 186/2792 (Clojure 1.11,
+  1.12, 1.13); value-type suite 82/314 (Temurin 21), 80/314 (Valhalla; one
+  test and one assertion less). kondo, cljfmt clean.
+- Acceptance note (criterion 3): 2026-11-04, ref `020-value-type-records`,
+  SHA `b642eb2`, PR https://github.com/hugoduncan/closed-record/pull/1, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41890869170:
+  Build verification, Value-type tests (Temurin 21), Value-type tests
+  (Valhalla), Release tooling verification, Development quality, Markdown
+  links, Runtime tests (Clojure 1.11, 1.12, 1.13): all `success`.
+
+## Test review, twelfth round (2026-11-04)
+
+- no new actionable issues
+
+## Documentation review (2026-11-04)
+
+- added 5 steps to be addressed
+
+## Documentation review follow-ups (2026-11-04)
+
+- addressed 5 review steps.
+- `CHANGELOG.md` Unreleased note for `:value-type true`; `mementum/state.md`
+  updated. `doc/performance.md` "Value-type records" states the value-type
+  size result (+8 bytes for 1–3 `long` fields) with a link to value-type
+  `object-size.md` at the pinned SHA `8bb7c4f`; VT-R4 unchanged. VT-V2 row
+  names `defvaluetype*`; artifacts `checks/*.clj` row states that
+  `serializable-test` is defined only for identity output;
+  `doc/development.md` names the three `test/runtime` commands. Vale and
+  lychee clean.
+- Acceptance note (criterion 3): 2026-11-04, ref `020-value-type-records`,
+  SHA `a90e160`, PR https://github.com/hugoduncan/closed-record/pull/1, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41892110200:
+  all 9 jobs `success`.
+
+## Documentation review, second round (2026-11-04)
+
+- no new actionable issues
+
+## Code-shaper review (2026-11-04)
+
+- added 3 steps to be addressed
+
+## Code-shaper review follow-ups (2026-11-04)
+
+- addressed 3 review steps.
+- `closed-record.checks.support/define-checks` is now a function: it takes
+  the representation value (`:identity` or `:value`, else throws) and puts
+  the keyword in place of `support/representation`. Macro, `load-checks`
+  and the 9 separate `(expectation/representation)` guard calls removed;
+  the evaluated opts map is the guard (no property → exit 1).
+- New `closed-record.form-support` (`test/runtime/closed_record/form_support.clj`):
+  `walk-form` (bottom-up, keeps collection metadata; `f` sets the metadata
+  of its result) and `with-options`. `strip-positions` and `transform` use
+  `walk-form`; `fixture/with-option` and `support/with-record-opts` removed.
+- `closed-record.impl.jvm/check-value-type [opts tname]` replaces
+  `resolve-value-type`; called as a statement after `check-options`; gives
+  nil; same ex-info and `:class-name`.
+- Counts unchanged: ordinary 186/2792 (Clojure 1.11, 1.13); Temurin 21
+  82/314; Valhalla 80/314; Clojure 1.11 case 1/7. Fixture test green.
+  clj-kondo, cljfmt clean. Not pushed; CI run of this change is pending
+  (acceptance criterion 3).
+
+## Code-shaper review, second round (2026-11-04)
+
+- added 2 steps to be addressed
+
+## Code-shaper review follow-ups, second round (2026-11-04)
+
+- addressed 2 review steps.
+- `emit` computes `value-type?` and `classname` once; `check-value-type
+  [value-type? classname]` is a statement before the inner `let`; the
+  `:class-name` of the error and the class of the expansion have one
+  source. Ordinary representation map has `:preamble []`.
+- New `closed-record.value-type.support`
+  (`test/value-type/closed_record/value_type/support.clj`) with
+  `type-form`; `representation-test` and `errors-test` use it.
+- Counts unchanged: ordinary 186/2792 (Clojure 1.11, 1.12, 1.13); Temurin 21
+  82/314; Valhalla 80/314; Clojure 1.11 case 1/7. Fixture test green.
+  clj-kondo, cljfmt clean. Not pushed; CI run of this change is pending
+  (acceptance criterion 3).
+
+## Code-shaper review, third round (2026-11-04)
+
+- added 3 steps to be addressed
+
+## Code-shaper review follow-ups, third round (2026-11-04)
+
+- addressed 3 review steps.
+- New `closed-record.probe-support` with `thrown` and `eval-in-new-ns`;
+  `defclosedrecord-test`, `value-type.representation-test` and the shared
+  check `closed-record.checks.defclosedrecord` use it. Other `thrown`
+  copies (checks `malli`, `hidden_key`, `differential`,
+  `compiler_rules_test`, `value-type.errors-test`) not in scope; unchanged.
+- `expansion-error` (option test, Clojure 1.11 test): same contract and
+  docstring; nil when there is no exception.
+- Counts unchanged: ordinary 186/2792 (Clojure 1.11, 1.12, 1.13); Temurin 21
+  82/314; Valhalla 80/314; Clojure 1.11 case 1/7. clj-kondo, cljfmt, Vale
+  clean.
+- Acceptance note (criterion 3), 2026-11-04: ref `020-value-type-records`,
+  SHA `a92e82e`, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41895033444;
+  all 9 jobs `success` (Runtime 1.11, 1.12, 1.13; Value-type Temurin 21,
+  Valhalla; Markdown links; Release tooling; Build; Development quality).
+
+## Code-shaper review, fourth round (2026-11-04)
+
+- added 2 steps to be addressed
+
+## Code-shaper review follow-ups, fourth round (2026-11-04)
+
+- addressed 2 review steps.
+- New `closed-record.bench.value-class/value-class?` (no dependencies;
+  `dev/bench` is on `:test` and `:bench`); `closed-record.bench.value-type`
+  and `closed-record.value-type.expectation` refer it. `fork`, `report`,
+  `legacy-transport`, `timing-tool`, `closed-record.bench` unchanged.
+  Artifacts `dev/bench/` row updated.
+- `errors-test` private `thrown` renamed `eval-error`.
+- Counts unchanged: ordinary 186/2792 (Clojure 1.12); Temurin 21 82/314;
+  Valhalla 80/314; Clojure 1.11 case 1/7. VT-V8 namespace loads on
+  Valhalla, `V` is a value class. clj-kondo, cljfmt clean. Not pushed; CI
+  run of this change is pending (acceptance criterion 3).
+
+## Code-shaper review, fifth round (2026-11-04)
+
+- added 3 steps to be addressed
+
+## Code-shaper review follow-ups, fifth round (2026-11-04)
+
+- addressed 3 review steps.
+- `closed-record.probe-support/data-of` added; `checks.defclosedrecord`,
+  `checks.malli`, `checks.hidden-key` refer it (and `thrown` where used);
+  private copies removed. `checks.differential` keeps its own two-argument
+  `thrown` (other contract). Artifacts `probe_support.clj` row updated.
+- `closed-record.bench.value-type` `:require` sorted.
+- Counts unchanged: ordinary 186/2792; Temurin 21 82/314; Valhalla 80/314.
+  clj-kondo, cljfmt clean.
+- Acceptance note (criterion 3), 2026-11-04: ref `020-value-type-records`,
+  SHA `8bd6cea`, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41896541516;
+  all 9 jobs `success`.
+
+## Code-shaper review, sixth round (2026-11-04)
+
+- added 2 steps to be addressed
+
+## Code-shaper review follow-ups, sixth round (2026-11-04)
+
+- addressed 2 review steps.
+- `closed-record.probe-support/expansion-error [ns-sym form]`; private
+  copies in `value-type-option-test` and `clj-1-11-test` removed.
+  Artifacts `probe_support.clj` row updated.
+- `closed-record.impl.jvm/representation` docstring states the argument
+  lists of `hash-form` and `with-meta-form`.
+- Counts unchanged: ordinary 186/2792 (Clojure 1.12); Temurin 21 82/314;
+  Clojure 1.11 case 1/7. clj-kondo, cljfmt clean. Not pushed; CI run of
+  this change is pending (acceptance criterion 3).
+
+## Code-shaper review, seventh round (2026-11-04)
+
+- added 2 steps to be addressed
+
+## Code-shaper review follow-ups, seventh round (2026-11-04)
+
+- addressed 2 review steps.
+- `absent-var-test` child script requires `closed-record.probe-support`,
+  creates `my-app.geo` and calls `expansion-error`; inline copy removed.
+  Artifacts `probe_support.clj` row updated.
+- Counts unchanged: ordinary 186/2792 (Clojure 1.11, 1.12, 1.13).
+  clj-kondo, cljfmt clean.
+- Acceptance note (criterion 3), 2026-11-04: ref `020-value-type-records`,
+  SHA `7534b9c` (contains `371b3a9`), run
+  https://github.com/hugoduncan/closed-record/actions/runs/41898125462;
+  all 9 jobs `success`.
+
+## Code-shaper review, eighth round (2026-11-04)
+
+- no new steps

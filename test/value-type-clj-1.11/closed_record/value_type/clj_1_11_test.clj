@@ -4,20 +4,16 @@
   gives `:closed-record/value-type-unavailable` with a cause."
   (:require
    [clojure.test :refer [deftest is testing]]
-   [closed-record.core]))
-
-(defn- expansion-error
-  [form]
-  (binding [*ns* (the-ns 'closed-record.value-type.clj-1-11-test)]
-    (try
-      (when (macroexpand-1 form) nil)
-      (catch clojure.lang.Compiler$CompilerException t (ex-cause t)))))
+   [closed-record.core]
+   [closed-record.probe-support :refer [expansion-error]]))
 
 (deftest value-type-unavailable-test
-  (is (= "1.11.4" (clojure-version)))
+  (is (= {:major 1 :minor 11}
+         (select-keys *clojure-version* [:major :minor])))
   (doseq [n ['A 'B 'C]]
     (testing (str n)
       (let [e (expansion-error
+               'closed-record.value-type.clj-1-11-test
                (list 'closed-record.core/defclosedrecord n '[x]
                      :value-type true))]
         (is (= {:type :closed-record/value-type-unavailable
