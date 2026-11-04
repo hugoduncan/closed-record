@@ -96,19 +96,19 @@
       `:local/root` dependency.
       Done 2026-11-03: `8bb7c4f` on GitHub master; tree equal to `66d5ff7`;
       pin `8bb7c4f`. See implementation.md.
-- [ ] Add the `:value-type-test` alias to `deps.edn`: lib
+- [x] Add the `:value-type-test` alias to `deps.edn`: lib
       `org.hugoduncan/value-type`, `:git/url
       "https://github.com/hugoduncan/value-type.git"`, full `:git/sha` of
       the pinned commit (no `:git/tag`), extra paths `test/value-type` and
       `test/value-type-clj-1.11`; base `:deps` unchanged. Verify that
       `clojure -Srepro -Spath -M:value-type-test` resolves it over HTTPS.
-- [ ] Add the alias to `closed-record.lint-dependencies/dependency-bases`.
-- [ ] Map the shared check selection rule to the ordinary runtime tests
+- [x] Add the alias to `closed-record.lint-dependencies/dependency-bases`.
+- [x] Map the shared check selection rule to the ordinary runtime tests
       (run-time behaviour of a defined type: methods, factories, literals,
       printing, equality, hash, metadata, call-site errors, D-06 round trip,
       D-15 user implementations; exclude V-11, V-13, expansion-time tests,
       bench support tests); record the mapping in implementation.md.
-- [ ] Extract the shared checks into `define-checks` macros in
+- [x] Extract the shared checks into `define-checks` macros in
       `test/runtime/closed_record/checks/<topic>.clj`
       (`closed-record.checks.<topic>`; helpers in
       `closed-record.checks.support`), loadable without value-type: the macro
@@ -119,11 +119,11 @@
       `:identity`. Each ordinary test namespace calls
       `(define-checks {:record-opts [] :representation :identity})` (no
       copies).
-- [ ] Resolve clj-kondo findings for macro-defined names in
+- [x] Resolve clj-kondo findings for macro-defined names in
       `.clj-kondo/config.edn`, if any.
-- [ ] Run the ordinary runtime suite on Clojure 1.11, 1.12 and 1.13 without
+- [x] Run the ordinary runtime suite on Clojure 1.11, 1.12 and 1.13 without
       value-type; commit.
-- [ ] Update `ramora/defclosedrecord/embodiment/artifacts.md` rows for the
+- [x] Update `ramora/defclosedrecord/embodiment/artifacts.md` rows for the
       shared check files and changed ordinary test files; commit.
 
 ## Slice 5: Value-type suite

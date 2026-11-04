@@ -768,3 +768,36 @@ Paths:
   in earlier entries as the commit of the observations; it is not on
   GitHub. The local `:local/root` checks of slices 1–3 used the same tree.
 - The slice-4 blocker is resolved.
+
+## Slice 4: alias and shared checks (2026-11-03)
+
+- `:value-type-test` alias added (`8bb7c4f…`, HTTPS `:git/url`); `clojure
+  -Srepro -Spath -M:value-type-test` cloned and resolved it. Added to
+  `dependency-bases`; `test/tooling` green (52 tests).
+- Selection mapping (shared → `closed-record.checks.<topic>`): all of
+  `equality`, `hidden-key`, `literal`, `rejected-key-message`, `malli`,
+  `differential`, `property`; `defclosedrecord` except
+  `accepted-options-test`, `load-ns-option-test`, `argument-errors-test`
+  (and their types NP, LN, NPS); `field-value` except
+  `field-declaration-test` (V-11; FL, DFL). Not shared: `compiler_rules`,
+  `value_type_option`, `bench_*`, `assoc_*`, `matrix_budget`.
+- Mechanism (deviation in form, not intent, from plan.md "Shared checks"):
+  each check ns holds the original test code as a quoted vector `body`;
+  `support/expand` rewrites it for the caller. Conventions: `$ns`,
+  `$ns/x`, `$P` (munged prefix, in strings and symbol names),
+  `$representation`. Symbols referred/aliased in the check ns are qualified;
+  symbols qualified with the check ns (from syntax-quote in body macros)
+  lose the namespace. So bodies keep their own helpers (`thrown`,
+  `in-test-ns`, `round-trip`) as before; `checks.support` holds only
+  `expand`. The check ns `:require`s exist only for qualification, so each
+  check ns turns off clj-kondo unused-namespace/referred-var in its ns
+  metadata. Quoted bodies are not linted by clj-kondo.
+- `defclosedrecord-test` non-shared tests: own `Measure` protocol (the
+  macro defines `Shape`/`area` in the same ns) and own `thrown`.
+- Counts unchanged: 186 tests, 2793 assertions on 1.11.4, 1.12.6,
+  1.13.0-alpha9.
+- Preview for slice 5 (ad hoc namespaces in /tmp, not committed):
+  `:record-opts [:value-type true]` over all 9 check namespaces: Temurin 21
+  73 tests pass; Valhalla `--enable-preview` all pass except
+  `serializable-test` when given `:representation :identity` (expected:
+  value output is not serializable). So the `$representation` gate works.
