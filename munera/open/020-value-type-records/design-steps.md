@@ -85,7 +85,7 @@
   result is an identity class or an error. Change the Intent to agree, for
   example: "an identity class or an error, as value-type's fallback policy
   selects, on other JVMs".
-- [ ] Ambiguity: state the cause of `:closed-record/value-type-unavailable`
+- [x] Ambiguity: state the cause of `:closed-record/value-type-unavailable`
   when `value-type.core` loads but has no `defvaluetype*`. The public
   contract says "the resolution failure as cause" for every case, including
   "a value-type version without `defvaluetype*`". In that case
@@ -95,7 +95,7 @@
   of design.md: no cause (`ex-cause` is `nil`) in this case, or a cause that
   the emitter makes (state its class and message). A missing library and a
   load failure throw, and that exception is the cause.
-- [ ] Inconsistency: the CI section adds the `Value-type tests (Valhalla)`
+- [x] Inconsistency: the CI section adds the `Value-type tests (Valhalla)`
   job, which runs Clojure on the Valhalla JDK. After this change, two
   statements in `doc/` are false: `doc/development.md` (Continuous
   integration: "Clojure jobs use Temurin Java 21") and

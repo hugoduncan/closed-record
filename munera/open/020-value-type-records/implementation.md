@@ -166,3 +166,12 @@ Paths:
 - Doc step paths: `doc/development.md` line 53 (Continuous integration),
   `doc/tool-installation.md` line 11. Leave `doc/performance.md` line 12:
   it describes task-019 evidence (Valhalla on macOS arm64), not CI.
+
+## Design-steps pass, round 3 (2026-11-03)
+
+- Both design steps resolved in design.md. No `SCOPE_QUESTION:` items.
+- Cause choice: absent var gives no cause (`ex-cause` `nil`). The design
+  adds the absent-var check on purpose (ordinary suite, subprocess JVM, stub
+  `value-type.core` in a temporary directory). Checked: with a stub that has
+  only `(ns value-type.core)` on the class path, `requiring-resolve` of
+  `value-type.core/defvaluetype*` gives `nil` on each call.

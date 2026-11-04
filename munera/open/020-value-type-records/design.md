@@ -146,10 +146,16 @@ Implement the public contract of the Ramora design:
   passed to `deftype*` or `defvaluetype*`.
 - When `value-type.core/defvaluetype*` cannot be resolved, for any reason,
   macroexpansion fails with `ex-info`
-  `{:type :closed-record/value-type-unavailable :class-name c}` and the
-  resolution failure as cause. A missing library, a load failure (such as on
-  Clojure 1.11) and a value-type version without `defvaluetype*` all give this
-  error.
+  `{:type :closed-record/value-type-unavailable :class-name c}`. A missing
+  library, a load failure (such as on Clojure 1.11) and a value-type version
+  without `defvaluetype*` all give this error.
+- The cause of this error:
+  - A missing library or a load failure: `requiring-resolve` throws. That
+    exception is the cause (for example `java.io.FileNotFoundException` when
+    value-type is not on the class path).
+  - `value-type.core` loads but has no `defvaluetype*`: `requiring-resolve`
+    gives `nil` and throws nothing. The error has no cause (`ex-cause` is
+    `nil`). The emitter does not make a cause.
 - `c` is the qualified class-name symbol that `deftype*` receives: the munged
   namespace name, a dot and the type name (`classname` in `emit`). For example,
   `Point` in the namespace `my-app.geo` gives `my_app.geo.Point`. It is a
@@ -220,7 +226,17 @@ rules:
 - VT-V1 runs in the ordinary `test/runtime` suite on Clojure 1.11, 1.12 and
   1.13, without value-type on the class path. There it checks the expansion
   with no option and with `:value-type false` against the expansion fixture
-  (below), and the errors of `:value-type true` and of other values.
+  (below), and the errors of `:value-type true` and of other values. The
+  `:value-type true` error there is the missing-library case, with the
+  `requiring-resolve` exception as cause.
+- VT-V1 absent-var case (Public contract). The ordinary suite also checks
+  `:value-type true` when `value-type.core` loads but has no
+  `defvaluetype*`: the error has no cause. The check runs in a subprocess JVM
+  with the `java` binary, the JVM input arguments and the class path of the
+  test JVM, plus a temporary directory that holds a stub
+  `value_type/core.clj` with only `(ns value-type.core)`. The test writes the
+  stub. The stub is in no committed alias and is never on a class path with
+  value-type. Add this case to the Ramora VT-V1 row.
 - Expansion fixture (VT-I2, acceptance criterion 2). The emitter uses
   `gensym`, so two expansions are not `=`. Thus:
   - Reference: a fixture file in `test/runtime`, recorded from the emitter at
@@ -342,10 +358,18 @@ Embody VT-D10 in `ci.yml`:
   cost, and no performance claim (VT-R4). value-type is unreleased: state how
   to add it.
 - `doc/development.md`: the commands for the value-type suite on both JVMs.
+  Continuous integration: replace "Clojure jobs use Temurin Java 21". The
+  `Value-type tests (Valhalla)` job runs on the pinned Valhalla build
+  `27-jep401ea3+1-1`. The other Clojure jobs use Temurin Java 21.
+- `doc/tool-installation.md`, Java and Clojure CLI: replace "CI uses Temurin
+  Java 21" with the same statement. Do not change the pinned local Temurin
+  archive.
 - `doc/API.md`: regenerate it from the docstring.
 - `ramora/value-type-records.md`, Public contract: state the value of
-  `:class-name` (the qualified class-name symbol, as Scope, Public contract
-  states). This adds precision and does not change a decision.
+  `:class-name` (the qualified class-name symbol) and the cause of each case
+  (the `requiring-resolve` exception, or no cause when the var is absent), as
+  Scope, Public contract states. Replace "the resolution failure as cause".
+  This adds precision and does not change a decision.
 - `ramora/value-type-records/embodiment.md`: replace "Not implemented" with the
   current embodiment and its verification limits (one Valhalla build, Linux
   x64, VT-V8 manual).
