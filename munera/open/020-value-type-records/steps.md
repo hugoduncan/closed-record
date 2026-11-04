@@ -462,3 +462,17 @@
       item (Ramora VT-V2 row); `aot-test` covers its behaviour (classes
       load without the source). A test that fixes its place in the `let`
       prevents a change of that decision.
+
+## Test review follow-ups, second round
+
+- [ ] Remove the two method-body shape checks of
+      `closed-record.value-type.representation-test/value-expansion-test`:
+      "hash forms compute on each call" (`hashCode` body ends in a
+      `APersistentMap/mapHash` call, `hasheq` names `mapHasheq`) and
+      "withMeta calls the constructor …" (body `=` `(new Q a b m __extmap)`).
+      They are not VT-V2 items (Ramora VT-V2 row) and fix the form of the
+      emitted code, so a change of that form (for example a helper call or
+      `Q.`) fails them. The behaviour has other tests: "no generated
+      reference to `__hash` or `__hasheq`" (no cache, VT-D6, VT-D7) and the
+      shared `hash`, `assoc` and `metadata` checks (values). Keep test
+      counts in implementation.md current.
