@@ -106,6 +106,40 @@ Key decisions:
   a pinned Git SHA and the two test directory paths. Base `:deps` unchanged.
   Add the alias to `closed-record.lint-dependencies/dependency-bases` so lint
   setup fetches the pin.
+  - Coordinate: lib `org.hugoduncan/value-type` (value-type `build.clj`),
+    `:git/url "https://github.com/hugoduncan/value-type.git"` and the full
+    40-character `:git/sha`, no `:git/tag` (value-type has no tags):
+    ```clojure
+    :value-type-test
+    {:extra-paths ["test/value-type" "test/value-type-clj-1.11"]
+     :extra-deps {org.hugoduncan/value-type
+                  {:git/url "https://github.com/hugoduncan/value-type.git"
+                   :git/sha "<full sha>"}}}
+    ```
+    tools.deps infers a URL only for `io.github.*` lib names, so the URL is
+    explicit. Use HTTPS, not the SSH `origin` of the local value-type
+    repository (`git@github.com:…`), because CI and lint setup have no SSH
+    key. value-type has only `.clj` sources and no `:deps/prep-lib`, so the
+    dependency needs no prep step. README (slice 8) uses the same coordinate
+    in its instruction for unreleased value-type.
+  - SHA rule at the slice-4 gate: pin `66d5ff7`
+    (`66d5ff7680c227bcf44ffe0824628288ffab0ebf`) when it is on GitHub.
+    Check: `git -C ~/projects/hugoduncan/value-type/value-type-master fetch
+    https://github.com/hugoduncan/value-type.git master`, then
+    `git -C … merge-base --is-ancestor <sha> FETCH_HEAD` exits 0 (fetch the
+    branch that the user names instead of `master`, if any). `git
+    ls-remote` shows only ref heads, not ancestors. `git fetch <url> <sha>`
+    is not a check: it exits 0 for a local object that is not on GitHub
+    (observed for `66d5ff7`). If it is not on
+    GitHub, stop and ask the user, who pushes it or names another commit
+    that is on GitHub. Pin that commit after the same check. For a commit
+    other than `66d5ff7`, first check that the value-type facts of design.md
+    (Context, value-type facts) and the error facts in implementation.md
+    still hold at that commit: `git diff 66d5ff7 <sha> -- src deps.edn` and
+    the `defvaluetype*` docstring. Record the result in implementation.md.
+    If a fact changed, stop for a user decision. If the user chooses
+    another reproducible source (design Prerequisite), record the choice in
+    implementation.md and change this coordinate to agree.
 - **Error contract**: in value mode, `emit` calls
   `(requiring-resolve 'value-type.core/defvaluetype*)` inside try/catch.
   Throw → `ex-info :closed-record/value-type-unavailable` with the thrown
@@ -133,6 +167,17 @@ Key decisions:
   the representation against the expectation. The compile is not in the
   test JVM, because `compile` needs `*compile-path*` on the class path and
   the load must not see the source.
+- **Local JDKs**: this machine is macOS arm64. Its default `java` is 25,
+  which is not a target JVM, so each local value-type suite, Clojure 1.11
+  case and VT-V8 command sets `JAVA_CMD`. Subprocess and fork child JVMs use
+  the same binary through `java.home`.
+  - Temurin 21 suite and Clojure 1.11 case: Temurin `21.0.10+7`,
+    `JAVA_CMD=$HOME/.local/share/mise/installs/java/temurin-21.0.10+7.0.LTS/bin/java`.
+  - Valhalla suite and VT-V8: Valhalla `27-jep401ea3+1-1`, macOS aarch64
+    build,
+    `JAVA_CMD=$HOME/.local/share/mise/installs/java/openjdk-27.0.0-jep401ea3+1-1/bin/java`.
+    It is the same build as the pinned archive on another platform. The
+    pinned Linux x64 archive (`.tar.gz`, SHA-256) runs only in CI.
 - **VT-V8 bench**: a separate entry namespace `closed-record.bench.value-type`
   (`dev/bench/closed_record/bench/value_type.clj`) that no other namespace
   requires, with its own child command (as `default-child-cmd`, with
@@ -204,8 +249,14 @@ Key decisions:
       An option that contains a space is not supported.
     - `JAVA_CMD` (Clojure CLI) selects the `java` binary. The child JVMs
       use the same binary through `java.home`.
-  - VT-V8 command:
-    `JAVA_CMD=<valhalla-jdk>/bin/java BENCH_ALIASES=:value-type-test:clj-1.12 BENCH_JVM_OPTS=-J--enable-preview sh dev/bench/timing/run.sh -m closed-record.bench.value-type`.
+  - VT-V8 command (local Valhalla JDK, see Local JDKs):
+    `JAVA_CMD=$HOME/.local/share/mise/installs/java/openjdk-27.0.0-jep401ea3+1-1/bin/java BENCH_ALIASES=:value-type-test:clj-1.12 BENCH_JVM_OPTS=-J--enable-preview sh dev/bench/timing/run.sh -m closed-record.bench.value-type`.
+  - VT-V8 limits (`implementation.md` and `doc/performance.md`): one manual,
+    informational run on the machine of the run (platform from
+    `uname -sm` and the machine model, as `doc/performance.md` names "macOS
+    arm64 MacBook Pro"), Valhalla `27-jep401ea3+1-1` (the macOS aarch64
+    build, not the pinned Linux x64 archive), Clojure 1.12.6, both record
+    kinds on that JDK. "Linux x64" is the platform of CI only.
   - `run.sh` check: `test/bench/closed_record/timing_launcher_test.clj`
     calls `run.sh -e …` through `clojure.java.shell`, so the child shell
     gets the environment of the test JVM. `test/bench` has no alias, and
@@ -226,14 +277,34 @@ Key decisions:
     extracted pinned JDK. The Clojure CLI uses `JAVA_CMD` for dependency
     resolution and for the test JVM. `-J--enable-preview` applies only to
     the test JVM.
+  - Push (gate): acceptance criterion 3 needs the jobs to pass in CI. Local
+    `master` is ahead of `origin/master` by many commits, and tasks 014 and
+    017 do not push only for evidence. Thus slice 6 stops and asks the user
+    before the first push, as at the slice-4 gate. The proposed ref is a
+    new branch `020-value-type-records` with a pull request to `master`
+    (`ci.yml` runs on `pull_request`): `git push origin
+    master:refs/heads/020-value-type-records`, then `gh pr create --base
+    master --head 020-value-type-records`. If the user names another ref
+    (for example `master`), use it. A fix after a failed run is a new commit
+    on local `master`, pushed to the same ref. A merge of the pull request is
+    the user's decision and is not part of this task.
+  - CI result: `gh run list --workflow ci.yml --branch <ref> --commit <sha>`
+    gives the run ID of the pushed commit; `gh run watch <id>
+    --exit-status` waits; `gh run view <id> --json jobs` gives each job
+    conclusion. The run passes when every
+    job, including `Value-type tests (Temurin 21)` and `Value-type tests
+    (Valhalla)`, has conclusion `success`.
+  - Record in implementation.md: the date, the pushed ref and commit SHA,
+    the pull request URL, and for each run the run URL and the conclusion of
+    each job (a failed run also gets its cause and fix commit).
 
 ## Risks
 
 - **Prerequisite unmet (blocker for slice 4)**: value-type `66d5ff7`
   (contains `defvaluetype*`) is not on GitHub; origin/master is at `5d2656b`.
   Slices 1–3 can proceed (no committed value-type dependency). At slice 4
-  (test alias), stop and ask the user per the design, unless the user has
-  pushed by then.
+  (test alias), apply the SHA rule (Alias): stop and ask the user per the
+  design, unless the user has pushed by then.
 - **Valhalla download flakiness**: `download.java.net` availability; mitigated
   by `actions/cache` keyed on the SHA-256.
 - **Shared check extraction churn**: refactoring the ordinary runtime tests
@@ -282,7 +353,8 @@ Key decisions:
    does-not-load; VT-V7 AOT test; `test/value-type-clj-1.11/` with the
    Clojure 1.11 VT-V1 case. Local runs on Temurin 21 and Valhalla.
 6. **CI** — the two required jobs, archive pin and cache, failure uploads,
-   release workflow verified unchanged (`workflow_call` picks up new jobs).
+   release workflow verified unchanged (`workflow_call` picks up new jobs);
+   push (**gate: requires user approval**) and CI result.
 7. **VT-V8 bench** — entry namespace, `run.sh` environment variables,
    manual Valhalla run; results in `implementation.md` and `doc/performance.md`; default
    `:bench` run and the `test/bench` launcher test verified unchanged.

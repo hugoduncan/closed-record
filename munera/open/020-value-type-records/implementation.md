@@ -525,3 +525,25 @@ Paths:
 - JDK step: the VT-V8 limits in `doc/performance.md` follow the existing
   style of that page (it names the machine "macOS arm64 MacBook Pro" and
   the runtime builds).
+
+## Plan-review design-steps pass, round 3 (2026-11-03)
+
+- All 3 plan steps resolved in plan.md (Alias, Local JDKs, VT-V8 limits, CI
+  Push) and steps.md (slices 4 to 8). design.md unchanged. No step of
+  steps.md is done.
+- value-type `66d5ff7` full SHA: `66d5ff7680c227bcf44ffe0824628288ffab0ebf`.
+  tools.deps needs the full SHA when no `:git/tag` is given.
+- Observed: `git fetch https://github.com/hugoduncan/value-type.git
+  66d5ff7680c2…` exits 0 although the commit is not on GitHub (the object
+  is local). `merge-base --is-ancestor 66d5ff7 FETCH_HEAD` after a fetch of
+  `master` gives 1. Use only the merge-base check.
+- Local JDK binaries checked: `temurin-21.0.10+7.0.LTS/bin/java` gives
+  `21.0.10+7-LTS`; `openjdk-27.0.0-jep401ea3+1-1/bin/java` gives
+  `27-jep401ea3+1-1` (both under `~/.local/share/mise/installs/java/`).
+  `uname -sm` is `Darwin arm64`.
+- `gh` 2.102.0 has `gh run list --commit`. For a `pull_request` run,
+  `headSha` is the head commit of the pull request branch.
+- Open point for review: slices 7 to 9 commit after the slice-6 CI run
+  (bench, docs, quality fixes). The plan does not require a second push;
+  the quality job (lint, prose, links) checks those files in CI only after
+  a later push.

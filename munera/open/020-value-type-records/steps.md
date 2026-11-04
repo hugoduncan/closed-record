@@ -75,12 +75,22 @@
 
 ## Slice 4: Test alias and shared checks
 
-- [ ] Verify a value-type commit containing `defvaluetype*` is on GitHub
-      (for example `66d5ff7`). **If not, stop and ask the user** (design
-      Prerequisite). Do not commit a `:local/root` dependency.
-- [ ] Add the `:value-type-test` alias to `deps.edn`: value-type at the
-      pinned Git SHA, extra paths `test/value-type` and
-      `test/value-type-clj-1.11`; base `:deps` unchanged.
+- [ ] Apply the SHA rule (plan.md, Alias): verify that `66d5ff7`
+      (`66d5ff7680c227bcf44ffe0824628288ffab0ebf`) is on GitHub with
+      `git fetch https://github.com/hugoduncan/value-type.git master` (or
+      the branch that the user names) and
+      `git merge-base --is-ancestor <sha> FETCH_HEAD` in the local
+      value-type repository. **If not, stop and ask the user** (design
+      Prerequisite); a commit that the user names gets the same check and,
+      if it is not `66d5ff7`, the value-type facts check. Record the pinned
+      SHA and the checks in implementation.md. Do not commit a
+      `:local/root` dependency.
+- [ ] Add the `:value-type-test` alias to `deps.edn`: lib
+      `org.hugoduncan/value-type`, `:git/url
+      "https://github.com/hugoduncan/value-type.git"`, full `:git/sha` of
+      the pinned commit (no `:git/tag`), extra paths `test/value-type` and
+      `test/value-type-clj-1.11`; base `:deps` unchanged. Verify that
+      `clojure -Srepro -Spath -M:value-type-test` resolves it over HTTPS.
 - [ ] Add the alias to `closed-record.lint-dependencies/dependency-bases`.
 - [ ] Map the shared check selection rule to the ordinary runtime tests
       (run-time behaviour of a defined type: methods, factories, literals,
@@ -152,11 +162,14 @@
 - [ ] Record the three commands in implementation.md:
       Temurin 21 suite (`:test` + value-type alias + `:clj-1.12`,
       `-J-Dclosed-record.test.representation=identity`); Valhalla suite (same
-      aliases, `JAVA_CMD`=pinned JDK, `-J--enable-preview`,
+      aliases, `JAVA_CMD`=Valhalla JDK, `-J--enable-preview`,
       `…representation=value`); Clojure 1.11 case (`:test` + value-type
       alias, no `:clj-1.12`).
-- [ ] Run all three locally (Valhalla run requires the pinned JDK; record
-      availability); commit.
+- [ ] Run all three locally with the `JAVA_CMD` of plan.md, Local JDKs:
+      Temurin `21.0.10+7` for the Temurin 21 suite and the Clojure 1.11
+      case; the macOS aarch64 Valhalla `27-jep401ea3+1-1` for the Valhalla
+      suite (same build as CI, not the pinned Linux x64 archive). Record the
+      `JAVA_CMD` and `java -version` of each run; commit.
 
 ## Slice 6: CI
 
@@ -181,7 +194,17 @@
 - [ ] Verify: no `continue-on-error`; artifact names unique in the workflow;
       runtime matrix unchanged; release workflow runs the new jobs through
       `workflow_call` with no change.
-- [ ] Push and confirm both jobs pass in CI; commit.
+- [ ] **Stop and ask the user before the first push** (plan.md, CI,
+      Push). Proposed: `git push origin
+      master:refs/heads/020-value-type-records` and `gh pr create --base
+      master --head 020-value-type-records`; use another ref if the user
+      names one.
+- [ ] Read the run of the pushed commit (`gh run list --workflow ci.yml
+      --branch <ref> --commit <sha>`, `gh run watch <id> --exit-status`,
+      `gh run view <id> --json jobs`); every job, including both new jobs,
+      has conclusion `success`. After a failure, fix, commit and push to the
+      same ref again. Record the date, ref, SHA, pull request URL, and each
+      run URL with its job conclusions in implementation.md; commit.
 
 ## Slice 7: VT-V8 bench
 
@@ -211,13 +234,18 @@
       scry.cli --dir test/bench --ns closed-record.timing-launcher-test`
       (1 test, 4 assertions before the change); it must pass.
 - [ ] Verify the `:test` alias does not load value-type through `dev/bench`.
-- [ ] Run VT-V8 manually: `JAVA_CMD=<valhalla-jdk>/bin/java
+- [ ] Run VT-V8 manually:
+      `JAVA_CMD=$HOME/.local/share/mise/installs/java/openjdk-27.0.0-jep401ea3+1-1/bin/java
       BENCH_ALIASES=:value-type-test:clj-1.12
       BENCH_JVM_OPTS=-J--enable-preview sh dev/bench/timing/run.sh -m
-      closed-record.bench.value-type`; record commands, runtime and results
-      in implementation.md.
-- [ ] Record the result and its limits (one Valhalla build, Linux x64,
-      manual, informational) in `doc/performance.md`; commit.
+      closed-record.bench.value-type`; record commands, runtime (`java
+      -version`), platform (`uname -sm`, machine model) and results in
+      implementation.md.
+- [ ] Record the result and its limits (plan.md, VT-V8 limits: the machine
+      of the run, the macOS aarch64 Valhalla `27-jep401ea3+1-1` build,
+      Clojure 1.12.6, one manual, informational run) in
+      `doc/performance.md`, in the style of its "Evidence and runtime"
+      section; commit.
 
 ## Slice 8: Documentation
 
@@ -225,8 +253,10 @@
       dependency and the differences table, in brief.
 - [ ] Regenerate `doc/API.md`.
 - [ ] Update `README.md` and `doc/`: the option, differences table,
-      value-type dependency (unreleased: how to add it), Clojure 1.12.6 and
-      JVM requirements, hash cost, no performance claim (VT-R4).
+      value-type dependency (unreleased: how to add it, with the
+      `:git/url` and `:git/sha` coordinate of the `:value-type-test` alias),
+      Clojure 1.12.6 and JVM requirements, hash cost, no performance claim
+      (VT-R4).
 - [ ] Update `doc/development.md`: suite commands for both JVMs and the
       Clojure 1.11 case; test suite list with both new directories and their
       requirements; CI section (Valhalla job JDK, other jobs Temurin 21,
@@ -239,7 +269,9 @@
       `:class-name` value and the cause of each case; replace "the resolution
       failure as cause".
 - [ ] Update `ramora/value-type-records/embodiment.md`: replace "Not
-      implemented" with the current embodiment and its verification limits.
+      implemented" with the current embodiment and its verification limits
+      (one Valhalla build; CI on Linux x64; VT-V8 manual, on the machine of
+      the run).
 - [ ] Update `ramora/value-type-records/invariants-and-verification.md`:
       VT-R1, VT-R2, the VT-V1 row (fixture, absent-var case, does-not-load
       placement, Clojure 1.11 case), the VT-V3 row (shared check selection,
