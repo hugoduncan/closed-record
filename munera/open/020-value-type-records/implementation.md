@@ -630,3 +630,24 @@ Paths:
   `^:non-nil` and `^:nil-restricted` cases reach `defvaluetype*`. No
   ordinary test file name collides with `aot` or `expectation` under
   `closed-record.value-type.*`.
+
+## Notes for the plan-review round-5 design-steps pass
+
+- One open step: reader position metadata in the fixture input forms. It is
+  a plan choice; resolve it in plan.md (Expansion fixture first) and
+  steps.md slice 1. design.md stays unchanged: the fixture is not recorded
+  yet, and the change is to the input side only. The comparison rule
+  (`*print-meta*` true, gensym normalisation) stays.
+- Keep other metadata: field tags (`^long b`), type hints and `:no-print`
+  style metadata must still reach the emitter and the printed form. Remove
+  only `:line`, `:column` and `:file`.
+- Observed on Clojure 1.11.4: `clojure.walk/postwalk` drops all metadata
+  of rebuilt lists (also `:tag`), and keeps symbol metadata. A strip
+  helper must rebuild lists with `(with-meta … (dissoc (meta f) :line
+  :column :file))`, or the fixture forms must have no hinted lists. The
+  `read-string` option has no such issue, but the forms are then strings
+  that cljfmt and clj-kondo do not check.
+- `with-option` builds a new top list; apply the strip rule to its result
+  too (or strip inside `expansion`, so every caller gets it).
+- Paths: emitter `src/closed_record/impl/jvm.clj` (`emit`, `user-methods`
+  copy method bodies with their metadata). cljfmt config `.cljfmt.edn`.
