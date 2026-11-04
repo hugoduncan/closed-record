@@ -1069,3 +1069,13 @@ Paths:
 ## Test review, second round (2026-11-04)
 
 - added 1 step to be addressed
+
+## Test review follow-ups, second round (2026-11-04)
+
+- addressed 1 review step.
+- Removed the "hash forms compute on each call" and "withMeta calls the
+  constructor" checks and the unused `method` helper from
+  `value-expansion-test`.
+- Value-type suite: Temurin 21 82/312; Valhalla 82/313. kondo, cljfmt clean.
+- The last green CI run (`290f2a1`) is before this change and the first
+  test-review change; acceptance criterion 3 needs a push and a green run.

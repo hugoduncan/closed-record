@@ -27,10 +27,6 @@
   (first (filter #(and (seq? %) (= 'value-type.core/defvaluetype* (first %)))
                  (tree-seq seq? seq expansion))))
 
-(defn- method
-  [tform mname]
-  (first (filter #(and (seq? %) (= mname (first %))) tform)))
-
 (defn- symbols
   [form]
   (set (filter symbol? (tree-seq coll? seq form))))
@@ -53,16 +49,7 @@
       (is (not-any? #{'__hash '__hasheq} (symbols specs))))
     (testing "the option is not passed to defvaluetype*"
       (is (not-any? #{:value-type} (flatten (map #(if (coll? %) [] [%])
-                                                 tform)))))
-    (testing "hash forms compute on each call"
-      (is (= 'clojure.lang.APersistentMap/mapHash
-             (first (last (method specs 'hashCode)))))
-      (is (contains? (symbols (method specs 'hasheq))
-                     'clojure.lang.APersistentMap/mapHasheq)))
-    (testing "withMeta calls the constructor with the fields, __meta and
-              __extmap"
-      (let [[_ [_ m] body] (method specs 'withMeta)]
-        (is (= (list 'new 'Q 'a 'b m '__extmap) body))))))
+                                                 tform)))))))
 
 (deftest representation-test
   ;; VT-V4: compare the observed representation with the expectation.

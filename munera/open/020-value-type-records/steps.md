@@ -465,7 +465,7 @@
 
 ## Test review follow-ups, second round
 
-- [ ] Remove the two method-body shape checks of
+- [x] Remove the two method-body shape checks of
       `closed-record.value-type.representation-test/value-expansion-test`:
       "hash forms compute on each call" (`hashCode` body ends in a
       `APersistentMap/mapHash` call, `hasheq` names `mapHasheq`) and
@@ -476,3 +476,4 @@
       reference to `__hash` or `__hasheq`" (no cache, VT-D6, VT-D7) and the
       shared `hash`, `assoc` and `metadata` checks (values). Keep test
       counts in implementation.md current.
+      Done: value-type suite 82/312 (Temurin 21), 82/313 (Valhalla).
