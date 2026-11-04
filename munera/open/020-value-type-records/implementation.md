@@ -175,3 +175,11 @@ Paths:
   `value-type.core` in a temporary directory). Checked: with a stub that has
   only `(ns value-type.core)` on the class path, `requiring-resolve` of
   `value-type.core/defvaluetype*` gives `nil` on each call.
+
+## Design review, fourth round (2026-11-03)
+
+- architectural review added 1 new design step
+- Checked, not filed: the round-3 absent-var subprocess in `test/runtime`
+  fits; the ordinary suite already starts real child JVMs
+  (`bench_fork_test`, `bench_assoc_allocation_run_test`), and the stub never
+  shares a class path with value-type (VT-I2 holds).

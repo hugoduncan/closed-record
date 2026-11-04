@@ -105,3 +105,14 @@
   criterion 7 requires current documentation. Add both statements to the
   Documentation list: the Valhalla job uses the pinned Valhalla build, and
   the other Clojure jobs use Temurin Java 21.
+- [ ] Architecture: complete the `ramora/defclosedrecord/embodiment/artifacts.md`
+  update so that the artifact map stays current (Ramora document rules). The
+  Documentation item names only the `deps.edn`, `ci.yml` and `dev/bench/`
+  rows and the value-type test directories. After the change these rows are
+  also false or incomplete: `src/closed_record/impl/jvm.clj` ("Builds the
+  `deftype*` form"; in value mode it builds the `defvaluetype*` form and
+  resolves value-type, VT-D4), and the `test/runtime` rows, which do not
+  name the VT-V1 selection tests (ordinary suite, absent-var subprocess),
+  the expansion fixture file (not a `*_test.clj` file) and the shared check
+  definitions of VT-V3 and VT-V4 if they are in `test/runtime`. Add these
+  rows to the Documentation item for that page.
