@@ -1297,3 +1297,7 @@ Paths:
   82/314; Valhalla 80/314; Clojure 1.11 case 1/7. Fixture test green.
   clj-kondo, cljfmt clean. Not pushed; CI run of this change is pending
   (acceptance criterion 3).
+
+## Code-shaper review, third round (2026-11-04)
+
+- added 3 steps to be addressed
