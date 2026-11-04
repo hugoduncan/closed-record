@@ -98,3 +98,23 @@ Paths:
   select the VT-V8 parent entry. Only extra aliases and `-J` options need the
   new way of the Verification section. value-type `66d5ff7` is still not on
   `origin` (local `master` ahead 119); the Prerequisite stands.
+
+## Notes for the round-2 design-steps pass
+
+- Three open steps: the Public boundary of the defclosedrecord embodiment,
+  the `:class-name` value, and the Intent wording. The earlier principles
+  apply: edit design.md in place, keep VT-D1 to VT-D10 and the scope, and
+  add no progress history to Ramora.
+- The `:class-name` choice is public API. Record it in design.md and in the
+  Public contract of `ramora/value-type-records.md`. This adds precision to
+  the contract and does not change a decision. Make the value agree with the
+  current `ex-data`: the `map->Name` error uses `:record` with the class
+  symbol (`src/closed_record/impl/jvm.clj`, `map-factory`). D-03 is in
+  `ramora/defclosedrecord/decisions/failure-and-validation.md`.
+- Public boundary step: add an item to the Documentation list for
+  `ramora/defclosedrecord/embodiment.md`. It covers the Boundaries "Public"
+  row and the "Public interface" section ("Error data: see D-03"). A pointer
+  to the value-type public contract is enough. Do not add a new D-03 `:type`,
+  because D-03 is about key-set failures.
+- Intent step: use the wording of the Summary in
+  `ramora/value-type-records.md`.
