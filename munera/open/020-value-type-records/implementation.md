@@ -1245,4 +1245,8 @@ Paths:
   names `defvaluetype*`; artifacts `checks/*.clj` row states that
   `serializable-test` is defined only for identity output;
   `doc/development.md` names the three `test/runtime` commands. Vale and
-  lychee clean. Documentation only; no CI run needed for criterion 3.
+  lychee clean.
+- Acceptance note (criterion 3): 2026-11-04, ref `020-value-type-records`,
+  SHA `a90e160`, PR https://github.com/hugoduncan/closed-record/pull/1, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41892110200:
+  all 9 jobs `success`.
