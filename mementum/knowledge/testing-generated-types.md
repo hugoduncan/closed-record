@@ -3,13 +3,13 @@ title: Tests of eval'ed forms and compiler-generated types
 status: active
 category: testing
 tags: [scry, eval, expansion-fixture, shared-checks, subprocess, value-type, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site, equality, hash, withMeta, extmap, iterator, test.check, property, keyword-invoke, map-views]
-related: [mementum/knowledge/dev-tooling.md, test/closed_record/compiler_rules_test.clj, test/closed_record/defclosedrecord_test.clj, test/closed_record/literal_test.clj, test/closed_record/field_value_test.clj, test/closed_record/equality_test.clj, test/closed_record/hidden_key_test.clj, test/closed_record/property_test.clj, test/closed_record/differential_test.clj, test/closed_record/malli_test.clj, ramora/defclosedrecord/invariants.md]
+related: [mementum/knowledge/dev-tooling.md, test/runtime/closed_record/compiler_rules_test.clj, test/runtime/closed_record/defclosedrecord_test.clj, test/runtime/closed_record/checks/support.clj, test/runtime/closed_record/checks/defclosedrecord.clj, test/runtime/closed_record/checks/literal.clj, test/runtime/closed_record/field_value_test.clj, test/runtime/closed_record/checks/field_value.clj, test/runtime/closed_record/checks/equality.clj, test/runtime/closed_record/checks/hidden_key.clj, test/runtime/closed_record/checks/property.clj, test/runtime/closed_record/checks/differential.clj, test/runtime/closed_record/checks/malli.clj, ramora/defclosedrecord/invariants.md]
 depends-on: [mementum/knowledge/dev-tooling.md]
 ---
 
 💡 Rules for tests that `eval` or `macroexpand-1` quoted forms, or that inspect generated classes.
 Observed in task 002 on Clojure 1.11.4, 1.12.6 and 1.13.0-alpha9. The helpers are in
-`test/closed_record/compiler_rules_test.clj`.
+`test/runtime/closed_record/compiler_rules_test.clj`.
 
 ## The scry CLI is not the REPL
 
@@ -45,7 +45,7 @@ Observed in task 002 on Clojure 1.11.4, 1.12.6 and 1.13.0-alpha9. The helpers ar
 
 ## Record literals and code constants
 
-Observed in task 003 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `test/closed_record/literal_test.clj`.
+Observed in task 003 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `test/runtime/closed_record/checks/literal.clj`.
 
 - ❌ A record literal in test source (for example in a `deftest` body) is a code constant. `emitValue` rebuilds it
   and drops `__extmap`. To test a value with extra keys, `read-string` the literal at run time (with `*ns*` bound).
@@ -64,7 +64,7 @@ Observed in task 003 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `
 
 ## Field hints and differential tests
 
-Observed in task 004 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `test/closed_record/field_value_test.clj`.
+Observed in task 004 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Patterns: `test/runtime/closed_record/checks/field_value.clj`, `field_value_test.clj` (V-11 field declarations).
 
 - 💡 The emitter has no cast code. The compiler emits the casts from the `deftype*` field hints. `new` (`->Name`,
   `assoc`) casts each argument to the field type (`^long` ← `2.7` gives `2`). `create` (`map->Name`, map literals)
@@ -99,7 +99,7 @@ Observed in task 004 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `
 
 ## Equality and hash tests
 
-Observed in task 005 (Clojure 1.11.4; facts also hold on 1.13). Pattern: `test/closed_record/equality_test.clj`.
+Observed in task 005 (Clojure 1.11.4; facts also hold on 1.13). Pattern: `test/runtime/closed_record/checks/equality.clj`.
 
 - 💡 For most field values, `=` (`Util.equiv`) and `.equals` (`Util.equals`) give the same result, so a test does
   not see a wrong comparison or a wrong map hash. Use field pairs that make them differ: `1`/`1N` and
@@ -119,7 +119,7 @@ Observed in task 005 (Clojure 1.11.4; facts also hold on 1.13). Pattern: `test/c
 
 ## Hidden keys and call paths
 
-Observed in task 006 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `test/closed_record/hidden_key_test.clj`.
+Observed in task 006 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `test/runtime/closed_record/checks/hidden_key.clj`.
 
 - 💡 Call paths from Clojure functions to the emitter methods of a closed record `x`. Mutation runs confirmed each
   path. A closed record is `Iterable` and not `IReduceInit`:
@@ -137,7 +137,7 @@ Observed in task 006 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `
 ## Property tests (test.check)
 
 Observed in task 007 (test.check 1.1.3, Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern:
-`test/closed_record/property_test.clj`.
+`test/runtime/closed_record/checks/property.clj`.
 
 - 🎯 The property body returns `true` or a failure `Result`. Do not use `is` in the body: each trial and each shrink
   step then adds assertions. The `deftest` has one `(is (:pass? result) msg)`. `msg` shows `:seed`,
@@ -164,7 +164,7 @@ Observed in task 007 (test.check 1.1.3, Clojure 1.11.4; suite passes on 1.12 and
 ## Differential property (closed type vs `defrecord`)
 
 Observed in task 008 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern:
-`test/closed_record/differential_test.clj` (V-02). It uses the property model above, with a real `defrecord` in
+`test/runtime/closed_record/checks/differential.clj` (V-02). It uses the property model above, with a real `defrecord` in
 place of a model map, and compares the two values after the start and after each generated step.
 
 - 💡 Keyword lookup with no call site: `(k x nf)` with `k` a local calls `Keyword.invoke`, not `getLookupThunk`.
@@ -237,7 +237,7 @@ Observed in task 020 (`:value-type`; Clojure 1.11.4, 1.12.6, 1.13.0-alpha9). Pat
 - 🔁 When the docs give a fix for a failure case, test the fix too. Put the failure test and the fix test on one
   case table (`[label input-setup expected-failure expected-fix]`), so each failure case has a fix check and both
   checks use the same inputs. Make variant inputs from a base value (for example a closed schema from the open
-  schema), not a second literal. Pattern: `throwing-cases` in `test/closed_record/malli_test.clj` (task 009).
+  schema), not a second literal. Pattern: `throwing-cases` in `test/runtime/closed_record/checks/malli.clj` (task 009).
 - 🎯 Test source must not refer to task design sections ("Scope 3", "the first Context table"). The reader cannot
   find them after the task closes. Describe each case in the source. Keep durable ids (V-nn, I-nn, D-nn).
 - ❌ `(is (.startsWith s p))` reports only `actual: false`: `clojure.test` shows the arguments only of a var call.
