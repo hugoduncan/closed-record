@@ -865,3 +865,25 @@ Paths:
   earlier task-020 commits; that is expected.
 - Next: slice 7 (VT-V8 bench). The slice-9 push goes to the same ref; the
   pull request exists, so do not run `gh pr create` again.
+
+## Slice 7: VT-V8 bench (2026-11-03)
+
+- `closed-record.bench.value-type` added; no other ns requires it (grep).
+  `git diff` of `dev/bench`: only `run.sh` changed, plus the new file.
+  It defines its own `ops`, table, parent loop and child command; uses
+  `bench-op`, `fork/in-order` (V thunk first → `[op v p]`), `report/ratio`,
+  `report/fork-count`, `timing-tool/*`. The temp result file is deleted
+  before launch, so "missing result file" is detectable.
+- `run.sh`: `BENCH_ALIASES` in the JAR lookup and the run;
+  `BENCH_JVM_OPTS` unquoted before `-Srepro` (run only). Launcher test
+  (vars unset): 1 test, 4 assertions pass. Default run (no args): six
+  S-03 rows all pass, exit 0. `:test` JVM after requiring
+  `closed-record.bench.fork`: `value-type.core` not loaded, no resource.
+  Ordinary suite: 186 tests, 2793 assertions.
+- VT-V8 run: command of plan.md; `build 27-jep401ea3+1-1`, `Darwin arm64`,
+  `Mac17,7`; wall 35 s; exit 0. `(hash x)` V 93.29 [36.74, 185.90], P 3.58
+  [3.18, 4.02], V/P 26.022; `(= x y)` V 3.30 [3.11, 3.45], P 4.69 [4.26,
+  5.34], V/P 0.705. Recorded in `doc/performance.md` "Value-type records".
+  Vale rejects a bare "ns" header word; the table uses `ns/op [range]` as
+  the other tables do.
+- Next: slice 8 (documentation).

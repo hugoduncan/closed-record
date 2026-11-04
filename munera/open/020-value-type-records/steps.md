@@ -222,7 +222,7 @@
 
 ## Slice 7: VT-V8 bench
 
-- [ ] Add the VT-V8 entry namespace `closed-record.bench.value-type`
+- [x] Add the VT-V8 entry namespace `closed-record.bench.value-type`
       (`dev/bench/closed_record/bench/value_type.clj`) as plan.md, VT-V8
       bench, states: records `V` (`:value-type true`) and `P`; `ops`
       `(hash x)` and `(= x y)`; own child command
@@ -236,26 +236,26 @@
       Verify that no other namespace requires it, and that `fork`,
       `report`, `legacy-transport`, `timing-tool` and `closed-record.bench`
       do not change (`git diff`).
-- [ ] Extend `dev/bench/timing/run.sh` with `BENCH_ALIASES` (appended to
+- [x] Extend `dev/bench/timing/run.sh` with `BENCH_ALIASES` (appended to
       `:bench` in the JAR lookup and the run) and `BENCH_JVM_OPTS` (`-J`
       options, run only), both default empty; `:corrected-timing` stays the
       last alias; arguments unchanged; verify the default run (no
       arguments: Clojure 1.11.4, V-11, S-03 pass rule and exit code) is
       unchanged.
-- [ ] Run the `test/bench` launcher test with both variables unset:
+- [x] Run the `test/bench` launcher test with both variables unset:
       `env -u BENCH_ALIASES -u BENCH_JVM_OPTS clojure -Sdeps '{:aliases
       {:bench-test {:extra-paths ["test/bench"]}}}' -M:test:bench-test -m
       scry.cli --dir test/bench --ns closed-record.timing-launcher-test`
       (1 test, 4 assertions before the change); it must pass.
-- [ ] Verify the `:test` alias does not load value-type through `dev/bench`.
-- [ ] Run VT-V8 manually:
+- [x] Verify the `:test` alias does not load value-type through `dev/bench`.
+- [x] Run VT-V8 manually:
       `JAVA_CMD=$HOME/.local/share/mise/installs/java/openjdk-27.0.0-jep401ea3+1-1/bin/java
       BENCH_ALIASES=:value-type-test:clj-1.12
       BENCH_JVM_OPTS=-J--enable-preview sh dev/bench/timing/run.sh -m
       closed-record.bench.value-type`; record commands, runtime (`java
       -version`), platform (`uname -sm`, machine model) and results in
       implementation.md.
-- [ ] Record the result and its limits (plan.md, VT-V8 limits: the machine
+- [x] Record the result and its limits (plan.md, VT-V8 limits: the machine
       of the run, the macOS aarch64 Valhalla `27-jep401ea3+1-1` build,
       Clojure 1.12.6, one manual, informational run) in
       `doc/performance.md`, in the style of its "Evidence and runtime"

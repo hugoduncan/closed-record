@@ -95,6 +95,31 @@ Full experimental tables: [time](../munera/closed/019-space-time-performance/evi
 [allocation](../munera/closed/019-space-time-performance/evidence/acceptance-01/experimental-allocation/report.md),
 and [graphs](../munera/closed/019-space-time-performance/evidence/acceptance-01/experimental-graph/report.md).
 
+## Value-type records
+
+One manual, informational run compares `hash` and `=` of a record with
+`:value-type true` (`V`, value output) and an ordinary closed record (`P`).
+Both records have three fields and run in the same child JVM. The machine is a
+macOS arm64 MacBook Pro (`Mac17,7`). The JDK is Valhalla 27-jep401ea3+1-1 (the
+macOS aarch64 build) with `--enable-preview`. Clojure is 1.12.6. The run uses
+five forks and five seconds per site. Brackets show the minimum and maximum
+fork means, not confidence intervals. No pass rule applies.
+
+| Operation | V ns/op [range] | P ns/op [range] | V / P |
+| --- | --- | --- | ---: |
+| `(hash x)` | 93.29 [36.74, 185.90] | 3.58 [3.18, 4.02] | 26.022 |
+| `(= x y)` | 3.30 [3.11, 3.45] | 4.69 [4.26, 5.34] | 0.705 |
+
+Value output does not cache the hash, so each `hash` call computes it again.
+The `V` hash means vary much between forks. This run does not support a
+performance claim for value output. Run it again with:
+
+```sh
+JAVA_CMD=<Valhalla java> BENCH_ALIASES=:value-type-test:clj-1.12 \
+  BENCH_JVM_OPTS=-J--enable-preview \
+  sh dev/bench/timing/run.sh -m closed-record.bench.value-type
+```
+
 ## Reproduction and limits
 
 Follow the [frozen commands and budgets](../munera/closed/019-space-time-performance/evidence/acceptance-01/README.md)
