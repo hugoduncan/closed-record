@@ -12,27 +12,24 @@
     its namespace, so it names the var of the calling namespace.
   - `$P` in a string or a symbol name gives the munged calling namespace
     (the class name prefix).
-  - `representation` of this namespace gives the representation form.
+  - `representation` of this namespace gives the representation value.
   - Each `defclosedrecord` form gets the record options after its field
     vector."
   (:require
    [clojure.java.io :as io]
-   [clojure.string :as str])
+   [clojure.string :as str]
+   [closed-record.form-support :as form])
   (:import
    (clojure.lang LineNumberingPushbackReader)))
 
 (def representation
   "Placeholder in a shared check namespace. `define-checks` replaces it with
-  the `:representation` form of the caller."
+  the `:representation` value of the caller."
   :identity)
 
 (defn- record-form?
   [form]
   (and (seq? form) (= 'closed-record.core/defclosedrecord (first form))))
-
-(defn- with-record-opts
-  [record-opts [head tname fields & more]]
-  (apply list head tname fields (concat record-opts more)))
 
 (defn- resolve-symbol
   [src-ns prefix sym]
@@ -51,22 +48,18 @@
 (defn- transform
   [src-ns {:keys [record-opts representation]} caller form]
   (let [prefix (namespace-munge caller)
-        walk (fn walk [x]
-               (let [y (cond
-                         (symbol? x) (let [r (resolve-symbol src-ns prefix x)]
-                                       (if (= 'closed-record.checks.support/representation r) representation r))
-                         (string? x) (str/replace x "$P" prefix)
-                         (seq? x) (let [l (apply list (map walk x))]
-                                    (if (record-form? l) (with-record-opts record-opts l) l))
-                         (map-entry? x) (clojure.lang.MapEntry. (walk (key x)) (walk (val x)))
-                         (vector? x) (mapv walk x)
-                         (map? x) (into (empty x) (map (fn [[k v]] [(walk k) (walk v)])) x)
-                         (set? x) (into (empty x) (map walk) x)
-                         :else x)]
-                 (if (and (instance? clojure.lang.IObj y) (meta x) (not (identical? x y)))
-                   (with-meta y (merge (meta y) (meta x)))
-                   y)))]
-    (walk form)))
+        keep-meta (fn [x y] (with-meta y (merge (meta y) (meta x))))]
+    (form/walk-form
+     (fn [x]
+       (cond
+         (symbol? x) (let [r (resolve-symbol src-ns prefix x)]
+                       (if (= 'closed-record.checks.support/representation r)
+                         representation
+                         (keep-meta x r)))
+         (string? x) (str/replace x "$P" prefix)
+         (record-form? x) (keep-meta x (form/with-options x record-opts))
+         :else x))
+     form)))
 
 (defn- source-path
   "The class path resource path of the source file of namespace `src-sym`."
@@ -91,12 +84,17 @@
                                        (repeatedly #(read r false ::eof)))))]
         [src-ns forms]))))
 
-(defn load-checks
-  "Evaluate the forms of the shared check namespace `src-sym` in the current
-  `*ns*`, with `opts` `{:record-opts [k v …] :representation form}`. The
-  compiler gets the check source file as source, so the file and the line of
-  a failure both name the check source."
-  [src-sym opts]
+(defn define-checks
+  "Define the checks of the shared check namespace `src-sym` in the current
+  `*ns*`. `opts`: `{:record-opts [k v …] :representation r}`, `r` is
+  `:identity` or `:value`. Each `representation` of this namespace in the
+  check source becomes `r`. The compiler gets the check source file as
+  source, so the file and the line of a failure both name the check source."
+  [src-sym {:keys [representation] :as opts}]
+  (when-not (#{:identity :value} representation)
+    (throw (ex-info (str "representation must be :identity or :value, not "
+                         (pr-str representation))
+                    {:representation representation})))
   (let [path (source-path src-sym)
         [src-ns forms] (read-source src-sym path)
         caller (ns-name *ns*)]
@@ -104,10 +102,3 @@
                     Compiler/SOURCE (subs path (inc (str/last-index-of path "/")))}
       (doseq [form forms]
         (eval (transform src-ns opts caller form))))))
-
-(defmacro define-checks
-  "Define the checks of the shared check namespace `src-sym` (quoted) in the
-  calling namespace. `opts`: `{:record-opts [k v …] :representation form}`."
-  [src-sym opts]
-  (let [src-sym (if (seq? src-sym) (second src-sym) src-sym)]
-    `(load-checks '~src-sym '~opts)))

@@ -1258,3 +1258,23 @@ Paths:
 ## Code-shaper review (2026-11-04)
 
 - added 3 steps to be addressed
+
+## Code-shaper review follow-ups (2026-11-04)
+
+- addressed 3 review steps.
+- `closed-record.checks.support/define-checks` is now a function: it takes
+  the representation value (`:identity` or `:value`, else throws) and puts
+  the keyword in place of `support/representation`. Macro, `load-checks`
+  and the 9 separate `(expectation/representation)` guard calls removed;
+  the evaluated opts map is the guard (no property → exit 1).
+- New `closed-record.form-support` (`test/runtime/closed_record/form_support.clj`):
+  `walk-form` (bottom-up, keeps collection metadata; `f` sets the metadata
+  of its result) and `with-options`. `strip-positions` and `transform` use
+  `walk-form`; `fixture/with-option` and `support/with-record-opts` removed.
+- `closed-record.impl.jvm/check-value-type [opts tname]` replaces
+  `resolve-value-type`; called as a statement after `check-options`; gives
+  nil; same ex-info and `:class-name`.
+- Counts unchanged: ordinary 186/2792 (Clojure 1.11, 1.13); Temurin 21
+  82/314; Valhalla 80/314; Clojure 1.11 case 1/7. Fixture test green.
+  clj-kondo, cljfmt clean. Not pushed; CI run of this change is pending
+  (acceptance criterion 3).

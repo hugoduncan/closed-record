@@ -4,8 +4,6 @@
    [closed-record.checks.support :refer [define-checks]]
    [closed-record.value-type.expectation :as expectation]))
 
-(expectation/representation)
-
 (define-checks 'closed-record.checks.literal
   {:record-opts [:value-type true]
    :representation (expectation/representation)})

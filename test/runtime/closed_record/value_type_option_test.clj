@@ -7,6 +7,7 @@
    [clojure.test :refer [deftest is testing]]
    [closed-record.core :refer [defclosedrecord]]
    [closed-record.expansion-fixture :as fixture]
+   [closed-record.form-support :as form]
    [closed-record.subprocess :as subprocess])
   (:import
    (java.io FileNotFoundException)))
@@ -21,7 +22,7 @@
       (testing (str k " with :value-type false")
         (is (= (recorded k)
                (fixture/expansion
-                (fixture/with-option form :value-type false))))))))
+                (form/with-options form [:value-type false]))))))))
 
 (defn- expansion-error
   "The exception of the macroexpansion of `form`, without the
