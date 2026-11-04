@@ -673,3 +673,13 @@ Paths:
 
 - no ambiguity review feedback (plan round 6)
 - no inconsistency review feedback (plan round 6)
+
+## Notes after plan round 6
+
+- No open design steps: both round-6 plan reviews found nothing, and all
+  design-steps.md items are checked. The plan is ready for execution at
+  slice 1.
+- Verified for the reviews: `deps.edn` `:test` alias has extra-paths
+  `["test/runtime" "dev/bench"]`, so the fixture EDN resolves as a
+  resource and the slice-7 "does not load value-type via dev/bench" check
+  is necessary; `:clj-1.12` is 1.12.6, `:clj-1.13` is 1.13.0-alpha9.
