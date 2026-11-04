@@ -975,3 +975,10 @@ Paths:
 ## Implementation review, third round (2026-11-04)
 
 - added 1 step to be addressed
+
+## Review follow-ups, third round (2026-11-04)
+
+- addressed 1 review step: artifacts rows of `subprocess.clj` (names
+  `temp-dir` and `delete-tree`, no symbolic links followed, used by the
+  absent-var and AOT tests) and `*_test.clj` (`subprocess_test.clj` also
+  checks `delete-tree`).

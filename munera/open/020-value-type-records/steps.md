@@ -374,7 +374,7 @@
 
 ## Implementation review follow-ups, third round
 
-- [ ] Update the `test/runtime/closed_record/subprocess.clj` and
+- [x] Update the `test/runtime/closed_record/subprocess.clj` and
       `test/runtime/closed_record/*_test.clj` rows of
       `ramora/defclosedrecord/embodiment/artifacts.md`. The `subprocess.clj`
       row names only `run`; it does not name `temp-dir` and `delete-tree`
