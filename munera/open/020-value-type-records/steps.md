@@ -384,7 +384,7 @@
 
 ## Implementation review follow-ups, fourth round
 
-- [ ] Push the branch and get a green CI run of the current code. The last
+- [x] Push the branch and get a green CI run of the current code. The last
       CI run (`d689459`) comes before the three follow-up rounds, which
       changed `test/runtime`, `test/value-type` and `dev/bench`
       (`define-checks` rewrite, VT-V6 pass-through check, subprocess time
@@ -394,6 +394,7 @@
       the slice-9 verification is stale. Push (approved at slice 6), read the
       run with the slice-6 `gh run` commands, and record the SHA, run URL
       and job conclusions in implementation.md as a new acceptance note.
+      Done 2026-11-04: `acd056f`, run 41880383270, all 9 jobs `success`.
 - [x] Rename the two shared-check `testing` labels in
       `test/runtime/closed_record/checks/defclosedrecord.clj` that name the
       ordinary-mode hash cache: "declared key gives hash caches 0 (no copy

@@ -986,3 +986,20 @@ Paths:
 ## Implementation review, fourth round (2026-11-04)
 
 - added 2 steps to be addressed
+
+## Review follow-ups, fourth round (2026-11-04)
+
+- addressed 2 review steps.
+- Renamed shared-check labels (VT-D6, both modes): "the hash after assoc
+  of a declared key equals the hash of a new record" (`assoc-test`),
+  "with-meta keeps the hash" (`metadata-test`). Ordinary suite 188/2799;
+  Temurin 21 value-type suite 81/308. kondo, cljfmt clean.
+- Acceptance note (criterion 3, replaces the slice-9 note): 2026-11-04,
+  ref `020-value-type-records`, SHA
+  `acd056ffd97f958289d46e16d08a6f2fc6483252` (last commit that changes
+  files outside the task directory), PR
+  https://github.com/hugoduncan/closed-record/pull/1, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41880383270:
+  Build verification, Markdown links, Value-type tests (Temurin 21),
+  Value-type tests (Valhalla), Runtime tests (Clojure 1.11, 1.12, 1.13),
+  Release tooling verification, Development quality: all `success`.
