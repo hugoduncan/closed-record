@@ -971,3 +971,7 @@ Paths:
   Valhalla suite 81/309, Clojure 1.11 case 1/7, VT-V8 run exit 0; no new
   `closed-record-{stub,aot,vt-fork}` entries in `$TMPDIR` after the runs.
   fmt, kondo, Vale clean. Not pushed.
+
+## Implementation review, third round (2026-11-04)
+
+- added 1 step to be addressed

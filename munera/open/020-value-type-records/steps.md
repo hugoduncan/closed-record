@@ -371,3 +371,13 @@
       files (`run-fork` in `closed-record.bench.value-type`) stay in the
       temporary directory after each run. Delete them in a `finally`
       (after the child exits or the result is read).
+
+## Implementation review follow-ups, third round
+
+- [ ] Update the `test/runtime/closed_record/subprocess.clj` and
+      `test/runtime/closed_record/*_test.clj` rows of
+      `ramora/defclosedrecord/embodiment/artifacts.md`. The `subprocess.clj`
+      row names only `run`; it does not name `temp-dir` and `delete-tree`
+      (no symbolic links followed), which the absent-var, AOT tests use.
+      The `*_test.clj` row says `subprocess_test.clj` checks only the time
+      limit; it also has `delete-tree-test`.
