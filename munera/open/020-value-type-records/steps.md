@@ -615,3 +615,20 @@
       Keep test and assertion counts in implementation.md current.
       Done: `field-names` helper; `contains?` in both branches.
       Value-type suite 82/314 (Temurin 21), 81/315 (Valhalla).
+
+## Test review follow-ups, eleventh round
+
+- [ ] Remove the value branch assertion of the shared
+      `closed-record.checks.defclosedrecord/serializable-test`
+      (`(is (= :value support/representation))`). The representation form
+      gives only `:identity` or `:value`, so in the else branch of
+      `(if (= :identity support/representation) …)` it cannot fail. It adds
+      an assertion to the Valhalla counts and no signal. This is the same
+      defect as the eighth-round VT-V5 step; use the same solution for
+      consistency: define the `deftest` only when the representation is
+      `:identity` (`(when (= :identity support/representation) (deftest …))`,
+      with a comment that D-06 applies to identity output only). Check that
+      `define-checks` replaces the placeholder in the `when` test, and that
+      the ordinary suite and the Temurin 21 suite still run the test. Keep
+      test and assertion counts in implementation.md current, and get a
+      green CI run of the change (acceptance criterion 3).
