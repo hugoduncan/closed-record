@@ -1250,3 +1250,7 @@ Paths:
   SHA `a90e160`, PR https://github.com/hugoduncan/closed-record/pull/1, run
   https://github.com/hugoduncan/closed-record/actions/runs/41892110200:
   all 9 jobs `success`.
+
+## Documentation review, second round (2026-11-04)
+
+- no new actionable issues
