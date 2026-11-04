@@ -105,7 +105,7 @@
   criterion 7 requires current documentation. Add both statements to the
   Documentation list: the Valhalla job uses the pinned Valhalla build, and
   the other Clojure jobs use Temurin Java 21.
-- [ ] Architecture: complete the `ramora/defclosedrecord/embodiment/artifacts.md`
+- [x] Architecture: complete the `ramora/defclosedrecord/embodiment/artifacts.md`
   update so that the artifact map stays current (Ramora document rules). The
   Documentation item names only the `deps.edn`, `ci.yml` and `dev/bench/`
   rows and the value-type test directories. After the change these rows are
@@ -116,7 +116,7 @@
   the expansion fixture file (not a `*_test.clj` file) and the shared check
   definitions of VT-V3 and VT-V4 if they are in `test/runtime`. Add these
   rows to the Documentation item for that page.
-- [ ] Inconsistency: the CI section does not say if the new scry steps
+- [x] Inconsistency: the CI section does not say if the new scry steps
   upload test failures. Every existing scry step in `ci.yml` uploads
   `.scry-results/` on failure with its own artifact name, the `ci.yml` row
   of `ramora/defclosedrecord/embodiment/artifacts.md` names "structured

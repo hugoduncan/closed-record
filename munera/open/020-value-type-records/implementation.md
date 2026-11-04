@@ -218,3 +218,18 @@ Paths:
   its own upload, or a distinct results directory if scry allows it.
 - Doc targets: `doc/development.md` Continuous integration, lines ~49-79
   (artifact list at ~74, "three test commands above" at ~70).
+
+## Design-steps pass, round 4 (2026-11-03)
+
+- Both design steps resolved in design.md. No `SCOPE_QUESTION:` items.
+- Choice: the Temurin 21 value-type suite is a separate job,
+  `Value-type tests (Temurin 21)`, not a runtime-matrix entry. A matrix
+  entry would need a per-entry artifact name and a Clojure 1.11 step that
+  runs in one entry only. The runtime matrix and its sentence in
+  `doc/development.md` stay as they are.
+- scry 0.1.61 facts: the CLI always writes `<cwd>/.scry-results/` and
+  clears it at the start of each run (`results/prepare-results-dir!`). It
+  has no option for another directory. Thus each scry step needs its upload
+  directly after it.
+- The location of the VT-V3/VT-V4 shared check definitions is still a plan
+  choice. They must load without value-type if ordinary tests use them.

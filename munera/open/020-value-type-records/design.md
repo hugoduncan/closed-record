@@ -344,10 +344,25 @@ Embody VT-D10 in `ci.yml`:
   the Valhalla command of Verification (`JAVA_CMD` set to that JDK,
   `:clj-1.12`, `-J--enable-preview`, expectation `value`). It also runs the
   value-output part of VT-V7.
-- A Temurin 21 job, or a matrix entry, for the value-type suite on identity
-  fallback (VT-V2, VT-V3, VT-V5, VT-V6, the identity part of VT-V7), with the
-  Temurin 21 command of Verification (expectation `identity`). The Clojure 1.11
-  case of VT-V1 is a separate step in this job, with its own command.
+- A required job `Value-type tests (Temurin 21)`, separate from the runtime
+  matrix, for the value-type suite on identity fallback (VT-V2, VT-V3, VT-V5,
+  VT-V6, the identity part of VT-V7), with the Temurin 21 command of
+  Verification (expectation `identity`). The Clojure 1.11 case of VT-V1 is a
+  separate step in this job, with its own command. That step also runs when
+  the suite step fails (`if: ${{ !cancelled() }}`). The runtime matrix does
+  not change.
+- Test-failure uploads. Each new scry step has its own upload step, with the
+  pattern of the existing jobs (`if: failure()` and the outcome of its own
+  scry step, `actions/upload-artifact@v4.6.2`, `path: .scry-results/`,
+  `include-hidden-files: true`, `if-no-files-found: warn`). Artifact names:
+  - Valhalla suite step: `scry-value-type-valhalla`.
+  - Temurin 21 suite step: `scry-value-type-temurin-21`.
+  - Clojure 1.11 step of VT-V1: `scry-value-type-clj-1.11`.
+
+  The names are unique in the workflow (`upload-artifact` v4 fails on a
+  duplicate name). scry clears `.scry-results/` at the start of each run, so
+  in the Temurin 21 job the upload of the suite step comes before the
+  Clojure 1.11 step.
 - No `continue-on-error`. The release workflow runs the new jobs through
   `workflow_call` with no change.
 
@@ -360,7 +375,12 @@ Embody VT-D10 in `ci.yml`:
 - `doc/development.md`: the commands for the value-type suite on both JVMs.
   Continuous integration: replace "Clojure jobs use Temurin Java 21". The
   `Value-type tests (Valhalla)` job runs on the pinned Valhalla build
-  `27-jep401ea3+1-1`. The other Clojure jobs use Temurin Java 21.
+  `27-jep401ea3+1-1`. The other Clojure jobs use Temurin Java 21. Next to
+  "The runtime matrix runs the three test commands above", add that the
+  `Value-type tests (Valhalla)` and `Value-type tests (Temurin 21)` jobs run
+  the value-type commands (the Clojure 1.11 case of VT-V1 in the Temurin 21
+  job). Add `scry-value-type-valhalla`, `scry-value-type-temurin-21` and
+  `scry-value-type-clj-1.11` to the list of failure artifact names.
 - `doc/tool-installation.md`, Java and Clojure CLI: replace "CI uses Temurin
   Java 21" with the same statement. Do not change the pinned local Temurin
   archive.
@@ -395,9 +415,25 @@ Embody VT-D10 in `ci.yml`:
     `:closed-record/value-type-unavailable`, or point to the Public contract
     in `ramora/value-type-records.md`. Do not add this `:type` to D-03: D-03
     is about key-set failures.
-- `ramora/defclosedrecord/embodiment/artifacts.md`: the value-type alias
-  (`deps.edn` row), the value-type test directories, the CI jobs (`ci.yml`
-  row), and the VT-V8 entry namespace (`dev/bench/` row).
+- `ramora/defclosedrecord/embodiment/artifacts.md` must stay current (Ramora
+  document rules). Update:
+  - `deps.edn` row: the value-type alias.
+  - `src/closed_record/impl/jvm.clj` row (now "Builds the `deftype*` form and
+    the factories"): in value mode it resolves value-type (VT-D4) and builds
+    the `value-type.core/defvaluetype*` form.
+  - `test/runtime/closed_record/*_test.clj` row: the VT-V1 tests of the
+    ordinary suite (option values, errors, expansion fixture comparison, and
+    the absent-var subprocess case).
+  - A new row for the expansion fixture file in `test/runtime`. It is not a
+    `*_test.clj` file.
+  - A row for each file of the shared check definitions of VT-V3 and VT-V4,
+    at the path that the plan selects. Update the rows of ordinary test files
+    that change to use these definitions.
+  - New rows for the value-type test directories: the value-type suite and
+    the Clojure 1.11 case of VT-V1.
+  - `ci.yml` row: the `Value-type tests (Valhalla)` and `Value-type tests
+    (Temurin 21)` jobs and their test-failure uploads.
+  - `dev/bench/` row: the VT-V8 entry namespace.
 - `mementum/state.md`: current state after the task.
 
 ## Invariants and ownership
@@ -439,8 +475,10 @@ Embody VT-D10 in `ci.yml`:
    identity output.
 4. `deps.edn` base `:deps` do not change. The value-type test alias pins a
    value-type Git SHA that is on GitHub.
-5. The `Value-type tests (Valhalla)` job and the Temurin 21 value-type job are
-   required jobs in `ci.yml`, with the pinned archive SHA-256 and the cache.
+5. The `Value-type tests (Valhalla)` and `Value-type tests (Temurin 21)` jobs
+   are required jobs in `ci.yml`. The Valhalla job has the pinned archive
+   SHA-256 and the cache. Each new scry step uploads its failures with its
+   own artifact name (CI).
 6. VT-V8 results are in `implementation.md` and `doc/performance.md`, with
    their limits.
 7. The documentation of the Documentation scope is current. `doc/API.md` is
