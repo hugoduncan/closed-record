@@ -1028,3 +1028,17 @@ Paths:
 ## Implementation review, sixth round (2026-11-04)
 
 - added 1 step to be addressed
+
+## Review follow-ups, sixth round (2026-11-04)
+
+- addressed 1 review step.
+- Acceptance note (criterion 3, replaces the fourth-round note):
+  2026-11-04, ref `020-value-type-records`, pushed SHA
+  `290f2a1b598b51893ee1c0e69399e375126bdbab`; it contains
+  `9a026d6` (last commit that changes files outside the task directory;
+  `290f2a1` and `d9867a2` change task files only). PR
+  https://github.com/hugoduncan/closed-record/pull/1, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41883488159:
+  Build verification, Markdown links, Value-type tests (Temurin 21),
+  Value-type tests (Valhalla), Runtime tests (Clojure 1.11, 1.12, 1.13),
+  Release tooling verification, Development quality: all `success`.
