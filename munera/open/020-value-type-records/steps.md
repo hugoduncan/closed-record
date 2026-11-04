@@ -84,8 +84,8 @@
 
 ## Slice 4: Test alias and shared checks
 
-- [ ] (BLOCKED 2026-11-03: 66d5ff7 not on GitHub; see implementation.md) Apply the SHA rule (plan.md, Alias): verify that `66d5ff7`
-      (`66d5ff7680c227bcf44ffe0824628288ffab0ebf`) is on GitHub with
+- [x] Apply the SHA rule (plan.md, Alias): verify that `8bb7c4f`
+      (`8bb7c4f7a21d72c8eae553df89e17b71f34aeda3`) is on GitHub with
       `git fetch https://github.com/hugoduncan/value-type.git master` (or
       the branch that the user names) and
       `git merge-base --is-ancestor <sha> FETCH_HEAD` in the local
@@ -94,6 +94,8 @@
       if it is not `66d5ff7`, the value-type facts check. Record the pinned
       SHA and the checks in implementation.md. Do not commit a
       `:local/root` dependency.
+      Done 2026-11-03: `8bb7c4f` on GitHub master; tree equal to `66d5ff7`;
+      pin `8bb7c4f`. See implementation.md.
 - [ ] Add the `:value-type-test` alias to `deps.edn`: lib
       `org.hugoduncan/value-type`, `:git/url
       "https://github.com/hugoduncan/value-type.git"`, full `:git/sha` of

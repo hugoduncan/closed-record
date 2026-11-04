@@ -752,7 +752,19 @@ Paths:
   ("019: close task") is local only; GitHub master is behind it.
 - Per design Prerequisite: stop; no `:value-type-test` alias added.
 
-<!-- IMPLEMENTATION_BLOCKER: START -->
-- blocker: value-type commit 66d5ff7 is not on GitHub (remote master is 5d2656b, not a descendant), so the `:value-type-test` git dependency cannot be pinned.
-- required-human-action: push value-type 66d5ff7 (or a descendant) to github.com/hugoduncan/value-type master, or name another branch/commit to pin.
-<!-- IMPLEMENTATION_BLOCKER: END -->
+## Slice 4: SHA rule check, second run (2026-11-03)
+
+- The user squashed value-type and pushed it. GitHub `master` is
+  `8bb7c4f` (`8bb7c4f7a21d72c8eae553df89e17b71f34aeda3`).
+- `git fetch https://github.com/hugoduncan/value-type.git master` →
+  FETCH_HEAD `8bb7c4f…`; `git merge-base --is-ancestor 8bb7c4f… FETCH_HEAD`
+  → exit 0.
+- Value-type facts check (plan.md, Alias): `git diff --quiet 66d5ff7 8bb7c4f
+  -- src deps.edn` → exit 0. The full trees are equal (tree
+  `2882c2fa2f7265593e40f4e31e507e7e8f9bc813` for both). So the
+  `defvaluetype*` docstring, the design.md value-type facts and the error
+  facts in this file hold at `8bb7c4f` with no change.
+- Decision: pin `8bb7c4f7a21d72c8eae553df89e17b71f34aeda3`. `66d5ff7` stays
+  in earlier entries as the commit of the observations; it is not on
+  GitHub. The local `:local/root` checks of slices 1–3 used the same tree.
+- The slice-4 blocker is resolved.

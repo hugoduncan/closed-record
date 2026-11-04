@@ -138,8 +138,9 @@ Key decisions:
     key. value-type has only `.clj` sources and no `:deps/prep-lib`, so the
     dependency needs no prep step. README (slice 8) uses the same coordinate
     in its instruction for unreleased value-type.
-  - SHA rule at the slice-4 gate: pin `66d5ff7`
-    (`66d5ff7680c227bcf44ffe0824628288ffab0ebf`) when it is on GitHub.
+  - SHA rule at the slice-4 gate: pin `8bb7c4f`
+    (`8bb7c4f7a21d72c8eae553df89e17b71f34aeda3`), the squashed push of
+    `66d5ff7` (equal tree) on GitHub `master`.
     Check: `git -C ~/projects/hugoduncan/value-type/value-type-master fetch
     https://github.com/hugoduncan/value-type.git master`, then
     `git -C … merge-base --is-ancestor <sha> FETCH_HEAD` exits 0 (fetch the
@@ -167,7 +168,8 @@ Key decisions:
   dependency:
   `clojure -Sdeps '{:deps {org.hugoduncan/value-type {:local/root "/Users/duncan/projects/hugoduncan/value-type/value-type-master"}}}' -M:test:clj-1.12 -e <form>`,
   where `<form>` prints the `macroexpand-1` of a `:value-type true`
-  definition. First verify that the HEAD of that repository is `66d5ff7`. Record the
+  definition. First verify that the tree of that repository HEAD is `2882c2f` (the tree of
+  `66d5ff7` and `8bb7c4f`). Record the
   command and the result in implementation.md. The committed check is VT-V2
   (slice 5).
 - **VT-V7**: a test in the value-type suite,
@@ -331,11 +333,9 @@ Key decisions:
 
 ## Risks
 
-- **Prerequisite unmet (blocker for slice 4)**: value-type `66d5ff7`
-  (contains `defvaluetype*`) is not on GitHub; origin/master is at `5d2656b`.
-  Slices 1–3 can proceed (no committed value-type dependency). At slice 4
-  (test alias), apply the SHA rule (Alias): stop and ask the user per the
-  design, unless the user has pushed by then.
+- **Prerequisite**: met. value-type `8bb7c4f` (the squashed push of
+  `66d5ff7`, equal tree) is on GitHub `master`. If value-type `master` is
+  rewritten again before the alias is committed, apply the SHA rule again.
 - **Valhalla download flakiness**: `download.java.net` availability; mitigated
   by `actions/cache` keyed on the SHA-256.
 - **Shared check extraction churn**: refactoring the ordinary runtime tests

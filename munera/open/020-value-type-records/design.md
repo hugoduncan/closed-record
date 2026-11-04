@@ -49,6 +49,7 @@ Purpose + Context → Architecture → Embodiment → Observed qualities.
 ### value-type facts
 
 From `~/projects/hugoduncan/value-type/value-type-master` at `66d5ff7`
+(GitHub `8bb7c4f` has the same tree)
 (`ramora/deftype-star-design.md`, the `defvaluetype*` docstring):
 
 - `(defvaluetype* tagname classname [fields*] opts+specs*)` takes the
@@ -67,8 +68,8 @@ From `~/projects/hugoduncan/value-type/value-type-master` at `66d5ff7`
 - The value-type release workflow pins the Valhalla archive
   `openjdk-27-jep401ea3+1-1_linux-x64_bin.tar.gz` with SHA-256
   `b8bdd7b181c6a5ea2dd9959255e222cd9d9a9f42cca4f2400991b9b2ff7ffb7d`.
-- Local `master` is 119 commits ahead of `origin/master`. The commits that add
-  `defvaluetype*` are not on GitHub (see Prerequisite).
+- GitHub `master` is `8bb7c4f`, a squash of the local commits up to
+  `66d5ff7`, with the same tree.
 
 The value-type feasibility gate observed that Valhalla `27-jep401ea3+1-1`
 accepts a value-class constructor that calls `this(…)`, and that `create`,
@@ -128,7 +129,7 @@ More observations:
 VT-R3 requires a test dependency on value-type at a pinned Git SHA. CI can
 fetch only a commit that is on GitHub. Before the implementation adds the test
 alias, the user must push a value-type commit that contains `defvaluetype*`
-(for example `66d5ff7`), or choose another reproducible source. The
+(`8bb7c4f` is on GitHub and meets this), or choose another reproducible source. The
 implementation must not use a `:local/root` dependency in a committed alias.
 If no commit is on GitHub, the implementation stops at the test alias and asks
 the user.
