@@ -1186,3 +1186,7 @@ Paths:
   defined). kondo, cljfmt clean.
 - The last green CI run (`5aa9556`) is before this change; acceptance
   criterion 3 needs a push and a green run.
+
+## Test review, tenth round (2026-11-04)
+
+- added 2 steps to be addressed

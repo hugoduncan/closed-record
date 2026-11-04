@@ -588,3 +588,26 @@
       Done: child prints `{:defined true}` or `{:causes [...]}`; failure
       message "the error policy does not apply: …". Value-type suite
       82/314 (Temurin 21); Valhalla unchanged (test not defined).
+
+## Test review follow-ups, tenth round
+
+- [ ] Push the branch and get a green CI run of `e77b873`. The ninth-round
+      follow-up changed
+      `test/value-type/closed_record/value_type/subprocess_test.clj`
+      (VT-V5 child result `{:defined true}` or `{:causes [...]}`); it has
+      run only locally. The last green run (`5aa9556`, run 41888528663)
+      comes before it, and `origin/020-value-type-records` is still at
+      `5aa9556`. Push (approved at slice 6), read the run with the slice-6
+      `gh run` commands, and record the SHA, run URL and job conclusions in
+      implementation.md as a new acceptance note (criterion 3).
+- [ ] Make the identity branch of
+      `closed-record.value-type.representation-test/representation-test`
+      fail with a clear message when the hash field is absent.
+      `(is (some? (.getDeclaredField VP "__hash")))` cannot fail:
+      `getDeclaredField` never gives nil, it throws
+      `NoSuchFieldException`, so a missing field gives a test error, not a
+      failure. Use a check that gives a boolean for both cases (for example
+      `(is (contains? (set (map #(.getName %) (.getDeclaredFields VP)))
+      "__hash"))`), and use the same form for the value branch
+      (`__hash` and `__hasheq` absent) so both branches are consistent.
+      Keep test and assertion counts in implementation.md current.
