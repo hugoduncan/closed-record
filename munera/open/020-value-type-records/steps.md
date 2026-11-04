@@ -545,7 +545,7 @@
 
 ## Test review follow-ups, eighth round
 
-- [ ] Push the branch and get a green CI run of `1bc278a`. The
+- [x] Push the branch and get a green CI run of `1bc278a`. The
       seventh-round follow-up changed
       `test/runtime/closed_record/value_type_option_test.clj`,
       `test/value-type-clj-1.11/closed_record/value_type/clj_1_11_test.clj`
@@ -557,7 +557,9 @@
       slice-6 `gh run` commands, and record the SHA, run URL and job
       conclusions in implementation.md as a new acceptance note
       (criterion 3).
-- [ ] Remove the assertion `(is (= :value expected))` of the value branch of
+      Done 2026-11-04: pushed `5aa9556` (contains `1bc278a` and the
+      second item), run 41888528663, all 9 jobs `success`.
+- [x] Remove the assertion `(is (= :value expected))` of the value branch of
       `closed-record.value-type.subprocess-test/error-policy-test`
       ("value output: the policy does not apply"). `expectation/representation`
       gives only `:value` or `:identity`, so in the else branch of
@@ -565,3 +567,7 @@
       assertion to the counts and no signal. Use `(when (= :identity
       expected) …)`, with a comment that VT-V5 applies to identity output
       only, and keep test and assertion counts in implementation.md current.
+      Done: scry fails a test with no assertion ("unknown", exit 1), so a
+      `when` body fails the Valhalla suite; the `deftest` is in a `when`
+      instead, with the comment. Value-type suite 82/314 (Temurin 21),
+      81/315 (Valhalla).

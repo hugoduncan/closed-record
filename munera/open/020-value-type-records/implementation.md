@@ -1151,3 +1151,20 @@ Paths:
 ## Test review, eighth round (2026-11-04)
 
 - added 2 steps to be addressed
+
+## Test review follow-ups, eighth round (2026-11-04)
+
+- addressed 2 review steps.
+- `subprocess-test/error-policy-test` (VT-V5) is defined only for identity
+  output (`deftest` in `(when (= :identity expected) …)`). A `when` in the
+  test body fails: scry counts a test with no assertion as "unknown" and
+  exits 1 (Valhalla run, checked).
+- Value-type suite 82/314 (Temurin 21), 81/315 (Valhalla). kondo, cljfmt
+  clean.
+- Acceptance note (criterion 3): 2026-11-04, ref `020-value-type-records`,
+  SHA `5aa9556` (contains `1bc278a`), PR
+  https://github.com/hugoduncan/closed-record/pull/1, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41888528663:
+  Build verification, Value-type tests (Temurin 21), Value-type tests
+  (Valhalla), Release tooling verification, Development quality, Markdown
+  links, Runtime tests (Clojure 1.11, 1.12, 1.13): all `success`.
