@@ -428,3 +428,29 @@ Paths:
 - Both steps carry earlier implementation.md notes (run `test/bench` after
   the `run.sh` change; keep the Clojure CLI clause) into steps.md, the
   active surface. All existing CI jobs pin `cli: '1.12.6.1673'`.
+
+## Notes for the round-2 plan-review design-steps pass
+
+- Three open steps (VT-V8 parent and report, `test/bench` launcher test,
+  Clojure CLI pin). All are plan choices: resolve them in plan.md and
+  steps.md. design.md stays unchanged. Keep VT-I2: the default `:bench`
+  run, its output, exit code and the tests of `fork`, `report` and
+  `legacy-transport` do not change.
+- VT-V8 precedent: the `assoc-timing` family in
+  `dev/bench/closed_record/bench/` (`assoc_timing_cli.clj`, `_run.clj`,
+  `_command.clj`, `_child.clj`, `_report.clj`) is a non-S-03 forked
+  Criterium measurement with its own command, child, result and report. It
+  reuses `fork/in-order` and `fork/capture-process!` and validates
+  `timing-tool` observations, with no change to `fork/parent`. Prefer this
+  pattern (smaller, in the VT-V8 entry namespace) over making
+  `fork/parent` generic.
+- `test/bench` has no alias and no documented command. Earlier tasks ran it
+  with an ad hoc `-Sdeps` alias that adds `test/bench` to the class path
+  (`munera/closed/019-space-time-performance/features.md`). Find the
+  aliases it needs (scry from `:test`, Criterium from `:bench`) before the
+  plan states the command. The launcher test inherits the environment, so
+  run it with `BENCH_ALIASES` and `BENCH_JVM_OPTS` unset.
+- CLI pin: `.github/workflows/ci.yml` lines 27, 133, 161
+  (`DeLaGuardo/setup-clojure@13.4`, `cli: '1.12.6.1673'`). The Clojure CLI
+  script uses `JAVA_CMD` for dependency resolution and for the program, so
+  the Valhalla job can work without Temurin. State the choice.
