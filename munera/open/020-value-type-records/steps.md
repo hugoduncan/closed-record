@@ -477,3 +477,15 @@
       shared `hash`, `assoc` and `metadata` checks (values). Keep test
       counts in implementation.md current.
       Done: value-type suite 82/312 (Temurin 21), 82/313 (Valhalla).
+
+## Test review follow-ups, third round
+
+- [ ] Push the branch and get a green CI run of `f99ce54`. The test-review
+      follow-ups (`fa5d2d6`, `f99ce54`) changed
+      `test/value-type/closed_record/value_type/representation_test.clj`
+      (new `options-test`) and removed `subprocess_test.clj`; the new
+      `options-test` has run only locally. The last green run (`290f2a1`,
+      run 41883488159) comes before these commits. Push (approved at
+      slice 6), read the run with the slice-6 `gh run` commands, and record
+      the SHA, run URL and job conclusions in implementation.md as a new
+      acceptance note (criterion 3).

@@ -1079,3 +1079,7 @@ Paths:
 - Value-type suite: Temurin 21 82/312; Valhalla 82/313. kondo, cljfmt clean.
 - The last green CI run (`290f2a1`) is before this change and the first
   test-review change; acceptance criterion 3 needs a push and a green run.
+
+## Test review, third round (2026-11-04)
+
+- added 1 step to be addressed
