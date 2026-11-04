@@ -210,10 +210,10 @@
       `020-value-type-records` (worktree
       `/Users/duncan/projects/hugoduncan/closed-record/020-value-type-records`),
       including the slice-9 push. Not `master`.
-- [ ] Push and open the pull request: `git push -u origin
+- [x] Push and open the pull request: `git push -u origin
       020-value-type-records`, then `gh pr create --base master --head
       020-value-type-records` (once).
-- [ ] Read the run of the pushed commit (`gh run list --workflow ci.yml
+- [x] Read the run of the pushed commit (`gh run list --workflow ci.yml
       --branch <ref> --commit <sha>`, `gh run watch <id> --exit-status`,
       `gh run view <id> --json jobs`); every job, including both new jobs,
       has conclusion `success`. After a failure, fix, commit and push to the

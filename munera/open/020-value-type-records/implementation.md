@@ -852,3 +852,16 @@ Paths:
 - `master` is not pushed and gets no more task commits.
 - `ci.yml` triggers on `pull_request` (and pushes to `master`), so CI
   evidence needs the pull request of plan.md (CI, Push).
+
+## Slice 6: first CI run (2026-11-03)
+
+- Ref `020-value-type-records`, SHA `33eab36e40bd3e97de36d5dd007cfe8c80115a84`, pull request
+  https://github.com/hugoduncan/closed-record/pull/1 (base `master`).
+- Run https://github.com/hugoduncan/closed-record/actions/runs/41869416187
+  (`pull_request`): all 9 jobs `success` — Release tooling, Runtime
+  1.11/1.12/1.13, Development quality, Markdown links, Build, Value-type
+  tests (Temurin 21), Value-type tests (Valhalla). No fix needed.
+- `origin/master` lags local `master`, so the pull request also carries
+  earlier task-020 commits; that is expected.
+- Next: slice 7 (VT-V8 bench). The slice-9 push goes to the same ref; the
+  pull request exists, so do not run `gh pr create` again.
