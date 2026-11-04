@@ -5,7 +5,8 @@
   (:require
    [clojure.test :refer [deftest is testing]]
    [closed-record.core :refer [defclosedrecord]]
-   [closed-record.value-type.expectation :as expectation]))
+   [closed-record.value-type.expectation :as expectation]
+   [closed-record.value-type.support :as support]))
 
 (def ^:private expected (expectation/representation))
 
@@ -21,12 +22,6 @@
     (macroexpand-1 '(closed-record.core/defclosedrecord Q [a b]
                       :value-type true))))
 
-(defn- type-form
-  "The `defvaluetype*` form of `expansion`."
-  [expansion]
-  (first (filter #(and (seq? %) (= 'value-type.core/defvaluetype* (first %)))
-                 (tree-seq seq? seq expansion))))
-
 (defn- symbols
   [form]
   (set (filter symbol? (tree-seq coll? seq form))))
@@ -34,7 +29,7 @@
 (deftest value-expansion-test
   ;; VT-V2: the expansion of a :value-type true definition.
   (let [expansion (value-expansion)
-        tform (type-form expansion)
+        tform (support/type-form expansion)
         [_ _ _ fields & specs] tform]
     (testing "defvaluetype* replaces deftype*"
       (is (some? tform))

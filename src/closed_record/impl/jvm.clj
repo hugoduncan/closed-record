@@ -49,15 +49,14 @@
                  (pr-str (:value-type opts)))))))
 
 (defn- check-value-type
-  "When `opts` has `:value-type true`, check that
-  `value-type.core/defvaluetype*` resolves (VT-D4). Throw ex-info
-  `:closed-record/value-type-unavailable` when it does not: with the
-  `requiring-resolve` exception as cause, or with no cause when the var is
-  absent. `:class-name` is the qualified class name symbol of `tname`."
-  [opts tname]
-  (when (true? (:value-type opts))
-    (let [classname (symbol (str (namespace-munge *ns*) "." tname))
-          data {:type :closed-record/value-type-unavailable
+  "When `value-type?`, check that `value-type.core/defvaluetype*` resolves
+  (VT-D4). Throw ex-info `:closed-record/value-type-unavailable` when it
+  does not: with the `requiring-resolve` exception as cause, or with no
+  cause when the var is absent. `:class-name` is `classname`, the qualified
+  class name symbol."
+  [value-type? classname]
+  (when value-type?
+    (let [data {:type :closed-record/value-type-unavailable
                 :class-name classname}
           msg (str "value-type.core/defvaluetype* is not available for "
                    classname)
@@ -132,7 +131,8 @@
      :hash-form (fn [_field expr] expr)
      :with-meta-form (fn [tname fields m]
                        `(new ~tname ~@fields ~m ~'__extmap))}
-    {:type-head 'deftype*
+    {:preamble []
+     :type-head 'deftype*
      :hidden-fields hidden-fields
      :hash-form cached-hash
      :with-meta-form (fn [tname fields m]
@@ -304,31 +304,31 @@
   [tname fields opts impls]
   (check-field-metadata fields)
   (check-options opts)
-  (check-value-type opts tname)
   (let [value-type? (true? (:value-type opts))
-        rep (representation value-type?)
-        opts (dissoc opts :value-type)
         classname (with-meta (symbol (str (namespace-munge *ns*) "." tname))
-                    (meta tname))
-        cname-str (str classname)
-        plain-fields (mapv #(with-meta % nil) fields)
-        type-hash (hash classname)
-        ->name (symbol (str "->" tname))
-        map->name (symbol (str "map->" tname))
-        methods (generated-methods rep tname cname-str type-hash plain-fields)]
-    `(let []
-       ~@(:preamble rep)
-       (declare ~->name)
-       (declare ~map->name)
-       (~(:type-head rep) ~(symbol (name (ns-name *ns*)) (name tname)) ~classname
-                          ~(into (vec fields) (:hidden-fields rep))
-                          :implements ~(vec (distinct (concat base-interfaces
-                                                              [protocol-interface]
-                                                              (user-interfaces impls))))
-                          ~@(mapcat identity opts)
-                          ~@methods
-                          ~@(user-methods impls))
-       (import ~classname)
-       ~(positional-factory ->name classname cname-str plain-fields)
-       ~(map-factory map->name classname cname-str plain-fields)
-       ~classname)))
+                    (meta tname))]
+    (check-value-type value-type? classname)
+    (let [rep (representation value-type?)
+          opts (dissoc opts :value-type)
+          cname-str (str classname)
+          plain-fields (mapv #(with-meta % nil) fields)
+          type-hash (hash classname)
+          ->name (symbol (str "->" tname))
+          map->name (symbol (str "map->" tname))
+          methods (generated-methods rep tname cname-str type-hash plain-fields)]
+      `(let []
+         ~@(:preamble rep)
+         (declare ~->name)
+         (declare ~map->name)
+         (~(:type-head rep) ~(symbol (name (ns-name *ns*)) (name tname)) ~classname
+                            ~(into (vec fields) (:hidden-fields rep))
+                            :implements ~(vec (distinct (concat base-interfaces
+                                                                [protocol-interface]
+                                                                (user-interfaces impls))))
+                            ~@(mapcat identity opts)
+                            ~@methods
+                            ~@(user-methods impls))
+         (import ~classname)
+         ~(positional-factory ->name classname cname-str plain-fields)
+         ~(map-factory map->name classname cname-str plain-fields)
+         ~classname))))

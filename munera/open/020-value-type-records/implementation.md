@@ -1282,3 +1282,18 @@ Paths:
 ## Code-shaper review, second round (2026-11-04)
 
 - added 2 steps to be addressed
+
+## Code-shaper review follow-ups, second round (2026-11-04)
+
+- addressed 2 review steps.
+- `emit` computes `value-type?` and `classname` once; `check-value-type
+  [value-type? classname]` is a statement before the inner `let`; the
+  `:class-name` of the error and the class of the expansion have one
+  source. Ordinary representation map has `:preamble []`.
+- New `closed-record.value-type.support`
+  (`test/value-type/closed_record/value_type/support.clj`) with
+  `type-form`; `representation-test` and `errors-test` use it.
+- Counts unchanged: ordinary 186/2792 (Clojure 1.11, 1.12, 1.13); Temurin 21
+  82/314; Valhalla 80/314; Clojure 1.11 case 1/7. Fixture test green.
+  clj-kondo, cljfmt clean. Not pushed; CI run of this change is pending
+  (acceptance criterion 3).

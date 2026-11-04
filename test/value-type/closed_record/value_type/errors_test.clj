@@ -6,7 +6,8 @@
   (:require
    [clojure.test :refer [deftest is testing]]
    [closed-record.core]
-   [closed-record.value-type.expectation :as expectation])
+   [closed-record.value-type.expectation :as expectation]
+   [closed-record.value-type.support :as support])
   (:import
    (clojure.lang Compiler$CompilerException ExceptionInfo)))
 
@@ -24,12 +25,6 @@
   [form]
   (try (eval form) nil (catch Throwable t (first-cause t))))
 
-(defn- value-type-form
-  "The `defvaluetype*` form at any depth of the expansion of `form`."
-  [form]
-  (first (filter #(and (seq? %) (= 'value-type.core/defvaluetype* (first %)))
-                 (tree-seq seq? seq (macroexpand-1 form)))))
-
 (defn- errors
   "The `:closed-record` error of the form that `text` gives and the
   `:value-type` error of its `defvaluetype*` form alone, in this namespace.
@@ -38,7 +33,7 @@
   [text]
   (binding [*ns* (the-ns 'closed-record.value-type.errors-test)]
     (let [form (read-string text)
-          vt-form (value-type-form form)]
+          vt-form (support/type-form (macroexpand-1 form))]
       {:closed-record (thrown form)
        :value-type-form vt-form
        :value-type (when vt-form (thrown vt-form))})))
