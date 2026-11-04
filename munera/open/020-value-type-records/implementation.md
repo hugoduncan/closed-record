@@ -313,3 +313,11 @@ Paths:
   (`ramora/defclosedrecord/decisions/verification.md`, "GitHub CI runs all
   three test aliases … with Temurin Java 21") stays true: it does not say
   "only", and VT-D10 owns the Valhalla job.
+- no ambiguity review feedback (round 6)
+- Checked, not filed: an invalid `-Dvalue-type.fallback` value makes the
+  `policy` def of `value-type.impl.runtime` throw `IllegalArgumentException`
+  at load. That is a load failure, so it gives
+  `:closed-record/value-type-unavailable` with that cause. It does not pass
+  through. No ordinary test uses `locking` or weak references
+  (`grep test/runtime`), so the identity-property rule adds no `locking`
+  assertion. VT-V4 lists only its own extra checks.
