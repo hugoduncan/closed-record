@@ -494,3 +494,12 @@ Paths:
   use the reflective rule that plan.md gives for the VT-V8 child. In the
   Clojure 1.11 case, the top-level Clojure 1.11.4 wins over the Clojure
   1.12.6 of value-type `:deps`.
+- no inconsistency review feedback (plan round 3)
+- Checked, not filed: the public vars that plan.md names for VT-V8 exist
+  (`fork/in-order`, `report/per-call-stats`, `report/fork-count`,
+  `report/ratio`, `timing-tool/observe`, `declaration`,
+  `validate-observation`, macro `closed-record.bench/bench-op`); `src/`,
+  `deps.edn`, `.github`, `dev/bench` and `test` have no diff from `ac25942`.
+  The tooling test `classpath_cache.clj` also resolves every entry of
+  `dependency-bases`, so after slice 4 it fetches the value-type Git
+  dependency too (network needed).
