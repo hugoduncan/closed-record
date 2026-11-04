@@ -116,3 +116,17 @@
   the expansion fixture file (not a `*_test.clj` file) and the shared check
   definitions of VT-V3 and VT-V4 if they are in `test/runtime`. Add these
   rows to the Documentation item for that page.
+- [ ] Inconsistency: the CI section does not say if the new scry steps
+  upload test failures. Every existing scry step in `ci.yml` uploads
+  `.scry-results/` on failure with its own artifact name, the `ci.yml` row
+  of `ramora/defclosedrecord/embodiment/artifacts.md` names "structured
+  test-failure uploads", and `doc/development.md` (Continuous integration)
+  lists each artifact name (`scry-runtime-1.11` … `scry-tooling`) and says
+  "The runtime matrix runs the three test commands above". Make the CI
+  section agree: the Valhalla suite step, the Temurin 21 suite step and
+  the Clojure 1.11 VT-V1 step each upload failures with a unique artifact
+  name (state the names). The matrix-entry option must not reuse
+  `scry-runtime-${{ matrix.version }}` (version 1.12 exists; duplicate names
+  fail in `upload-artifact` v4). Add the new names, and the runtime-matrix
+  sentence if a matrix entry is used, to the Documentation item for
+  `doc/development.md`.

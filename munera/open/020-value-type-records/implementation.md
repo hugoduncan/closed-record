@@ -192,3 +192,4 @@ Paths:
   value-type's fallback `Error` is a plain `java.lang.Error`
   (`value_type/impl/runtime.clj`). `:value-type nil` is an "other value"
   (`IllegalArgumentException`); use `contains?`, not truthiness.
+- inconsistency review (round 4) added 1 new design step
