@@ -707,3 +707,25 @@
       call it as a statement; keep the ex-info contract (VT-D4) and the
       `:class-name` value.
       Done: `check-value-type [opts tname]`.
+
+## Code-shaper review follow-ups, second round
+
+- [ ] In `closed-record.impl.jvm`, compute the option facts once in `emit`.
+      Now `check-value-type` and `emit` each compute the class name symbol
+      (`(symbol (str (namespace-munge *ns*) "." tname))`) and each test
+      `(true? (:value-type opts))`. Compute `value-type?` and `classname`
+      once in `emit`, and give them to `check-value-type` (for example
+      `(check-value-type value-type? classname)`), so the `:class-name` of
+      the error and the class of the expansion have one source. Also give
+      the two `representation` maps the same keys: the ordinary map has no
+      `:preamble`; add `:preamble []`. Keep the fixture strings, the ex-info
+      contract (VT-D4) and test counts.
+- [ ] Remove the duplicate `defvaluetype*` form finder of the value-type
+      suite. `closed-record.value-type.representation-test/type-form` and
+      `closed-record.value-type.errors-test/value-type-form` both find the
+      first `value-type.core/defvaluetype*` form with the same
+      `tree-seq seq? seq` filter. Put one function in one value-type suite
+      support namespace (for example `closed-record.value-type.expectation`
+      or a new `closed-record.value-type.support`) and use it from both
+      tests, so a change of the expansion shape needs one fix. Keep test
+      and assertion counts.
