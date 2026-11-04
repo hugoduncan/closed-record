@@ -130,7 +130,7 @@
   fail in `upload-artifact` v4). Add the new names, and the runtime-matrix
   sentence if a matrix entry is used, to the Documentation item for
   `doc/development.md`.
-- [ ] Ambiguity: state which ordinary tests the shared VT-V3/VT-V4 checks
+- [x] Ambiguity: state which ordinary tests the shared VT-V3/VT-V4 checks
   include, and the expectation for serialization on value output. The
   ordinary suite does not map one-to-one to V-01 to V-15.
   `test/runtime/closed_record/defclosedrecord_test.clj` has
@@ -146,7 +146,7 @@
   emitter or expansion tests), and state that the serialization check runs
   on identity fallback and does not run on value output (or another stated
   expectation).
-- [ ] Inconsistency: the Documentation item for `doc/development.md` does
+- [x] Inconsistency: the Documentation item for `doc/development.md` does
   not name its list of test suites. `doc/development.md` (lines 7-16) says
   "Test suites share the `test/` parent directory", lists the five suites
   (`test/runtime/` … `test/bench/`), and says "Each suite has a separate

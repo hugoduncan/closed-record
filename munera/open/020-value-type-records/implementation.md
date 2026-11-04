@@ -286,3 +286,20 @@ Paths:
   `doc/development.md`; add the `test/` path constraint to the Dependencies
   section (where the alias and the two directories are defined). Format and
   lint scope: `dev/quality/closed_record/quality_scope.clj`.
+
+## Design-steps pass, round 5 (2026-11-03)
+
+- Both design steps resolved in design.md. No `SCOPE_QUESTION:` items.
+- Selection rule facts for the plan mapping:
+  - Excluded by the rule: `field_value_test.clj` `field-declaration-test`
+    (labelled V-11, reflects on class fields), `compiler_rules_test.clj`
+    (V-13), `argument-errors-test`, `accepted-options-test` and
+    `load-ns-option-test` (option checks), and the `bench_*`, `assoc_*` and
+    `matrix_budget_test` files.
+  - The hash-cache tests (`assoc-test` "hash caches 0", `metadata-test`
+    "with-meta copies the hash caches") read only `hash` and `.hashCode`,
+    not the fields. Their assertions hold in both representations.
+- Path facts: `deps.edn` `:test` has `:extra-paths ["test/runtime"
+  "dev/bench"]`. The value-type alias adds both new directories
+  to `:extra-paths`, and each command selects its directory with `--dir`. scry discovery
+  without `--dir` scans all of `test/`, as for `test/bench/`.
