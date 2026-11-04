@@ -479,3 +479,18 @@ Paths:
   defaults to `type -p java` and is used for `make-classpath2` (resolution)
   and the program JVM. CI pins: `.github/workflows/ci.yml` lines 21-27,
   127-133, 155-161, 185-191.
+
+## Plan review, third round (2026-11-03)
+
+- ambiguity review (plan round 3) added 3 new design steps
+- Facts for the steps: value-type `origin` is
+  `git@github.com:hugoduncan/value-type.git`; the HTTPS URL is public, its
+  HEAD is `5d2656b`; `66d5ff7` is still not on GitHub. value-type has only
+  `.clj` sources and no `:deps/prep-lib`, so a Git dependency needs no
+  prep step. Local JDKs: `~/.local/share/mise/installs/java/temurin-21.0.10+7.0.LTS`
+  and `.../openjdk-27.0.0-jep401ea3+1-1` (macOS aarch64, build
+  `27-jep401ea3+1-1`); `~/.local/jdks/jdk-27.jdk` is the same build.
+- Checked, not filed: VT-V4 `.isValue` on Temurin 21 (method absent) can
+  use the reflective rule that plan.md gives for the VT-V8 child. In the
+  Clojure 1.11 case, the top-level Clojure 1.11.4 wins over the Clojure
+  1.12.6 of value-type `:deps`.

@@ -252,3 +252,35 @@
   other jobs do. Add both: slice 6 pins that CLI version in both new jobs
   (the Valhalla job sets `JAVA_CMD` and needs no Temurin), and slice 8
   keeps the CLI clause for all Clojure jobs.
+- [ ] Plan ambiguity: state the value-type coordinate of the
+  `:value-type-test` alias. Plan and steps say only "value-type at a pinned
+  Git SHA". The lib name `org.hugoduncan/value-type` does not let
+  tools.deps infer a URL (only `io.github.*` names do), so the alias needs
+  an explicit `:git/url`. The local value-type `origin` is the SSH URL
+  `git@github.com:hugoduncan/value-type.git`; CI and lint setup have no SSH
+  key. `https://github.com/hugoduncan/value-type.git` is public (anonymous
+  `git ls-remote` works). State: the lib name, the `:git/url` (HTTPS), and
+  the SHA rule at the slice-4 gate (pin `66d5ff7` when it is on GitHub, or
+  the commit that the user names; a later commit needs a check that the
+  value-type facts of design.md still hold).
+- [ ] Plan ambiguity: state how slice 6 pushes and confirms CI. Steps say
+  only "Push and confirm both jobs pass in CI". Local `master` is 41
+  commits ahead of `origin/master`, CI runs on pushes to `master` and on
+  pull requests, and earlier tasks say "do not push solely for evidence"
+  (tasks 014, 017). Acceptance criterion 3 needs the jobs to pass in CI.
+  State: the ref to push (`master`, or a branch with a pull request), if
+  the push needs user approval first (stop and ask, as at the slice-4
+  gate), how the result is read (for example `gh run watch`), and what to
+  record in implementation.md.
+- [ ] Plan ambiguity: name the local JDKs and the VT-V8 platform. Slice 5
+  says "Local runs on Temurin 21 and Valhalla (the Valhalla run requires the
+  pinned JDK)", and the VT-V8 command has `<valhalla-jdk>`. The pinned
+  archive is Linux x64; this machine is macOS arm64 and cannot run it. The
+  machine has Temurin `21.0.10+7` and the macOS aarch64 build of Valhalla
+  `27-jep401ea3+1-1` (mise, `~/.local/share/mise/installs/java/`), and the
+  default `java` is 25. Slice 7 records the VT-V8 limits as "one Valhalla
+  build, Linux x64", which is false for a local run. State: the `JAVA_CMD`
+  of each local run (slice 5 and VT-V8), that a local Valhalla run uses the
+  same build on another platform (not the pinned archive), and the platform
+  that the VT-V8 limits name (the machine of the run, as in
+  `doc/performance.md`).
