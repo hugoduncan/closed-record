@@ -381,3 +381,24 @@
       (no symbolic links followed), which the absent-var, AOT tests use.
       The `*_test.clj` row says `subprocess_test.clj` checks only the time
       limit; it also has `delete-tree-test`.
+
+## Implementation review follow-ups, fourth round
+
+- [ ] Push the branch and get a green CI run of the current code. The last
+      CI run (`d689459`) comes before the three follow-up rounds, which
+      changed `test/runtime`, `test/value-type` and `dev/bench`
+      (`define-checks` rewrite, VT-V6 pass-through check, subprocess time
+      limit and temporary-file deletion). Branch `020-value-type-records` is
+      7 commits ahead of `origin`. Acceptance criterion 3 needs the green run
+      of the last commit that changes files outside the task directory, so
+      the slice-9 verification is stale. Push (approved at slice 6), read the
+      run with the slice-6 `gh run` commands, and record the SHA, run URL
+      and job conclusions in implementation.md as a new acceptance note.
+- [ ] Rename the two shared-check `testing` labels in
+      `test/runtime/closed_record/checks/defclosedrecord.clj` that name the
+      ordinary-mode hash cache: "declared key gives hash caches 0 (no copy
+      of cached hashes)" (`assoc-test`) and "with-meta copies the hash
+      caches" (`metadata-test`). The value-type suite also runs them, and
+      value mode has no hash cache (VT-D6). Name the behaviour that both
+      modes share (for example "the hash after assoc equals the hash of a
+      new record", "with-meta keeps the hash").
