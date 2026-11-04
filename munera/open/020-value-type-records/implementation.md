@@ -233,3 +233,18 @@ Paths:
   directly after it.
 - The location of the VT-V3/VT-V4 shared check definitions is still a plan
   choice. They must load without value-type if ordinary tests use them.
+
+## Design review, fifth round (2026-11-03)
+
+- no architectural review feedback
+- Checked, not filed: the separate `Value-type tests (Temurin 21)` job fits
+  VT-D10 ("Temurin 21 jobs") and the release gate (`release.yml` calls all
+  of `ci.yml` through `workflow_call`). The "No other closed-record namespace
+  depends on value-type" boundary in `ramora/value-type-records/embodiment.md`
+  is about library namespaces; test and `dev/bench` namespaces are outside it.
+- Implementation hint: the Documentation item "replace Not implemented with
+  the current embodiment" for `ramora/value-type-records/embodiment.md`
+  covers the whole page. The Elements table rows `ci.yml` (names only the
+  Valhalla job), Tests ("VT-V1 runs in the ordinary `:test` alias"; VT-V1
+  now has three placements) and Verification limits ("Until the job
+  exists") are then false and must change too.
