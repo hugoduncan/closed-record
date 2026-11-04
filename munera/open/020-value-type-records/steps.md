@@ -184,7 +184,7 @@
 
 ## Slice 6: CI
 
-- [ ] Add required job `Value-type tests (Temurin 21)` to `ci.yml`:
+- [x] Add required job `Value-type tests (Temurin 21)` to `ci.yml`:
       `actions/setup-java@v4.7.1` (Temurin `'21'`) and
       `DeLaGuardo/setup-clojure@13.4` with `cli: '1.12.6.1673'`, as the
       runtime matrix; suite step with expectation `identity`; upload step `if: failure()` on its
@@ -193,7 +193,7 @@
       `actions/upload-artifact@v4.6.2`; then the Clojure 1.11 VT-V1 step with
       `if: ${{ !cancelled() }}` and its upload `scry-value-type-clj-1.11`
       (suite upload before the 1.11 step).
-- [ ] Add required job `Value-type tests (Valhalla)`: download
+- [x] Add required job `Value-type tests (Valhalla)`: download
       `openjdk-27-jep401ea3+1-1_linux-x64_bin.tar.gz` from
       `download.java.net`, verify SHA-256
       `b8bdd7b181c6a5ea2dd9959255e222cd9d9a9f42cca4f2400991b9b2ff7ffb7d`,
@@ -202,7 +202,7 @@
       `bin/java` of the extracted JDK (used for dependency resolution and
       the test JVM); run the Valhalla suite command (it
       includes VT-V7 for value output); upload `scry-value-type-valhalla`.
-- [ ] Verify: no `continue-on-error`; artifact names unique in the workflow;
+- [x] Verify: no `continue-on-error`; artifact names unique in the workflow;
       runtime matrix unchanged; release workflow runs the new jobs through
       `workflow_call` with no change.
 - [ ] **Stop and ask the user before the first push** (plan.md, CI,

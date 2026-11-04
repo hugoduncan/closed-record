@@ -825,3 +825,24 @@ Paths:
   - Clojure 1.11: `JAVA_CMD=<Temurin 21> clojure -M:test:value-type-test -m scry.cli --dir test/value-type-clj-1.11`
     → 1 test, 7 assertions.
 - Ordinary suite on 1.11/1.12/1.13: 186 tests, 2793 assertions.
+
+## Slice 6: CI (2026-11-03)
+
+- `ci.yml` jobs `value-type-temurin-21` and `value-type-valhalla` after
+  `test`. Valhalla URL (from value-type `release.yml`):
+  `https://download.java.net/java/early_access/valhalla/27/1/<archive>`
+  (HTTP 200, 248889276 bytes). Cache `actions/cache@v4.2.3`, path
+  `$RUNNER_TEMP/valhalla-archive`, key `valhalla-<sha256>`; download only on
+  miss, SHA-256 check always; `JAVA_CMD` via `$GITHUB_ENV` before
+  `setup-clojure`.
+- 1.11 step: `if: ${{ !cancelled() }}`; each upload gated on its own step
+  outcome.
+- Checked: YAML parses (bb clj-yaml); no `continue-on-error`; artifact names
+  unique; runtime matrix and `release.yml` unchanged (`ci.yml` diff is
+  additions only).
+- Not yet run in CI: push needs user approval (gate).
+
+<!-- IMPLEMENTATION_BLOCKER: START -->
+- blocker: Slice 6 push gate: the first push to GitHub needs user approval (plan.md, CI, Push).
+- required-human-action: Approve `git push origin master:refs/heads/020-value-type-records` and `gh pr create --base master --head 020-value-type-records` (or name another ref), and approve the slice-9 final push to the same ref.
+<!-- IMPLEMENTATION_BLOCKER: END -->
