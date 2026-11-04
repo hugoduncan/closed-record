@@ -91,3 +91,4 @@ Paths:
   lint scope already covers all of `test/` and `dev/`
   (`dev/quality/closed_record/quality_scope.clj`), so new test directories
   need no scope change.
+- ambiguity review (round 2) added 1 new design step

@@ -67,3 +67,13 @@
   does not include that `:type`. Add to the Documentation list: the Public
   row and the Public interface section name the option and this error, or
   point to the public contract in `ramora/value-type-records.md`.
+- [ ] Ambiguity: state the value of `:class-name` in the
+  `:closed-record/value-type-unavailable` `ex-data`. The design and the
+  Ramora public contract give only the key (`:class-name …`). The data is
+  public API (as D-03 `:type` values and keys are), and VT-V1 must assert
+  it. At macroexpansion no class exists. The emitter has the munged,
+  qualified symbol `classname` (`ns.Name`) and its string `cname-str`
+  (`src/closed_record/impl/jvm.clj`, `emit`). Choose one (for example, the
+  qualified class-name symbol, as `deftype*` receives it), state it in
+  design.md, and add it to the public contract in
+  `ramora/value-type-records.md`.
