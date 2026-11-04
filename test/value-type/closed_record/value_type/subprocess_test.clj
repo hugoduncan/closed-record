@@ -3,7 +3,7 @@
   do not load value-type) and VT-V5 (the `error` fallback policy)."
   (:require
    [clojure.edn :as edn]
-   [clojure.test :refer [deftest is testing]]
+   [clojure.test :refer [deftest is]]
    [closed-record.subprocess :as subprocess]
    [closed-record.value-type.expectation :as expectation]))
 
@@ -26,10 +26,13 @@
     (is (= 0 exit) err)
     (is (= {:p 1 :f 2 :loaded false} (edn/read-string out)))))
 
-(deftest error-policy-test
-  ;; VT-V5: on a JVM without value classes, the `error` policy makes the
-  ;; definition throw value-type's `Error`.
-  (if (= :identity expected)
+(when (= :identity expected)
+  ;; VT-V5 applies to identity output only: with value output the policy
+  ;; does not apply. scry fails a test with no assertion, so the test is
+  ;; defined only for identity output.
+  (deftest error-policy-test
+    ;; VT-V5: on a JVM without value classes, the `error` policy makes the
+    ;; definition throw value-type's `Error`.
     (let [script (pr-str
                   '(do
                      (require 'closed-record.core)
@@ -46,6 +49,4 @@
                                   ["-e" script]
                                   :jvm-opts ["-Dvalue-type.fallback=error"])]
       (is (= 0 exit) err)
-      (is (= "java.lang.Error" (last (edn/read-string out)))))
-    (testing "value output: the policy does not apply"
-      (is (= :value expected)))))
+      (is (= "java.lang.Error" (last (edn/read-string out)))))))
