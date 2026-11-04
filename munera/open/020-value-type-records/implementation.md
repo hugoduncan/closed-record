@@ -1114,3 +1114,16 @@ Paths:
 ## Test review, fifth round (2026-11-04)
 
 - added 1 step to be addressed
+
+## Test review follow-ups, fifth round (2026-11-04)
+
+- addressed 1 review step.
+- Acceptance note (criterion 3): 2026-11-04, ref `020-value-type-records`,
+  pushed `9f657a9` (contains `4405d9d`, the last commit that changes files
+  outside the task directory; `9f657a9` changes task files only).
+  PR https://github.com/hugoduncan/closed-record/pull/1.
+  Run https://github.com/hugoduncan/closed-record/actions/runs/41887056544:
+  `success`. Jobs: Build verification, Value-type tests (Temurin 21),
+  Runtime tests (Clojure 1.11, 1.12, 1.13), Markdown links, Release tooling
+  verification, Value-type tests (Valhalla), Development quality: all
+  `success`.

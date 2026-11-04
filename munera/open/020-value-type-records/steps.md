@@ -508,7 +508,7 @@
 
 ## Test review follow-ups, fifth round
 
-- [ ] Push the branch and get a green CI run of `4405d9d`. The fourth-round
+- [x] Push the branch and get a green CI run of `4405d9d`. The fourth-round
       follow-up changed
       `test/value-type/closed_record/value_type/errors_test.clj`
       (`value-type-form` with `tree-seq`, new "the expansion has a
@@ -518,3 +518,5 @@
       at slice 6), read the run with the slice-6 `gh run` commands, and
       record the SHA, run URL and job conclusions in implementation.md as a
       new acceptance note (criterion 3).
+      Done 2026-11-04: pushed `9f657a9` (contains `4405d9d`; later commit
+      changes task files only), run 41887056544, all 9 jobs `success`.
