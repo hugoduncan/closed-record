@@ -1127,3 +1127,7 @@ Paths:
   Runtime tests (Clojure 1.11, 1.12, 1.13), Markdown links, Release tooling
   verification, Value-type tests (Valhalla), Development quality: all
   `success`.
+
+## Test review, sixth round (2026-11-04)
+
+- no new steps
