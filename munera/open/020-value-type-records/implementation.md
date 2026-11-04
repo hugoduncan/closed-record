@@ -1342,3 +1342,18 @@ Paths:
 ## Code-shaper review, fifth round (2026-11-04)
 
 - added 3 steps to be addressed
+
+## Code-shaper review follow-ups, fifth round (2026-11-04)
+
+- addressed 3 review steps.
+- `closed-record.probe-support/data-of` added; `checks.defclosedrecord`,
+  `checks.malli`, `checks.hidden-key` refer it (and `thrown` where used);
+  private copies removed. `checks.differential` keeps its own two-argument
+  `thrown` (other contract). Artifacts `probe_support.clj` row updated.
+- `closed-record.bench.value-type` `:require` sorted.
+- Counts unchanged: ordinary 186/2792; Temurin 21 82/314; Valhalla 80/314.
+  clj-kondo, cljfmt clean.
+- Acceptance note (criterion 3), 2026-11-04: ref `020-value-type-records`,
+  SHA `8bd6cea`, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41896541516;
+  all 9 jobs `success`.

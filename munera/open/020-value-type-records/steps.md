@@ -800,7 +800,7 @@
 
 ## Code-shaper review follow-ups, fifth round
 
-- [ ] Push the branch and get a green CI run of `b8f5974`. The
+- [x] Push the branch and get a green CI run of `b8f5974`. The
       fourth-round follow-ups changed `dev/bench`
       (`closed-record.bench.value-class`, `closed-record.bench.value-type`)
       and `test/value-type` (`expectation`, `errors-test`); they have run
@@ -809,7 +809,9 @@
       Push (approved at slice 6), read the run with the slice-6 `gh run`
       commands, and record the SHA, run URL and job conclusions in
       implementation.md as a new acceptance note.
-- [ ] Use one `thrown` and one `data-of` in the shared check namespaces.
+      Done 2026-11-04: pushed `8bd6cea` (contains `b8f5974` and the other
+      two items), run 41896541516, all 9 jobs `success`.
+- [x] Use one `thrown` and one `data-of` in the shared check namespaces.
       `closed-record.checks.defclosedrecord` refers
       `closed-record.probe-support/thrown`, but `closed-record.checks.malli`
       and `closed-record.checks.hidden-key` (files of this task) keep
@@ -819,7 +821,9 @@
       three check namespaces, and remove the copies. Check for refer clashes
       in the wrapper test namespaces (as in the third round). Keep test and
       assertion counts.
-- [ ] Sort the `:require` vector of `closed-record.bench.value-type`:
+      Done: `data-of` in `closed-record.probe-support`; private copies
+      removed; no refer clashes (wrappers call only `define-checks`).
+- [x] Sort the `:require` vector of `closed-record.bench.value-type`:
       `closed-record.bench.value-class` is before
       `closed-record.bench.timing-tool`; the other entries and the other
       namespaces are in alphabetical order.
