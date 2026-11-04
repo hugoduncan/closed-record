@@ -405,3 +405,17 @@
       new record", "with-meta keeps the hash").
       Done: "the hash after assoc of a declared key equals the hash of a
       new record", "with-meta keeps the hash".
+
+## Implementation review follow-ups, fifth round
+
+- [ ] Make shared-check failures report the correct source location.
+      `define-checks` keeps the `:line` metadata of the forms that it reads
+      from `closed-record.checks.<topic>`, but the compiler uses the file of
+      the caller. Thus a failure gives the file of the wrapper test
+      namespace and a line of the check file. Observed: a failing `is` on
+      line 7 of a check file gives `FAIL in (zz-test) (zz_test.clj:7)`, and
+      the wrapper file has 3 lines. Make the file and the line agree (for
+      example, compile the expanded forms with the check source path, as
+      `Compiler/load` with the check file name does, or report the check
+      file in the failure). Keep test and assertion counts. Verify with a
+      failing assertion in a temporary check namespace (not committed).
