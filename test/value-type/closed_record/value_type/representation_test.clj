@@ -48,8 +48,7 @@
     (testing "no generated reference to __hash or __hasheq"
       (is (not-any? #{'__hash '__hasheq} (symbols specs))))
     (testing "the option is not passed to defvaluetype*"
-      (is (not-any? #{:value-type} (flatten (map #(if (coll? %) [] [%])
-                                                 tform)))))))
+      (is (not-any? #{:value-type} tform)))))
 
 (deftest representation-test
   ;; VT-V4: compare the observed representation with the expectation.

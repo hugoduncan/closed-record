@@ -1135,3 +1135,15 @@ Paths:
 ## Test review, seventh round (2026-11-04)
 
 - added 3 steps to be addressed
+
+## Test review follow-ups, seventh round (2026-11-04)
+
+- addressed 3 review steps.
+- Clojure 1.11 case checks `{:major 1 :minor 11}`, not the patch release;
+  removed the redundant `symbol?` assertion; the option check is
+  `(not-any? #{:value-type} tform)`.
+- Ordinary suite 186/2792 (one assertion less); value-type suite 82/314
+  (Temurin 21), 82/316 (Valhalla); Clojure 1.11 case 1/7. kondo, cljfmt
+  clean.
+- The last green CI run (`9f657a9`) is before this change; acceptance
+  criterion 3 needs a push and a green run.

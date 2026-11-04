@@ -14,7 +14,8 @@
       (catch clojure.lang.Compiler$CompilerException t (ex-cause t)))))
 
 (deftest value-type-unavailable-test
-  (is (= "1.11.4" (clojure-version)))
+  (is (= {:major 1 :minor 11}
+         (select-keys *clojure-version* [:major :minor])))
   (doseq [n ['A 'B 'C]]
     (testing (str n)
       (let [e (expansion-error

@@ -523,20 +523,22 @@
 
 ## Test review follow-ups, seventh round
 
-- [ ] In `closed-record.value-type.clj-1-11-test/value-type-unavailable-test`,
+- [x] In `closed-record.value-type.clj-1-11-test/value-type-unavailable-test`,
       replace `(is (= "1.11.4" (clojure-version)))` with a check of the
       major and minor version (`(select-keys *clojure-version* [:major
       :minor])` is `{:major 1 :minor 11}`). The test is about Clojure 1.11,
       not one patch release. A bump of the base `org.clojure/clojure` in
       `deps.edn` (for example to 1.11.5) now fails it with no change of
       behaviour.
-- [ ] Remove `(is (symbol? (:class-name (ex-data e))))` from
+- [x] Remove `(is (symbol? (:class-name (ex-data e))))` from
       `closed-record.value-type-option-test/value-type-unavailable-test`. The
       `=` assertion before it compares the `ex-data` with a map that holds
       the symbol `closed_record.value_type_option_test.Point`, so it already
       checks that `:class-name` is a symbol.
-- [ ] Simplify the "the option is not passed to defvaluetype*" assertion of
+- [x] Simplify the "the option is not passed to defvaluetype*" assertion of
       `closed-record.value-type.representation-test/value-expansion-test`:
       `(flatten (map #(if (coll? %) [] [%]) tform))` gives the elements of
       `tform` that are not collections, so `(is (not-any? #{:value-type}
       tform))` checks the same thing and is easier to read.
+      Done: ordinary suite 186/2792; value-type suite 82/314 (Temurin 21),
+      82/316 (Valhalla); Clojure 1.11 case 1/7.

@@ -45,7 +45,6 @@
     (is (= {:type :closed-record/value-type-unavailable
             :class-name 'closed_record.value_type_option_test.Point}
            (ex-data e)))
-    (is (symbol? (:class-name (ex-data e))))
     (is (instance? FileNotFoundException (ex-cause e)))))
 
 (deftest absent-var-test
