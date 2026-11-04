@@ -424,3 +424,7 @@ Paths:
   emitter. A user method can name `__hash` (no closed-record check), so
   the VT-V6 `:removed-field-access` case is reachable. `run.sh` must put
   `BENCH_ALIASES` before `:corrected-timing`, which clears the main opts.
+- inconsistency review added 2 new design steps
+- Both steps carry earlier implementation.md notes (run `test/bench` after
+  the `run.sh` change; keep the Clojure CLI clause) into steps.md, the
+  active surface. All existing CI jobs pin `cli: '1.12.6.1673'`.

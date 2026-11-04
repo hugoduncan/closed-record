@@ -231,3 +231,24 @@
   namespaces change, if any (for example `run-fork` made public, or `ops`
   as a parameter). A change to `fork`, `report` or `legacy-transport` must
   keep the default `:bench` run and its tests unchanged (VT-I2).
+- [ ] Plan inconsistency: the `run.sh` change has no test step. The
+  plan-review design-steps notes in implementation.md say that
+  `test/bench/closed_record/timing_launcher_test.clj` calls
+  `run.sh -e …` (arguments as main arguments) and "run `test/bench` after
+  the `run.sh` change". Steps slice 7 checks only the default run, and slice
+  9 does not name `test/bench`. `test/bench` has no CI job and no command in
+  `doc/development.md`. Add to slice 7 a step that runs the `test/bench`
+  launcher test (state the command, for example
+  `clojure -M:test:bench -m scry.cli --dir test/bench`, after checking the
+  aliases that the suite needs) with `BENCH_ALIASES` and `BENCH_JVM_OPTS`
+  unset.
+- [ ] Plan inconsistency: the Clojure CLI version of the new CI jobs.
+  `doc/development.md` line 53 says "Clojure jobs use Temurin Java 21 and
+  Clojure CLI `1.12.6.1673`". The "Notes after round 6" in
+  implementation.md say to keep the Clojure CLI clause when the Temurin
+  statement is replaced, but steps slice 8 (`doc/development.md` item) does
+  not say this, and steps slice 6 does not say that both new jobs install
+  Clojure CLI `1.12.6.1673` with `DeLaGuardo/setup-clojure@13.4`, as the
+  other jobs do. Add both: slice 6 pins that CLI version in both new jobs
+  (the Valhalla job sets `JAVA_CMD` and needs no Temurin), and slice 8
+  keeps the CLI clause for all Clojure jobs.
