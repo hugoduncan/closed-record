@@ -22,3 +22,32 @@
   `ramora/defvaluetype-design.md` D7 (cited from
   `ramora/deftype-star-design.md`): AOT fixes the representation. Not filed.
 - inconsistency review added 1 new design step
+
+## Notes for the design-steps pass
+
+Principles:
+- Resolve each step by editing design.md in place. Do not change VT-D1 to
+  VT-D10 or the scope. Ramora pages get no progress history.
+- VT-I2 comes first: the ordinary expansion, the default `:bench` run and the
+  `:test` alias stay the same and do not load value-type.
+- A representation expectation in the tests is test data, not a library
+  switch (VT-D1). Detection of the JVM capability alone cannot catch silent
+  fallback.
+
+Paths:
+- Gensym sites (VT-I2 comparison step): `src/closed_record/impl/jvm.clj`
+  parameter gensyms `p__` and `this__`, the auto-gensyms of `cached-hash`,
+  and `m#` in `withMeta`. Existing expansion test helpers (`in-test-ns`,
+  `thrown`): `test/runtime/closed_record/defclosedrecord_test.clj` near
+  line 489, `literal_test.clj` line 82.
+- Subprocess JVM patterns (VT-V5, VT-V1 Clojure 1.11 case, VT-V7):
+  `dev/bench/closed_record/bench/fork.clj`, `test/build/build_test.clj`
+  (isolated consumer JVM).
+- Bench: `dev/bench/closed_record/bench.clj` (S-03 exit code),
+  `bench/report.clj`, `dev/bench/valhalla/*.java`, `test/bench/` (no CI job).
+  The `dev/bench/` row in `ramora/defclosedrecord/embodiment/artifacts.md`
+  already omits `memory/`, `timing/` and `valhalla/`.
+- CI runtime matrix: `.github/workflows/ci.yml`, job "Runtime tests", with
+  `matrix` entries that each have a `command`.
+- value-type sources: `~/projects/hugoduncan/value-type/value-type-master/ramora/`
+  `deftype-star-design.md` and `defvaluetype-design.md`.
