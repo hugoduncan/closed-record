@@ -1024,3 +1024,7 @@ Paths:
   value-type suite 81/308; Valhalla suite 81/309. kondo, cljfmt clean.
 - The last green CI run (`acd056f`) is before this change; acceptance
   criterion 3 needs a push and a green run of this commit.
+
+## Implementation review, sixth round (2026-11-04)
+
+- added 1 step to be addressed

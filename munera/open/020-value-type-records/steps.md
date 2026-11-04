@@ -422,3 +422,15 @@
       Done: `define-checks` expands to `load-checks`, which evaluates each
       form with `Compiler/SOURCE` and `SOURCE_PATH` of the check file.
       Temporary check: `FAIL in (zz-test) (zz.clj:7)`.
+
+## Implementation review follow-ups, sixth round
+
+- [ ] Push the branch and get a green CI run of `9a026d6`. The fifth-round
+      follow-up changed `test/runtime/closed_record/checks/support.clj`
+      (`load-checks`), which the ordinary and both value-type suites use.
+      The last green run (`acd056f`, run 41880383270) comes before it, and
+      the branch is 3 commits ahead of `origin`. Acceptance criterion 3
+      needs the green run of the last commit that changes files outside the
+      task directory. Push (approved at slice 6), read the run with the
+      slice-6 `gh run` commands, and record the SHA, run URL and job
+      conclusions in implementation.md as a new acceptance note.
