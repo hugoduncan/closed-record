@@ -118,3 +118,15 @@ Paths:
   because D-03 is about key-set failures.
 - Intent step: use the wording of the Summary in
   `ramora/value-type-records.md`.
+
+## Design-steps pass, round 2 (2026-11-03)
+
+- All 3 design steps resolved in design.md. No `SCOPE_QUESTION:` items.
+- `:class-name` is the `classname` symbol of `emit`. It carries the metadata
+  of `tname` (`with-meta … (meta tname)`); metadata does not affect `=`, so
+  VT-V1 can compare with a plain symbol. Checked: `(namespace-munge
+  'my-app.geo)` is `my_app.geo`.
+- The Ramora edits that the steps ask for (`:class-name` value in the
+  `ramora/value-type-records.md` Public contract, the defclosedrecord Public
+  row and Public interface section) are items in the Documentation list.
+  The implementation makes them; Ramora is not edited in the design pass.

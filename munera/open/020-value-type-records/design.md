@@ -4,9 +4,10 @@
 
 Implement the [value-type records design](../../../ramora/value-type-records.md).
 With `:value-type true`, `defclosedrecord` defines a closed record through
-`value-type.core/defvaluetype*`. The result is a JEP 401 value class on a
-supported JVM and an identity class on other JVMs. The closed-record contract
-does not change. Users who do not set the option get no new dependency, cost or
+`value-type.core/defvaluetype*`. On a supported JVM the result is a JEP 401
+value class. On other JVMs, value-type's fallback policy (the application
+property `value-type.fallback`) selects an identity class or an error. The
+closed-record contract does not change. Users who do not set the option get no new dependency, cost or
 behaviour.
 
 The Ramora design is the authority for the contract and the decisions
@@ -145,10 +146,16 @@ Implement the public contract of the Ramora design:
   passed to `deftype*` or `defvaluetype*`.
 - When `value-type.core/defvaluetype*` cannot be resolved, for any reason,
   macroexpansion fails with `ex-info`
-  `{:type :closed-record/value-type-unavailable :class-name …}` and the
+  `{:type :closed-record/value-type-unavailable :class-name c}` and the
   resolution failure as cause. A missing library, a load failure (such as on
   Clojure 1.11) and a value-type version without `defvaluetype*` all give this
   error.
+- `c` is the qualified class-name symbol that `deftype*` receives: the munged
+  namespace name, a dot and the type name (`classname` in `emit`). For example,
+  `Point` in the namespace `my-app.geo` gives `my_app.geo.Point`. It is a
+  symbol, not a class and not a string: at macroexpansion no class exists.
+  (The D-03 `:record` value is a class, because it is computed at run time.)
+  VT-V1 asserts this value.
 - value-type errors pass through with no change.
 - The `defclosedrecord` docstring describes the option, the runtime dependency
   and the differences table, in brief.
@@ -336,6 +343,9 @@ Embody VT-D10 in `ci.yml`:
   to add it.
 - `doc/development.md`: the commands for the value-type suite on both JVMs.
 - `doc/API.md`: regenerate it from the docstring.
+- `ramora/value-type-records.md`, Public contract: state the value of
+  `:class-name` (the qualified class-name symbol, as Scope, Public contract
+  states). This adds precision and does not change a decision.
 - `ramora/value-type-records/embodiment.md`: replace "Not implemented" with the
   current embodiment and its verification limits (one Valhalla build, Linux
   x64, VT-V8 manual).
@@ -355,6 +365,12 @@ Embody VT-D10 in `ci.yml`:
     `ramora/value-type-records/embodiment.md`.
   - Boundaries: the permitted dependencies of the Ramora value-type
     embodiment.
+  - Public surface: the Boundaries "Public" row (now "the `ex-data` of
+    D-03") and the Public interface section (now "Error data: see D-03")
+    also name the `:value-type` option and the `ex-data` of
+    `:closed-record/value-type-unavailable`, or point to the Public contract
+    in `ramora/value-type-records.md`. Do not add this `:type` to D-03: D-03
+    is about key-set failures.
 - `ramora/defclosedrecord/embodiment/artifacts.md`: the value-type alias
   (`deps.edn` row), the value-type test directories, the CI jobs (`ci.yml`
   row), and the VT-V8 entry namespace (`dev/bench/` row).

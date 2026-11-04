@@ -58,7 +58,7 @@
   value-output part of VT-V7 for the Valhalla job. Add this paragraph to the
   Documentation update list for that page, so that it names the identity
   part of VT-V7 in the Temurin 21 job.
-- [ ] Architecture: add the public surface of the option to the
+- [x] Architecture: add the public surface of the option to the
   `ramora/defclosedrecord/embodiment.md` update (Ramora document rules,
   Principle 6 explicit boundaries). After the change, the Boundaries
   "Public" row ("the `ex-data` of D-03") and the Public interface section
@@ -67,7 +67,7 @@
   does not include that `:type`. Add to the Documentation list: the Public
   row and the Public interface section name the option and this error, or
   point to the public contract in `ramora/value-type-records.md`.
-- [ ] Ambiguity: state the value of `:class-name` in the
+- [x] Ambiguity: state the value of `:class-name` in the
   `:closed-record/value-type-unavailable` `ex-data`. The design and the
   Ramora public contract give only the key (`:class-name …`). The data is
   public API (as D-03 `:type` values and keys are), and VT-V1 must assert
@@ -77,7 +77,7 @@
   qualified class-name symbol, as `deftype*` receives it), state it in
   design.md, and add it to the public contract in
   `ramora/value-type-records.md`.
-- [ ] Inconsistency: the Intent says the result is "an identity class on
+- [x] Inconsistency: the Intent says the result is "an identity class on
   other JVMs". The public contract (value-type errors pass through), VT-V5
   (`-Dvalue-type.fallback=error` gives value-type's `Error`) and the
   Summary of `ramora/value-type-records.md` ("value-type's application
