@@ -147,3 +147,22 @@ Paths:
   metadata in the printed expansion (`*print-meta*` true), so the VT-V1
   fixture does not depend on test source positions.
 - inconsistency review (round 3) added 1 new design step
+
+## Notes for the round-3 design-steps pass
+
+- Two open steps: the cause of `:closed-record/value-type-unavailable` when
+  the var is absent, and the Temurin statements in `doc/`. The earlier
+  principles apply: edit design.md in place, keep VT-D1 to VT-D10 and the
+  scope, and add no progress history to Ramora.
+- Cause step: the choice is public contract. Record it in the design.md
+  Public contract, and extend the Documentation item for the
+  `ramora/value-type-records.md` Public contract (as for `:class-name`).
+  Observed on Clojure 1.11.4: with no value-type, `requiring-resolve`
+  throws `java.io.FileNotFoundException` ("Could not locate
+  value_type/core__init.class …"); an absent var gives `nil`. No suite can
+  make the absent-var case without a stub `value-type.core`, which would
+  conflict with the real library; do not require a test for it unless the
+  design adds one on purpose.
+- Doc step paths: `doc/development.md` line 53 (Continuous integration),
+  `doc/tool-installation.md` line 11. Leave `doc/performance.md` line 12:
+  it describes task-019 evidence (Valhalla on macOS arm64), not CI.
