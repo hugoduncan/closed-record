@@ -142,3 +142,7 @@ Paths:
 - For the later turns, not architecture: `doc/development.md` says "Clojure
   jobs use Temurin Java 21". The Valhalla job makes this false; the
   Documentation item for that file names only the commands.
+- ambiguity review (round 3) added 1 new design step
+- Checked, not filed: a quoted form in a test file gives no `:line`
+  metadata in the printed expansion (`*print-meta*` true), so the VT-V1
+  fixture does not depend on test source positions.
