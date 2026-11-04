@@ -303,3 +303,13 @@ Paths:
   "dev/bench"]`. The value-type alias adds both new directories
   to `:extra-paths`, and each command selects its directory with `--dir`. scry discovery
   without `--dir` scans all of `test/`, as for `test/bench/`.
+
+## Design review, sixth round (2026-11-03)
+
+- no architectural review feedback
+- Checked, not filed: the round-5 shared-check rule fits VT-D1 and VT-I2
+  (definitions load without value-type; the value-type commands add
+  `test/runtime` through `:test`). D-16 Scope
+  (`ramora/defclosedrecord/decisions/verification.md`, "GitHub CI runs all
+  three test aliases … with Temurin Java 21") stays true: it does not say
+  "only", and VT-D10 owns the Valhalla job.
