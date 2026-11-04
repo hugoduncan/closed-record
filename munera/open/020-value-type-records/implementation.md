@@ -503,3 +503,25 @@ Paths:
   The tooling test `classpath_cache.clj` also resolves every entry of
   `dependency-bases`, so after slice 4 it fetches the value-type Git
   dependency too (network needed).
+
+## Notes for the plan-review round-3 design-steps pass
+
+- Three open steps (value-type coordinate, slice-6 push, local JDKs and
+  VT-V8 platform). All are plan choices: resolve them in plan.md and
+  steps.md. design.md stays unchanged; it already says AC4 (SHA on GitHub)
+  and the CI-only "Linux x64" limit. Keep VT-I2 and no committed
+  `:local/root`.
+- Coordinate step: the existing Git dependency pattern is the `:quickdoc`
+  alias in `deps.edn` (`:git/tag` + `:git/sha`). value-type has no tags,
+  so use `:git/url` + `:git/sha` only. Use the same coordinate in the
+  README instruction for unreleased value-type (README Installation shows
+  only the Clojars coordinate of closed-record).
+- Push step: do not choose an autonomous push to `master`; a stop-and-ask
+  point (as at the slice-4 gate) agrees with the precedents in
+  `munera/closed/014-github-ci/steps.md` and
+  `munera/closed/017-markdown-link-checks/steps.md` (line 46 of each).
+  `ci.yml` triggers: `push` to `master`, `pull_request` (any branch),
+  `workflow_call`. `gh` is at `/opt/homebrew/bin/gh`.
+- JDK step: the VT-V8 limits in `doc/performance.md` follow the existing
+  style of that page (it names the machine "macOS arm64 MacBook Pro" and
+  the runtime builds).
