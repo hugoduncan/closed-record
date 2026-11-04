@@ -351,3 +351,8 @@ Paths:
 - Shared-check step is the main one: ordinary tests bind to top-level types
   by name (reader literals, `.field` interop), so a function-only extraction
   loses checks. A macro over the record options keeps them.
+- inconsistency review added 1 new design step
+- Checked, not filed: plan.md copies the design list of identity
+  properties (hash cache, `locking`, reference `identical?`). The round-5
+  and round-6 notes show that no shared check needs a branch for these;
+  D-06 serialization is the only branch, and steps.md slice 5 states it.

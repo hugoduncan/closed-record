@@ -205,3 +205,14 @@
   value-type. Choose: code reading only, a local run with an uncommitted
   `-Sdeps` value-type dependency, a check of a form builder that runs after
   resolution, or defer the check to VT-V2 in slice 5.
+- [ ] Plan inconsistency: steps.md slice 5 VT-V6 names a `:mutable-field`
+  pass-through case. `defclosedrecord` cannot reach it:
+  `check-field-metadata` in `src/closed_record/impl/jvm.clj` throws
+  `IllegalArgumentException` for `:volatile-mutable` and
+  `:unsynchronized-mutable` fields before `emit` builds the form
+  (`argument-errors-test` asserts this). The Ramora VT-V6 row names only
+  `:non-nil` metadata → `:value-type/error :invalid-field`. Make the VT-V6
+  cases agree with the Ramora row: use `:invalid-field` cases that the
+  emitter can reach (`^:non-nil` or `^:nil-restricted` field; optionally a
+  user method that reads `__hash`, which gives `:removed-field-access` on
+  value output only). Remove the `:mutable-field` case.
