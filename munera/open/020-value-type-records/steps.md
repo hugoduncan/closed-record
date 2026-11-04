@@ -571,3 +571,17 @@
       `when` body fails the Valhalla suite; the `deftest` is in a `when`
       instead, with the comment. Value-type suite 82/314 (Temurin 21),
       81/315 (Valhalla).
+
+## Test review follow-ups, ninth round
+
+- [ ] Make `closed-record.value-type.subprocess-test/error-policy-test`
+      (VT-V5) fail with a clear message when the `error` policy does not
+      apply. When the definition succeeds, the child prints `:defined`, and
+      `(last (edn/read-string out))` throws `IllegalArgumentException`
+      ("Don't know how to create ISeq from: clojure.lang.Keyword"). Thus
+      the contract violation that VT-V5 checks gives a test error, not a
+      failure that names the policy. Compare the printed value with a form
+      that is valid in both cases (for example, the child prints
+      `{:causes [...]}` or `{:defined true}`, and the test asserts that
+      `(peek (:causes r))` is `"java.lang.Error"`). Keep test and assertion
+      counts in implementation.md current.
