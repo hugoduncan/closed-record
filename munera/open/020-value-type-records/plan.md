@@ -286,17 +286,32 @@ Key decisions:
     master:refs/heads/020-value-type-records`, then `gh pr create --base
     master --head 020-value-type-records`. If the user names another ref
     (for example `master`), use it. A fix after a failed run is a new commit
-    on local `master`, pushed to the same ref. A merge of the pull request is
-    the user's decision and is not part of this task.
+    on local `master`, pushed to the same ref. The question at slice 6 also
+    asks for approval of the slice-9 push to the same ref (Final push). A
+    merge of the pull request is the user's decision and is not part of
+    this task.
+  - Final push (slice 9): slices 7 to 9 change files that CI checks (the
+    `src` docstring, `doc/`, Ramora, `dev/bench`, quality fixes). Thus the
+    slice-6 run is not the acceptance criterion 3 evidence. After the
+    local quality, build and release checks of slice 9 pass, push local
+    `master` to the slice-6 ref and read the run with the CI result
+    commands. If the user did not approve this push at slice 6, stop and
+    ask first. A fix after a failed run is a new commit, pushed to the same
+    ref. The acceptance criterion 3 evidence is the green run of the last
+    commit that changes files outside
+    `munera/open/020-value-type-records/`. The commit that records the run
+    and the acceptance verification changes only task files; it needs no
+    other run, and the task does not push it.
   - CI result: `gh run list --workflow ci.yml --branch <ref> --commit <sha>`
     gives the run ID of the pushed commit; `gh run watch <id>
     --exit-status` waits; `gh run view <id> --json jobs` gives each job
     conclusion. The run passes when every
     job, including `Value-type tests (Temurin 21)` and `Value-type tests
     (Valhalla)`, has conclusion `success`.
-  - Record in implementation.md: the date, the pushed ref and commit SHA,
-    the pull request URL, and for each run the run URL and the conclusion of
-    each job (a failed run also gets its cause and fix commit).
+  - Record in implementation.md, for the slice-6 push and the slice-9
+    push: the date, the pushed ref and commit SHA, the pull request URL,
+    and for each run the run URL and the conclusion of each job (a failed
+    run also gets its cause and fix commit).
 
 ## Risks
 
@@ -362,4 +377,5 @@ Key decisions:
    `doc/tool-installation.md`, `doc/API.md` regeneration, Ramora value-type
    pages, defclosedrecord embodiment and artifact map, `mementum/state.md`.
 9. **Quality gate** — format, lint, prose, API freshness, link, build and
-   release checks.
+   release checks; final push to the slice-6 ref and its CI result
+   (acceptance criterion 3 evidence).

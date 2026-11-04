@@ -594,3 +594,20 @@ Paths:
 - Embodiment step: page `ramora/value-type-records/embodiment.md`. Edit the
   existing slice-8 item; do not add a new step for each row. Ramora rule:
   no progress history (state the current embodiment only).
+
+## Plan-review design-steps pass, round 4 (2026-11-03)
+
+- Both plan steps resolved in plan.md (CI: Final push, record list, slice
+  order 9) and steps.md (slices 6, 8 and 9). design.md unchanged. No step
+  of steps.md is done.
+- Choice: option (a). Slice 9 pushes the final tree to the slice-6 ref and
+  reads a second run. The slice-6 question asks for approval of both
+  pushes; if the user approves only the first, slice 9 stops and asks.
+  The AC3 evidence is the run of the last commit outside the task
+  directory; the evidence commit (task files only) is not pushed, so no
+  run-record recursion.
+- The slice-8 embodiment item now names the rows of
+  `ramora/value-type-records/embodiment.md` that become false: Status,
+  Elements `ci.yml` and Tests rows, Verification limits. The Permitted
+  dependencies and Generated type sections hold as written; check them
+  against the code at slice 8.

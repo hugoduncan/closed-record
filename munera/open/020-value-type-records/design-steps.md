@@ -284,7 +284,7 @@
   same build on another platform (not the pinned archive), and the platform
   that the VT-V8 limits name (the machine of the run, as in
   `doc/performance.md`).
-- [ ] Plan ambiguity: state if the commits after the slice-6 CI run go to
+- [x] Plan ambiguity: state if the commits after the slice-6 CI run go to
   CI. Slice 6 pushes local `master` to the pull request ref and reads one
   green run. Slices 7 to 9 then commit more changes: `src` (the
   `defclosedrecord` docstring, slice 8), `dev/bench`, `doc/`, Ramora and
@@ -300,7 +300,7 @@
   is the AC3 evidence, and slice 9 records the commits after it and why no
   push is necessary. If (b), state which local checks replace the CI jobs
   for the changed files.
-- [ ] Plan inconsistency: the slice-8 item for
+- [x] Plan inconsistency: the slice-8 item for
   `ramora/value-type-records/embodiment.md` names only the Status ("Not
   implemented") and the verification limits. The design-review round-5
   note in implementation.md says that the whole page must change, and that

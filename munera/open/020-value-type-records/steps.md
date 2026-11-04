@@ -198,7 +198,8 @@
       Push). Proposed: `git push origin
       master:refs/heads/020-value-type-records` and `gh pr create --base
       master --head 020-value-type-records`; use another ref if the user
-      names one.
+      names one. Also ask for approval of the slice-9 final push to the
+      same ref (plan.md, CI, Final push).
 - [ ] Read the run of the pushed commit (`gh run list --workflow ci.yml
       --branch <ref> --commit <sha>`, `gh run watch <id> --exit-status`,
       `gh run view <id> --json jobs`); every job, including both new jobs,
@@ -268,10 +269,20 @@
 - [ ] Update `ramora/value-type-records.md` Public contract: the
       `:class-name` value and the cause of each case; replace "the resolution
       failure as cause".
-- [ ] Update `ramora/value-type-records/embodiment.md`: replace "Not
-      implemented" with the current embodiment and its verification limits
-      (one Valhalla build; CI on Linux x64; VT-V8 manual, on the machine of
-      the run).
+- [ ] Update all of `ramora/value-type-records/embodiment.md` to state the
+      current embodiment (no progress history):
+      - Status: replace "Not implemented".
+      - Elements table, `.github/workflows/ci.yml` row: both jobs
+        (`Value-type tests (Temurin 21)` and `Value-type tests (Valhalla)`)
+        and their failure uploads.
+      - Elements table, Tests row: replace "VT-V1 runs in the ordinary
+        `:test` alias" with the three VT-V1 placements (ordinary suite with
+        the absent-var subprocess, value-type suite does-not-load
+        subprocess, `test/value-type-clj-1.11/`).
+      - Verification limits: replace "Until the job exists" with the
+        current limits (one Valhalla build; CI on Linux x64; VT-V8 manual,
+        on the machine of the run).
+      - Check the other rows and sections against the implementation.
 - [ ] Update `ramora/value-type-records/invariants-and-verification.md`:
       VT-R1, VT-R2, the VT-V1 row (fixture, absent-var case, does-not-load
       placement, Clojure 1.11 case), the VT-V3 row (shared check selection,
@@ -296,5 +307,14 @@
 
 - [ ] Run format, lint, prose, API freshness and link checks; fix findings.
 - [ ] Run the build and release checks.
-- [ ] Verify all acceptance criteria 1–8 against the design; record the
-      verification in implementation.md; commit.
+- [ ] Final push (plan.md, CI, Final push): if the user did not approve it
+      at slice 6, stop and ask. Push local `master` to the slice-6 ref; read
+      the run of the pushed commit with the slice-6 `gh run` commands; every
+      job has conclusion `success`. After a failure, fix, commit and push to
+      the same ref again. Record the date, ref, SHA, pull request URL and
+      each run URL with its job conclusions in implementation.md.
+- [ ] Verify all acceptance criteria 1–8 against the design (acceptance
+      criterion 3: the green run of the last commit that changes files
+      outside `munera/open/020-value-type-records/`); record the
+      verification in implementation.md; commit (task files only; not
+      pushed).
