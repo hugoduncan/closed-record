@@ -743,3 +743,16 @@ Paths:
   on Temurin 21 (identity fallback): hash, `with-meta`, `=` correct.
 - Options are keyword pairs (`:value-type true`), not a map.
 - Suite green on 1.11.4, 1.12.6, 1.13.0-alpha9 (186 tests, 2793 assertions).
+
+## Slice 4: SHA rule check (2026-11-03)
+
+- `git fetch https://github.com/hugoduncan/value-type.git master` →
+  FETCH_HEAD `5d2656b`; `git merge-base --is-ancestor 66d5ff7… FETCH_HEAD`
+  → exit 1. `git ls-remote` shows only `master` (`5d2656b`). `66d5ff7`
+  ("019: close task") is local only; GitHub master is behind it.
+- Per design Prerequisite: stop; no `:value-type-test` alias added.
+
+<!-- IMPLEMENTATION_BLOCKER: START -->
+- blocker: value-type commit 66d5ff7 is not on GitHub (remote master is 5d2656b, not a descendant), so the `:value-type-test` git dependency cannot be pinned.
+- required-human-action: push value-type 66d5ff7 (or a descendant) to github.com/hugoduncan/value-type master, or name another branch/commit to pin.
+<!-- IMPLEMENTATION_BLOCKER: END -->

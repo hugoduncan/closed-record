@@ -84,7 +84,7 @@
 
 ## Slice 4: Test alias and shared checks
 
-- [ ] Apply the SHA rule (plan.md, Alias): verify that `66d5ff7`
+- [ ] (BLOCKED 2026-11-03: 66d5ff7 not on GitHub; see implementation.md) Apply the SHA rule (plan.md, Alias): verify that `66d5ff7`
       (`66d5ff7680c227bcf44ffe0824628288ffab0ebf`) is on GitHub with
       `git fetch https://github.com/hugoduncan/value-type.git master` (or
       the branch that the user names) and
