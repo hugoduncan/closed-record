@@ -63,24 +63,24 @@
 
 ## Slice 3: Emitter value mode
 
-- [ ] Add the representation description (type-form head, hidden fields,
+- [x] Add the representation description (type-form head, hidden fields,
       hash forms, `withMeta` form), selected once from the option in `emit`;
       pass it as explicit data to the affected emitter functions.
-- [ ] Value mode: hidden fields `__meta __extmap ^int __hash ^int __hasheq`
+- [x] Value mode: hidden fields `__meta __extmap ^int __hash ^int __hasheq`
       with no mutable metadata (VT-D5); `hasheq`/`hashCode` compute D-07
       values on each call (VT-D6); `withMeta` constructor call with declared
       fields, `__meta` and `__extmap` as in `assoc` (VT-D7); type-form head
       `value-type.core/defvaluetype*` with the same arguments (VT-D3).
-- [ ] Verify no generated method reads or writes `__hash`/`__hasheq` in value
+- [x] Verify no generated method reads or writes `__hash`/`__hasheq` in value
       mode; all other methods and both factories identical in both modes
       (VT-D8). Check: a local run with an uncommitted `-Sdeps` `:local/root`
       value-type dependency at `66d5ff7` and `:clj-1.12` that prints the
       value-mode expansion (plan.md, Value-mode check in slice 3); record the
       command and result in implementation.md. VT-V2 (slice 5) is the
       committed check.
-- [ ] Run the fixture test: no-option and `:value-type false` expansions
+- [x] Run the fixture test: no-option and `:value-type false` expansions
       still equal the fixture (VT-I2).
-- [ ] Run the ordinary runtime suite on Clojure 1.11, 1.12 and 1.13; commit.
+- [x] Run the ordinary runtime suite on Clojure 1.11, 1.12 and 1.13; commit.
 
 ## Slice 4: Test alias and shared checks
 

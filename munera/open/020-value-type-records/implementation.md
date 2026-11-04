@@ -716,3 +716,30 @@ Paths:
   → `{:exit :out :err}`; absent-var test passes a `-e` script, reads the
   printed EDN.
 - Suite green on 1.11.4, 1.12.6, 1.13.0-alpha9 (186 tests, 2793 assertions).
+
+## Slice 3: emitter value mode (2026-11-03)
+
+- `representation` (private, `impl.jvm`) gives `{:type-head :hidden-fields
+  :hash-form :with-meta-form}`; `emit` selects it once and passes it to
+  `generated-methods` as its first argument. Public `hidden-fields` stays
+  the ordinary layout (`core.cljc` uses it for reserved names);
+  value layout is private `value-hidden-fields`.
+- `withMeta` param is now built outside the syntax quote as
+  `(symbol (str (gensym "m__") "__auto__"))`, the name `m#` gave, so the
+  ordinary expansion is unchanged (fixture test passes).
+- Value mode still emits `__hash`/`__hasheq` fields (`^int`, not mutable);
+  no method reads them; constructors from factories/`assoc` use the short
+  compiler-generated constructors, unchanged.
+- Check (value-type HEAD `66d5ff7`): `clojure -Sdeps '{:deps
+  {org.hugoduncan/value-type {:local/root
+  "/Users/duncan/projects/hugoduncan/value-type/value-type-master"}}}'
+  -M:test:clj-1.12 -e "(require 'closed-record.core 'clojure.pprint)
+  (in-ns 'user) (binding [*print-meta* true] (clojure.pprint/pprint
+  (macroexpand-1 '(closed-record.core/defclosedrecord P [a b] :value-type
+  true))))"`. Result: head `value-type.core/defvaluetype*`, fields
+  `[a b __meta __extmap ^int __hash ^int __hasheq]`, `hashCode` =
+  `(APersistentMap/mapHash this)`, `hasheq` uncached, `withMeta` =
+  `(new P a b m __extmap)`; `__hash` occurs once (field vector). Evaluated
+  on Temurin 21 (identity fallback): hash, `with-meta`, `=` correct.
+- Options are keyword pairs (`:value-type true`), not a map.
+- Suite green on 1.11.4, 1.12.6, 1.13.0-alpha9 (186 tests, 2793 assertions).
