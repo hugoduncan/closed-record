@@ -13,6 +13,15 @@
       of first appearance) and the printed-form comparison (`*print-meta*`
       true) as `expansion` in the same namespace; verify two expansions of
       the same form normalise to equal strings.
+- [ ] Add the private `strip-positions` helper (plan.md, Position
+      metadata): remove `:line`, `:column` and `:file` from every list,
+      vector, map and set of the input form; keep other metadata; no
+      `clojure.walk`. `expansion` applies it before `macroexpand-1`, so
+      `record!`, the fixture test and `with-option` forms all get it.
+      Verify: no `(expansion f)` string contains `:line`, `:column` or
+      `:file`; field tags and list type hints stay; a form and the same
+      text read with `read-string` (no position metadata) give the same
+      string.
 - [ ] Add `record!`; verify `src/` matches `ac25942`; record
       `test/runtime/closed_record/expansion_fixture.edn` (EDN sorted map of
       form name to normalised printed expansion) from the unchanged emitter

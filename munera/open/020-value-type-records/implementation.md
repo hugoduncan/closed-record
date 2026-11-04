@@ -651,3 +651,20 @@ Paths:
   too (or strip inside `expansion`, so every caller gets it).
 - Paths: emitter `src/closed_record/impl/jvm.clj` (`emit`, `user-methods`
   copy method bodies with their metadata). cljfmt config `.cljfmt.edn`.
+
+## Plan-review design-steps pass, round 5 (2026-11-03)
+
+- The one plan step is resolved in plan.md (Expansion fixture first,
+  Position metadata; slice order 1) and steps.md (slice 1, new
+  `strip-positions` item). design.md unchanged. No step of steps.md is done.
+- Choice: `expansion` removes `:line`, `:column` and `:file` from the input
+  form before `macroexpand-1`. The forms stay code, so cljfmt and clj-kondo
+  check them. This replaces the round-3 note "a quoted form … gives no
+  `:line` metadata", which is false for nested lists.
+- Observed on Clojure 1.11.4 and 1.13 (`clojure -M:test -i <tmp file>`):
+  a hand-written strip helper (`seq?` → `apply list`, `map-entry?` before
+  `vector?`, `with-meta` of `(dissoc (meta x) :line :column :file)` on each
+  `IObj`) removes all positions, keeps a `^String` list hint, and gives the
+  same printed expansion (modulo gensyms) as the `read-string` form. The
+  emitter adds no position metadata of its own (a `read-string` input
+  prints no `:line`).

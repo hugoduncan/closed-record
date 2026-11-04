@@ -29,6 +29,22 @@ Key decisions:
     gives the normalised printed `macroexpand-1` of a form, with `*ns*`
     bound to `closed-record.expansion-fixture` (the fixed namespace).
     `record!` writes the fixture file.
+  - Position metadata: the reader gives each list in a loaded file `:line`
+    and `:column` metadata, and the emitter copies user method bodies into
+    the expansion. Thus `expansion` first removes `:line`, `:column` and
+    `:file` from the metadata of every form in its input, then calls
+    `macroexpand-1`. A private helper `strip-positions` walks lists, vectors,
+    maps and sets, rebuilds each with
+    `(with-meta … (dissoc (meta f) :line :column :file))` and keeps all
+    other metadata (field tags, type hints on lists and symbols). It does
+    not use `clojure.walk`, which drops list metadata on Clojure 1.11.4.
+    Every caller of `expansion` (`record!`, the fixture test, and forms from
+    `with-option`) gets this rule, so a move of a form in the file (a new
+    form, a `cljfmt` fix) does not change the fixture. The forms stay code,
+    not strings, so `cljfmt` and clj-kondo check them. The emitter output
+    has no position metadata of its own (observed: a `read-string` input
+    gives no `:line`, `:column` or `:file` in the printed expansion), so the
+    comparison rule is unchanged.
   - `test/runtime/closed_record/expansion_fixture.edn`: the fixture file. It
     is an EDN sorted map of form name keyword to normalised printed
     expansion string. Tests read it with
@@ -348,7 +364,7 @@ Key decisions:
 ## Slice order
 
 1. **Expansion fixture** — `closed-record.expansion-fixture` (forms,
-   normalisation, `record!`); record `expansion_fixture.edn` from the
+   position metadata removal, normalisation, `record!`); record `expansion_fixture.edn` from the
    unchanged emitter; the VT-V1 fixture test in
    `closed-record.value-type-option-test`.
 2. **Option and error contract** — `check-options` accepts `:value-type`;

@@ -313,7 +313,7 @@
   limits text "Until the job exists". Carry this note into the slice-8
   step of steps.md (the active surface), as round 2 did for the earlier
   notes.
-- [ ] Plan ambiguity: state how the expansion fixture treats the reader
+- [x] Plan ambiguity: state how the expansion fixture treats the reader
   position metadata of its input forms. plan.md (Expansion fixture first)
   puts `forms` as quoted forms in
   `test/runtime/closed_record/expansion_fixture.clj` and compares printed
