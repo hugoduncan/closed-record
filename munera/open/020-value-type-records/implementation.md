@@ -923,3 +923,7 @@ Paths:
   "Reproduction and limits"; 7 slice 8 docs, API check clean, no progress
   history in Ramora value-type pages (grep); 8 local checks above + CI.
 - This commit changes task files only; not pushed (plan.md, Final push).
+
+## Implementation review (2026-11-04)
+
+- added 3 steps to be addressed

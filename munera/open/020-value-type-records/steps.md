@@ -331,3 +331,26 @@
       outside `munera/open/020-value-type-records/`); record the
       verification in implementation.md; commit (task files only; not
       pushed).
+
+## Implementation review follow-ups
+
+- [ ] Restore clj-kondo coverage of the shared checks. Each
+      `closed-record.checks.<topic>` holds its tests as a quoted `body`
+      vector (about 1500 lines), so clj-kondo does not lint them, and each
+      check ns turns off `unused-namespace` and `unused-referred-var`. The
+      ordinary test files now hold only a `define-checks` call, so the
+      ordinary suite lost lint coverage too. Make the bodies real code that
+      clj-kondo lints. For example: keep the check forms as plain top-level
+      forms in a source file, and let `define-checks` read them from the
+      resource and apply `support/expand`; then remove the quoted vectors
+      and the clj-kondo `:off` metadata. Keep test and assertion counts
+      (186/2793 ordinary; 81 value-type).
+- [ ] Make VT-V6 check "pass through unchanged". `errors-test/root-ex-data`
+      searches the whole cause chain, so the test also passes if
+      closed-record wraps the value-type error. Assert that the first cause
+      that is not a `Compiler$CompilerException` is the value-type
+      `ex-info` (same `ex-data` and message).
+- [ ] Add a timeout to `closed-record.subprocess/run` (for example
+      `.waitFor` with a limit, then `destroyForcibly` and a failed result
+      that holds the output so far). Now a child JVM that does not exit
+      blocks the suite and the CI job until the GitHub job limit.
