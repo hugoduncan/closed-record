@@ -1301,3 +1301,22 @@ Paths:
 ## Code-shaper review, third round (2026-11-04)
 
 - added 3 steps to be addressed
+
+## Code-shaper review follow-ups, third round (2026-11-04)
+
+- addressed 3 review steps.
+- New `closed-record.probe-support` with `thrown` and `eval-in-new-ns`;
+  `defclosedrecord-test`, `value-type.representation-test` and the shared
+  check `closed-record.checks.defclosedrecord` use it. Other `thrown`
+  copies (checks `malli`, `hidden_key`, `differential`,
+  `compiler_rules_test`, `value-type.errors-test`) not in scope; unchanged.
+- `expansion-error` (option test, Clojure 1.11 test): same contract and
+  docstring; nil when there is no exception.
+- Counts unchanged: ordinary 186/2792 (Clojure 1.11, 1.12, 1.13); Temurin 21
+  82/314; Valhalla 80/314; Clojure 1.11 case 1/7. clj-kondo, cljfmt, Vale
+  clean.
+- Acceptance note (criterion 3), 2026-11-04: ref `020-value-type-records`,
+  SHA `a92e82e`, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41895033444;
+  all 9 jobs `success` (Runtime 1.11, 1.12, 1.13; Value-type Temurin 21,
+  Valhalla; Markdown links; Release tooling; Build; Development quality).

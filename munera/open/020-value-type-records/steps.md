@@ -736,7 +736,7 @@
 
 ## Code-shaper review follow-ups, third round
 
-- [ ] Push the branch and get a green CI run of `994806a`. The two
+- [x] Push the branch and get a green CI run of `994806a`. The two
       code-shaper follow-up rounds (`5e82df5`, `994806a`) changed
       `src/closed_record/impl/jvm.clj` (`check-value-type`, option facts
       once in `emit`, `:preamble []`), `test/runtime` (`define-checks`
@@ -747,7 +747,9 @@
       slice 6), read the run with the slice-6 `gh run` commands, and record
       the SHA, run URL and job conclusions in implementation.md as a new
       acceptance note.
-- [ ] Remove the copy of the `:load-ns` probe helpers.
+      Done 2026-11-04: pushed `a92e82e` (contains `994806a` and the other
+      two items), run 41895033444, all 9 jobs `success`.
+- [x] Remove the copy of the `:load-ns` probe helpers.
       `closed-record.value-type.representation-test` defines `thrown` and
       `eval-in-new-ns` with the same body and docstring as
       `closed-record.defclosedrecord-test` (only the gensym prefix differs).
@@ -756,10 +758,17 @@
       one test support namespace on `test/runtime` (the value-type suite
       has `test/runtime` on its class path) and use it from both tests.
       Keep test and assertion counts.
-- [ ] Give the two `expansion-error` helpers one contract and a clear body.
+      Done: `closed-record.probe-support`
+      (`test/runtime/closed_record/probe_support.clj`); the shared check
+      `closed-record.checks.defclosedrecord` refers its `thrown` too (its
+      own copy clashed with the refer in `defclosedrecord-test`).
+- [x] Give the two `expansion-error` helpers one contract and a clear body.
       In `closed-record.value-type.clj-1-11-test`, `(when (macroexpand-1
       form) nil)` always gives nil, so the `when` hides the intent; in
       `closed-record.value-type-option-test` the helper of the same name
       gives the expansion when there is no exception. Use the same
       contract in both (for example, nil when there is no exception, with
       `(do (macroexpand-1 form) nil)`), and the same docstring.
+      Done: both bind their namespace, give nil when there is no exception,
+      same docstring; `(macroexpand-1 form) nil` in the `try` with a
+      clj-kondo `:unused-value` ignore (`do` is redundant there).
