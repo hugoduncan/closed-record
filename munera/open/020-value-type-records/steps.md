@@ -618,7 +618,7 @@
 
 ## Test review follow-ups, eleventh round
 
-- [ ] Remove the value branch assertion of the shared
+- [x] Remove the value branch assertion of the shared
       `closed-record.checks.defclosedrecord/serializable-test`
       (`(is (= :value support/representation))`). The representation form
       gives only `:identity` or `:value`, so in the else branch of
@@ -632,3 +632,6 @@
       the ordinary suite and the Temurin 21 suite still run the test. Keep
       test and assertion counts in implementation.md current, and get a
       green CI run of the change (acceptance criterion 3).
+      Done 2026-11-04: `b642eb2`; ordinary 186/2792, Temurin 21 82/314
+      (test runs), Valhalla 80/314 (test not defined); run 41890869170,
+      all 9 jobs `success`.

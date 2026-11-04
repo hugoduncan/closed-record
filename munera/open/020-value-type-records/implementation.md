@@ -1210,3 +1210,19 @@ Paths:
 ## Test review, eleventh round (2026-11-04)
 
 - added 1 step to be addressed
+
+## Test review follow-ups, eleventh round (2026-11-04)
+
+- addressed 1 review step.
+- Shared `serializable-test` is in a `(when (= :identity
+  support/representation) …)` with a comment (D-06: identity output only),
+  as VT-V5. `transform` replaces the placeholder at any depth, so the `when`
+  test gets the representation form. Ordinary suite 186/2792 (Clojure 1.11,
+  1.12, 1.13); value-type suite 82/314 (Temurin 21), 80/314 (Valhalla; one
+  test and one assertion less). kondo, cljfmt clean.
+- Acceptance note (criterion 3): 2026-11-04, ref `020-value-type-records`,
+  SHA `b642eb2`, PR https://github.com/hugoduncan/closed-record/pull/1, run
+  https://github.com/hugoduncan/closed-record/actions/runs/41890869170:
+  Build verification, Value-type tests (Temurin 21), Value-type tests
+  (Valhalla), Release tooling verification, Development quality, Markdown
+  links, Runtime tests (Clojure 1.11, 1.12, 1.13): all `success`.
