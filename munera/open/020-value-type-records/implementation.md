@@ -1007,3 +1007,20 @@ Paths:
 ## Implementation review, fifth round (2026-11-04)
 
 - added 1 step to be addressed
+
+## Review follow-ups, fifth round (2026-11-04)
+
+- addressed 1 review step.
+- Shared-check source location: `define-checks` now expands to
+  `(load-checks 'src 'opts)`. `load-checks` evaluates each transformed form
+  in the calling namespace with `Compiler/SOURCE` (`<topic>.clj`) and
+  `Compiler/SOURCE_PATH` (`closed_record/checks/<topic>.clj`) bound, so
+  the class `SourceFile`, the `deftest` `:file` and the `:line` all name
+  the check source. `expand` removed (no users). Temporary check namespace
+  (not committed), failing `is` on line 7: before `zz_test.clj:7`, after
+  `zz.clj:7` (clojure.test and scry `.scry-results` `:file "zz.clj"
+  :line 7`).
+- Ordinary suite 188/2799 on Clojure 1.11, 1.12, 1.13; Temurin 21
+  value-type suite 81/308; Valhalla suite 81/309. kondo, cljfmt clean.
+- The last green CI run (`acd056f`) is before this change; acceptance
+  criterion 3 needs a push and a green run of this commit.

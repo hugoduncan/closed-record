@@ -68,15 +68,19 @@
                    y)))]
     (walk form)))
 
-(defn- read-source
-  "The namespace and the forms after the `ns` form of the source file of
-  namespace `src-sym`. Evaluate the `ns` form only (its requires, aliases
-  and refers), then read the forms in that namespace, so syntax-quote and
-  `::` keywords resolve as in the source."
+(defn- source-path
+  "The class path resource path of the source file of namespace `src-sym`."
   [src-sym]
-  (let [path (str (-> (name src-sym) (str/replace "-" "_") (str/replace "." "/"))
-                  ".clj")
-        url (or (io/resource path)
+  (str (-> (name src-sym) (str/replace "-" "_") (str/replace "." "/"))
+       ".clj"))
+
+(defn- read-source
+  "The namespace and the forms after the `ns` form of the source file at
+  `path`. Evaluate the `ns` form only (its requires, aliases and refers),
+  then read the forms in that namespace, so syntax-quote and `::` keywords
+  resolve as in the source."
+  [src-sym path]
+  (let [url (or (io/resource path)
                 (throw (ex-info (str "No shared check source " path)
                                 {:namespace src-sym})))]
     (with-open [r (LineNumberingPushbackReader. (io/reader url))]
@@ -87,16 +91,23 @@
                                        (repeatedly #(read r false ::eof)))))]
         [src-ns forms]))))
 
-(defn expand
-  "The `do` form of `forms` of `src-ns` for the current `*ns*`, with `opts`
-  `{:record-opts [k v …] :representation form}`."
-  [src-ns opts forms]
-  (cons 'do (map #(transform src-ns opts (ns-name *ns*) %) forms)))
+(defn load-checks
+  "Evaluate the forms of the shared check namespace `src-sym` in the current
+  `*ns*`, with `opts` `{:record-opts [k v …] :representation form}`. The
+  compiler gets the check source file as source, so the file and the line of
+  a failure both name the check source."
+  [src-sym opts]
+  (let [path (source-path src-sym)
+        [src-ns forms] (read-source src-sym path)
+        caller (ns-name *ns*)]
+    (with-bindings {Compiler/SOURCE_PATH path
+                    Compiler/SOURCE (subs path (inc (str/last-index-of path "/")))}
+      (doseq [form forms]
+        (eval (transform src-ns opts caller form))))))
 
 (defmacro define-checks
   "Define the checks of the shared check namespace `src-sym` (quoted) in the
   calling namespace. `opts`: `{:record-opts [k v …] :representation form}`."
   [src-sym opts]
-  (let [src-sym (if (seq? src-sym) (second src-sym) src-sym)
-        [src-ns forms] (read-source src-sym)]
-    (expand src-ns opts forms)))
+  (let [src-sym (if (seq? src-sym) (second src-sym) src-sym)]
+    `(load-checks '~src-sym '~opts)))

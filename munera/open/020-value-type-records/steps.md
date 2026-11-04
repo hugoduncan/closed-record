@@ -408,7 +408,7 @@
 
 ## Implementation review follow-ups, fifth round
 
-- [ ] Make shared-check failures report the correct source location.
+- [x] Make shared-check failures report the correct source location.
       `define-checks` keeps the `:line` metadata of the forms that it reads
       from `closed-record.checks.<topic>`, but the compiler uses the file of
       the caller. Thus a failure gives the file of the wrapper test
@@ -419,3 +419,6 @@
       `Compiler/load` with the check file name does, or report the check
       file in the failure). Keep test and assertion counts. Verify with a
       failing assertion in a temporary check namespace (not committed).
+      Done: `define-checks` expands to `load-checks`, which evaluates each
+      form with `Compiler/SOURCE` and `SOURCE_PATH` of the check file.
+      Temporary check: `FAIL in (zz-test) (zz.clj:7)`.
