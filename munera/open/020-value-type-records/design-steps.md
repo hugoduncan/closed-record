@@ -58,3 +58,12 @@
   value-output part of VT-V7 for the Valhalla job. Add this paragraph to the
   Documentation update list for that page, so that it names the identity
   part of VT-V7 in the Temurin 21 job.
+- [ ] Architecture: add the public surface of the option to the
+  `ramora/defclosedrecord/embodiment.md` update (Ramora document rules,
+  Principle 6 explicit boundaries). After the change, the Boundaries
+  "Public" row ("the `ex-data` of D-03") and the Public interface section
+  ("Error data: see D-03") are incomplete. The `:value-type` option and the
+  `ex-data` of `:closed-record/value-type-unavailable` are public, and D-03
+  does not include that `:type`. Add to the Documentation list: the Public
+  row and the Public interface section name the option and this error, or
+  point to the public contract in `ramora/value-type-records.md`.

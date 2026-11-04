@@ -82,3 +82,12 @@ Paths:
     the VT-V8 entry namespace.
   - `dev/bench/cases.edn` `:valhalla` is the task-019 probe configuration
     (Clojure 1.11.4). It is not the VT-V8 configuration.
+
+## Design review, second round (2026-11-03)
+
+- architectural review added 1 new design step
+- The defclosedrecord design pages already name value mode
+  (`decisions/type-structure.md`). Only the embodiment page lags. Format and
+  lint scope already covers all of `test/` and `dev/`
+  (`dev/quality/closed_record/quality_scope.clj`), so new test directories
+  need no scope change.
