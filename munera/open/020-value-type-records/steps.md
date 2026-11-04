@@ -574,7 +574,7 @@
 
 ## Test review follow-ups, ninth round
 
-- [ ] Make `closed-record.value-type.subprocess-test/error-policy-test`
+- [x] Make `closed-record.value-type.subprocess-test/error-policy-test`
       (VT-V5) fail with a clear message when the `error` policy does not
       apply. When the definition succeeds, the child prints `:defined`, and
       `(last (edn/read-string out))` throws `IllegalArgumentException`
@@ -585,3 +585,6 @@
       `{:causes [...]}` or `{:defined true}`, and the test asserts that
       `(peek (:causes r))` is `"java.lang.Error"`). Keep test and assertion
       counts in implementation.md current.
+      Done: child prints `{:defined true}` or `{:causes [...]}`; failure
+      message "the error policy does not apply: …". Value-type suite
+      82/314 (Temurin 21); Valhalla unchanged (test not defined).

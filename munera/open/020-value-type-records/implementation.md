@@ -1172,3 +1172,17 @@ Paths:
 ## Test review, ninth round (2026-11-04)
 
 - added 1 step to be addressed
+
+## Test review follow-ups, ninth round (2026-11-04)
+
+- addressed 1 review step.
+- `subprocess-test/error-policy-test` (VT-V5): the child prints
+  `{:defined true}` or `{:causes [class names]}`; the test asserts
+  `(peek (:causes r))` is `"java.lang.Error"`, with the message
+  "the error policy does not apply: <out>". Checked (not committed): no
+  policy gives a failure with `{:defined true}`; an invalid policy gives a
+  failure with the cause chain. No test error in either case.
+- Value-type suite 82/314 (Temurin 21); Valhalla 81/315 (test not
+  defined). kondo, cljfmt clean.
+- The last green CI run (`5aa9556`) is before this change; acceptance
+  criterion 3 needs a push and a green run.

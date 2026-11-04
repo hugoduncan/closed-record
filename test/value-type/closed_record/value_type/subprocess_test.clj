@@ -41,12 +41,15 @@
                      (prn (try
                             (eval '(closed-record.core/defclosedrecord P [x]
                                      :value-type true))
-                            :defined
+                            {:defined true}
                             (catch Throwable t
-                              (mapv #(.getName (class %))
-                                    (take-while some? (iterate ex-cause t))))))))
+                              {:causes
+                               (mapv #(.getName (class %))
+                                     (take-while some?
+                                                 (iterate ex-cause t)))})))))
           {:keys [exit out err]} (subprocess/run
                                   ["-e" script]
                                   :jvm-opts ["-Dvalue-type.fallback=error"])]
       (is (= 0 exit) err)
-      (is (= "java.lang.Error" (last (edn/read-string out)))))))
+      (is (= "java.lang.Error" (peek (:causes (edn/read-string out))))
+          (str "the error policy does not apply: " out)))))
