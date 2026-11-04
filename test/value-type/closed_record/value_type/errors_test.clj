@@ -25,10 +25,10 @@
   (try (eval form) nil (catch Throwable t (first-cause t))))
 
 (defn- value-type-form
-  "The `defvaluetype*` form of the expansion of `form`."
+  "The `defvaluetype*` form at any depth of the expansion of `form`."
   [form]
-  (some #(when (and (seq? %) (= 'value-type.core/defvaluetype* (first %))) %)
-        (macroexpand-1 form)))
+  (first (filter #(and (seq? %) (= 'value-type.core/defvaluetype* (first %)))
+                 (tree-seq seq? seq (macroexpand-1 form)))))
 
 (defn- errors
   "The `:closed-record` error of the form that `text` gives and the
@@ -38,15 +38,17 @@
   [text]
   (binding [*ns* (the-ns 'closed-record.value-type.errors-test)]
     (let [form (read-string text)
-          closed (thrown form)]
-      {:closed-record closed
-       :value-type (thrown (value-type-form form))})))
+          vt-form (value-type-form form)]
+      {:closed-record (thrown form)
+       :value-type-form vt-form
+       :value-type (when vt-form (thrown vt-form))})))
 
 (defn- check-pass-through
   "Assert that the closed-record error is the value-type error with
   `reason`, unchanged."
   [text reason]
-  (let [{:keys [closed-record value-type]} (errors text)]
+  (let [{:keys [closed-record value-type value-type-form]} (errors text)]
+    (is (some? value-type-form) "the expansion has a defvaluetype* form")
     (is (instance? ExceptionInfo closed-record))
     (is (= {:value-type/error :invalid-field :reason reason}
            (select-keys (ex-data closed-record) [:value-type/error :reason])))

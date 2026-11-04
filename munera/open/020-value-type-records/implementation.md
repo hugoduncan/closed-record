@@ -1100,3 +1100,13 @@ Paths:
 ## Test review, fourth round (2026-11-04)
 
 - added 1 step to be addressed
+
+## Test review follow-ups, fourth round (2026-11-04)
+
+- addressed 1 review step.
+- `errors-test/value-type-form` searches the expansion with `tree-seq`;
+  `check-pass-through` asserts that the `defvaluetype*` form is found, and
+  evaluates it only when it is found.
+- Value-type suite: Temurin 21 82/314; Valhalla 82/316. kondo, cljfmt clean.
+- The last green CI run (`14a3e33`) is before this change; acceptance
+  criterion 3 needs a push and a green run.

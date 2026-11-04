@@ -494,7 +494,7 @@
 
 ## Test review follow-ups, fourth round
 
-- [ ] Make `closed-record.value-type.errors-test/value-type-form` find the
+- [x] Make `closed-record.value-type.errors-test/value-type-form` find the
       `defvaluetype*` form at any depth of the expansion (for example with
       `tree-seq`, as `representation-test/type-form` does). Now it looks
       only at the direct children of the expansion, so the test depends on
@@ -503,3 +503,5 @@
       `(eval nil)` throws nothing, and the test fails with a misleading
       class, message and `ex-data` mismatch. Assert that the form is found
       before the comparison.
+      Done: `tree-seq` search; `check-pass-through` asserts the form is
+      found. Value-type suite 82/314 (Temurin 21), 82/316 (Valhalla).
