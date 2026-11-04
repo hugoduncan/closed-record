@@ -51,3 +51,10 @@
   in `dev/bench/valhalla/` (task 019). Name the one to use and the alias
   combination of the VT-V8 command (value-type, `:clj-1.12`, Valhalla
   `JAVA_CMD`, `--enable-preview`).
+- [ ] Inconsistency: the CI section puts the identity part of VT-V7 in the
+  Temurin 21 value-type job. The VT-D10 placement paragraph in
+  `ramora/value-type-records/invariants-and-verification.md` names only
+  VT-V1, VT-V2, VT-V3, VT-V5 and VT-V6 for Temurin 21 jobs, and only the
+  value-output part of VT-V7 for the Valhalla job. Add this paragraph to the
+  Documentation update list for that page, so that it names the identity
+  part of VT-V7 in the Temurin 21 job.

@@ -21,3 +21,4 @@
 - "value-type AOT rules" (VT-V7) resolve to value-type
   `ramora/defvaluetype-design.md` D7 (cited from
   `ramora/deftype-star-design.md`): AOT fixes the representation. Not filed.
+- inconsistency review added 1 new design step
