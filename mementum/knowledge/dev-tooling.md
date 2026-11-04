@@ -30,6 +30,11 @@ Shared quality checks and their verification boundaries are in
   `clojure -Sdeps "{:paths [...]}"` then uses the Clojure version of the root deps (`~/.clojure/deps.edn` or the
   CLI default, 1.12.6 here), not 1.11.4. Add `:deps {org.clojure/clojure {:mvn/version "1.11.4"}}` to the
   `-Sdeps` map and print `(clojure-version)` with the evidence (task 012, found in plan review).
+- ❌ Clojure CLI `-J` options go before `-M`. After `-M` the CLI passes them to `clojure.main` as file arguments.
+- 🎯 Git dependency: a lib name not under `io.github.*` needs an explicit `:git/url`. Use HTTPS: CI and lint setup
+  have no SSH key. Pin the full `:git/sha`. Add a new test alias to `closed-record.lint-dependencies/dependency-bases`.
+- ❌ `git fetch <url> <sha>` exits 0 for a local object that is not on the remote. To prove a SHA is on GitHub:
+  `git fetch <url> <branch>`, then `git merge-base --is-ancestor <sha> FETCH_HEAD` (task 020, slice 4).
 
 ## Build tooling runtime
 
@@ -96,6 +101,7 @@ and `c1112e4`.
 
 - ❌ The scry CLI exits non-zero when it finds zero tests.
 - ❌ A test with no assertions counts as "unknown". The CLI then exits 1. Every test needs an assertion.
+  For a test of one mode only, define the `deftest` conditionally (task 020).
 - In a CLI test, `*ns*` is `user` and `Compiler/LOADER` is not bound. A REPL run can hide this. See
   `mementum/knowledge/testing-generated-types.md`.
 - On a pass, `.scry-results/` is empty. On a failure, read `.scry-results/*.edn`, not the terminal output.
