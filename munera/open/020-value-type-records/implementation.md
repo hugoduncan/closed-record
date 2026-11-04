@@ -17,3 +17,7 @@
 - `dev/bench/valhalla/` (task 019) also exists. "The existing bench
   structure" can mean the criterium forks or that directory; left to the
   ambiguity turn.
+- ambiguity review added 4 new design steps
+- "value-type AOT rules" (VT-V7) resolve to value-type
+  `ramora/defvaluetype-design.md` D7 (cited from
+  `ramora/deftype-star-design.md`): AOT fixes the representation. Not filed.
