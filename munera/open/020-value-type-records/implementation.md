@@ -92,3 +92,9 @@ Paths:
   (`dev/quality/closed_record/quality_scope.clj`), so new test directories
   need no scope change.
 - ambiguity review (round 2) added 1 new design step
+- inconsistency review (round 2) added 1 new design step
+- `dev/bench/timing/run.sh` clears the `:bench` main opts (`:corrected-timing`
+  alias) and passes `"$@"` as main args, so `run.sh -m <vt-v8-entry-ns>` can
+  select the VT-V8 parent entry. Only extra aliases and `-J` options need the
+  new way of the Verification section. value-type `66d5ff7` is still not on
+  `origin` (local `master` ahead 119); the Prerequisite stands.

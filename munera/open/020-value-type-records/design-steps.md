@@ -77,3 +77,11 @@
   qualified class-name symbol, as `deftype*` receives it), state it in
   design.md, and add it to the public contract in
   `ramora/value-type-records.md`.
+- [ ] Inconsistency: the Intent says the result is "an identity class on
+  other JVMs". The public contract (value-type errors pass through), VT-V5
+  (`-Dvalue-type.fallback=error` gives value-type's `Error`) and the
+  Summary of `ramora/value-type-records.md` ("value-type's application
+  policy selects an identity class or an error") say that on other JVMs the
+  result is an identity class or an error. Change the Intent to agree, for
+  example: "an identity class or an error, as value-type's fallback policy
+  selects, on other JVMs".
