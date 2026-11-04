@@ -1320,3 +1320,7 @@ Paths:
   https://github.com/hugoduncan/closed-record/actions/runs/41895033444;
   all 9 jobs `success` (Runtime 1.11, 1.12, 1.13; Value-type Temurin 21,
   Valhalla; Markdown links; Release tooling; Build; Development quality).
+
+## Code-shaper review, fourth round (2026-11-04)
+
+- added 2 steps to be addressed

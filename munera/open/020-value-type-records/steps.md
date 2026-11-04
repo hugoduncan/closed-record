@@ -772,3 +772,25 @@
       Done: both bind their namespace, give nil when there is no exception,
       same docstring; `(macroexpand-1 form) nil` in the `try` with a
       clj-kondo `:unused-value` ignore (`do` is redundant there).
+
+## Code-shaper review follow-ups, fourth round
+
+- [ ] Remove the copy of `value-class?`.
+      `closed-record.value-type.expectation/value-class?` and the private
+      `closed-record.bench.value-type/value-class?` have the same body and
+      docstring (reflective `Class.isValue`). `Class.isValue` is an
+      early-access Valhalla API, so a change of it needs two fixes. Put
+      one function in one namespace without dependencies on `dev/bench`
+      (on the class path of `:test` and `:bench`; for example
+      `closed-record.bench.value-class`), and use it from both. Do not
+      change the existing `dev/bench` namespaces (plan.md, VT-V8 bench).
+      Update the `dev/bench/` row of
+      `ramora/defclosedrecord/embodiment/artifacts.md`. Keep test and
+      assertion counts.
+- [ ] Rename the private `thrown` of
+      `closed-record.value-type.errors-test` (for example `eval-error`).
+      It takes a form, evaluates it and gives the first cause that is not a
+      `Compiler$CompilerException`. `closed-record.probe-support/thrown`,
+      which `representation-test` in the same suite uses, takes a function
+      and gives the exception itself. Two functions with the same name and
+      different contracts in one suite make the tests harder to read.
