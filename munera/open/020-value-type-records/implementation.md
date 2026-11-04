@@ -1357,3 +1357,7 @@ Paths:
   SHA `8bd6cea`, run
   https://github.com/hugoduncan/closed-record/actions/runs/41896541516;
   all 9 jobs `success`.
+
+## Code-shaper review, sixth round (2026-11-04)
+
+- added 2 steps to be addressed

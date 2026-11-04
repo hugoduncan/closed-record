@@ -827,3 +827,23 @@
       `closed-record.bench.value-class` is before
       `closed-record.bench.timing-tool`; the other entries and the other
       namespaces are in alphabetical order.
+
+## Code-shaper review follow-ups, sixth round
+
+- [ ] Remove the copy of `expansion-error`.
+      `closed-record.value-type-option-test` and
+      `closed-record.value-type.clj-1-11-test` define private
+      `expansion-error` with the same body, docstring and clj-kondo ignore;
+      only the bound namespace differs. Both suites have `test/runtime` on
+      the class path (`:test` alias). Put one function in
+      `closed-record.probe-support` that takes the namespace symbol and the
+      form (for example `(expansion-error ns-sym form)`), and use it from
+      both tests. Update the `probe_support.clj` row of
+      `ramora/defclosedrecord/embodiment/artifacts.md`. Keep test and
+      assertion counts.
+- [ ] Correct the `representation` docstring in
+      `closed-record.impl.jvm`. It says that `hash-form` and
+      `with-meta-form` "take the method locals"; `hash-form` takes the
+      cache field symbol and the hash expression (`cached-hash` contract),
+      and `with-meta-form` takes the type name, the field symbols and the
+      metadata local. State each argument list. Keep the fixture strings.
