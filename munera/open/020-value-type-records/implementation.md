@@ -321,3 +321,9 @@ Paths:
   through. No ordinary test uses `locking` or weak references
   (`grep test/runtime`), so the identity-property rule adds no `locking`
   assertion. VT-V4 lists only its own extra checks.
+- no inconsistency review feedback (round 6)
+- Checked, not filed: the value-type suite runs in both jobs. Thus VT-V2,
+  VT-V6 and the VT-V1 subprocess check also run in the Valhalla job. The
+  VT-D10 placement paragraph ("run in Temurin 21 jobs") does not say "only",
+  so it stays true. `doc/development.md` line 53 also names Clojure CLI
+  `1.12.6.1673`. Keep that clause when the Temurin statement is replaced.
