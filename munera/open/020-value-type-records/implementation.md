@@ -547,3 +547,25 @@ Paths:
   (bench, docs, quality fixes). The plan does not require a second push;
   the quality job (lint, prose, links) checks those files in CI only after
   a later push.
+
+## Plan review, fourth round (2026-11-03)
+
+- ambiguity review (plan round 4) added 1 new design step
+- The step resolves the "Open point for review" of the round-3
+  design-steps pass. It is actionable because slice 8 changes `src` (the
+  docstring), so the slice-6 run does not test the final tree.
+- Slice-6 context: value-type `release.yml` (at `66d5ff7`, lines 47-60)
+  has the full archive URL
+  `https://download.java.net/java/early_access/valhalla/27/1/openjdk-27-jep401ea3+1-1_linux-x64_bin.tar.gz`,
+  the `sha256sum -c` check and `tar -xzf … --strip-components=1`. It sets
+  `JAVA_CMD` for each step. Its `--add-exports` option is for value-type's
+  own tests; closed-record does not need it (the probe got value output
+  with `--enable-preview` only).
+- Checked, not filed: value-type is not on the `:test` class path, so a
+  `dev/bench` load of the VT-V8 entry would fail the ordinary suite. A grep
+  for requires of `closed-record.bench.value-type` and a green ordinary
+  suite are enough for the slice-7 check. The test namespace names of
+  VT-V2, VT-V4, VT-V5, VT-V6, does-not-load and the Clojure 1.11 case are
+  free choices (they must end in `-test`). An uncaught parent exception in
+  VT-V8 (for example from `timing-tool/declaration`) exits 1, the same as
+  the default run.

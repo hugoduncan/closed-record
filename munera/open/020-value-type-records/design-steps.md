@@ -284,3 +284,19 @@
   same build on another platform (not the pinned archive), and the platform
   that the VT-V8 limits name (the machine of the run, as in
   `doc/performance.md`).
+- [ ] Plan ambiguity: state if the commits after the slice-6 CI run go to
+  CI. Slice 6 pushes local `master` to the pull request ref and reads one
+  green run. Slices 7 to 9 then commit more changes: `src` (the
+  `defclosedrecord` docstring, slice 8), `dev/bench`, `doc/`, Ramora and
+  quality fixes, which can touch `test/value-type` or `ci.yml` (slice 9).
+  The plan pushes again only after a failed run. Thus the pull request head
+  and the CI evidence of acceptance criterion 3 are for an earlier commit
+  than the final one, and the quality job (lint, prose, links, API
+  freshness) does not see the new files in CI. Slice 9 says "Verify all
+  acceptance criteria 1–8" but does not say which commit the AC3 run must
+  be for. Choose and state in plan.md and steps.md: (a) slice 9 pushes the
+  final commit to the same ref (the user approved the ref at slice 6, or
+  stop and ask again) and records a second green run; or (b) the slice-6 run
+  is the AC3 evidence, and slice 9 records the commits after it and why no
+  push is necessary. If (b), state which local checks replace the CI jobs
+  for the changed files.
