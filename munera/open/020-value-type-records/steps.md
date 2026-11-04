@@ -505,3 +505,16 @@
       before the comparison.
       Done: `tree-seq` search; `check-pass-through` asserts the form is
       found. Value-type suite 82/314 (Temurin 21), 82/316 (Valhalla).
+
+## Test review follow-ups, fifth round
+
+- [ ] Push the branch and get a green CI run of `4405d9d`. The fourth-round
+      follow-up changed
+      `test/value-type/closed_record/value_type/errors_test.clj`
+      (`value-type-form` with `tree-seq`, new "the expansion has a
+      defvaluetype* form" assertion); it has run only locally. The last
+      green run (`14a3e33`, run 41885774931) comes before it, and
+      `origin/020-value-type-records` is still at `14a3e33`. Push (approved
+      at slice 6), read the run with the slice-6 `gh run` commands, and
+      record the SHA, run URL and job conclusions in implementation.md as a
+      new acceptance note (criterion 3).
