@@ -2,20 +2,27 @@
 
 ## Slice 1: Expansion fixture
 
-- [ ] Select the fixture `defclosedrecord` forms (cover `:no-print`,
-      `:load-ns`, field tags, user interfaces and methods, destructured method
-      parameters) in a fixed namespace; list them in implementation.md.
+- [ ] Create `test/runtime/closed_record/expansion_fixture.clj`
+      (`closed-record.expansion-fixture`, the fixed namespace) with `forms`:
+      the fixture `defclosedrecord` forms (cover `:no-print`, `:load-ns`,
+      field tags, Java interfaces and methods, destructured method
+      parameters), and `with-option`; list the form names in
+      implementation.md.
 - [ ] Write the gensym normalisation function (replace `prefix__N` /
       `prefix__N__auto__` with `prefix__G<i>` / `prefix__G<i>__auto__` by order
       of first appearance) and the printed-form comparison (`*print-meta*`
-      true); verify two expansions of the same form normalise to equal
-      strings.
-- [ ] Record the fixture file in `test/runtime` from the unchanged emitter;
-      verify `src/` matches `ac25942` first.
-- [ ] Add the VT-V1 fixture test: no-option and `:value-type false`
-      expansions equal the fixture (the `:value-type false` assertion stays
-      pending until slice 2 accepts the option; note this in the test or add
-      it in slice 2).
+      true) as `expansion` in the same namespace; verify two expansions of
+      the same form normalise to equal strings.
+- [ ] Add `record!`; verify `src/` matches `ac25942`; record
+      `test/runtime/closed_record/expansion_fixture.edn` (EDN sorted map of
+      form name to normalised printed expansion) from the unchanged emitter
+      with `clojure -M:test -e "(require 'closed-record.expansion-fixture)
+      (closed-record.expansion-fixture/record!)"`.
+- [ ] Add the VT-V1 fixture test in
+      `test/runtime/closed_record/value_type_option_test.clj`: no-option and
+      `:value-type false` expansions equal the fixture (the
+      `:value-type false` assertion stays pending until slice 2 accepts the
+      option; note this in the test or add it in slice 2).
 - [ ] Run the ordinary runtime suite; commit.
 
 ## Slice 2: Option and error contract
@@ -34,9 +41,11 @@
       `IllegalArgumentException`; `:value-type true` without value-type throws
       `:closed-record/value-type-unavailable` with the `requiring-resolve`
       exception as cause; `:class-name` is the expected symbol.
-- [ ] Add a subprocess-JVM test helper (java binary, JVM input arguments and
-      class path of the test JVM, plus extra class path entries and
-      properties).
+- [ ] Add the subprocess-JVM test helper `closed-record.subprocess`
+      (`test/runtime/closed_record/subprocess.clj`): `clojure.main` with
+      given arguments; java binary of `java.home`, JVM input arguments of
+      the test JVM, extra JVM options, extra class path entries before the
+      test JVM class path; gives `{:exit :out :err}`.
 - [ ] Add the absent-var subprocess test: temporary directory with a stub
       `value_type/core.clj` containing only `(ns value-type.core)`; assert
       the error has no cause (`ex-cause` nil).
@@ -55,7 +64,11 @@
       `value-type.core/defvaluetype*` with the same arguments (VT-D3).
 - [ ] Verify no generated method reads or writes `__hash`/`__hasheq` in value
       mode; all other methods and both factories identical in both modes
-      (VT-D8).
+      (VT-D8). Check: a local run with an uncommitted `-Sdeps` `:local/root`
+      value-type dependency at `66d5ff7` and `:clj-1.12` that prints the
+      value-mode expansion (plan.md, Value-mode check in slice 3); record the
+      command and result in implementation.md. VT-V2 (slice 5) is the
+      committed check.
 - [ ] Run the fixture test: no-option and `:value-type false` expansions
       still equal the fixture (VT-I2).
 - [ ] Run the ordinary runtime suite on Clojure 1.11, 1.12 and 1.13; commit.
@@ -74,9 +87,19 @@
       printing, equality, hash, metadata, call-site errors, D-06 round trip,
       D-15 user implementations; exclude V-11, V-13, expansion-time tests,
       bench support tests); record the mapping in implementation.md.
-- [ ] Extract shared check definitions into namespaces under `test/runtime/`,
-      loadable without value-type; rewire the ordinary tests to use them (no
+- [ ] Extract the shared checks into `define-checks` macros in
+      `test/runtime/closed_record/checks/<topic>.clj`
+      (`closed-record.checks.<topic>`; helpers in
+      `closed-record.checks.support`), loadable without value-type: the macro
+      expands the types, values and `deftest`s in the calling namespace with
+      `:record-opts` after each field vector, unqualified type-bound
+      symbols, class names from `(namespace-munge *ns*)`, and the D-06
+      serialization assertion only when `:representation` gives
+      `:identity`. Each ordinary test namespace calls
+      `(define-checks {:record-opts [] :representation :identity})` (no
       copies).
+- [ ] Resolve clj-kondo findings for macro-defined names in
+      `.clj-kondo/config.edn`, if any.
 - [ ] Run the ordinary runtime suite on Clojure 1.11, 1.12 and 1.13 without
       value-type; commit.
 - [ ] Update `ramora/defclosedrecord/embodiment/artifacts.md` rows for the
@@ -84,30 +107,45 @@
 
 ## Slice 5: Value-type suite
 
-- [ ] Create `test/value-type/` with the expectation guard: read
-      `closed-record.test.representation`; fail the suite if absent or not
-      `value`/`identity`.
+- [ ] Create `test/value-type/` with the expectation guard
+      `closed-record.value-type.expectation`: `representation` reads
+      `closed-record.test.representation`, gives `:value`/`:identity`, and
+      throws if absent or another value; each suite test namespace calls it
+      at load. Verify that scry 0.1.61 exits non-zero on that load error.
 - [ ] VT-V2: expansion inspection for value mode (hidden field layout, hash
       forms, `withMeta` form, `defvaluetype*` head) — the VT-I4 check on
       Temurin 21.
-- [ ] VT-V3/VT-V4: run the shared checks on `:value-type true` types;
-      representation-dependent checks assert the differences table for the
-      expected representation; serialization round trip on identity fallback
-      only, no serialization assertion for value output.
+- [ ] VT-V3/VT-V4: one test namespace
+      `closed-record.value-type.<topic>-test` for each shared check
+      namespace, calling `(define-checks {:record-opts [:value-type true]
+      :representation (expectation/representation)})`; serialization round
+      trip on identity fallback only, no serialization assertion for value
+      output.
 - [ ] VT-V4 representation checks: `.isValue`, `identical?` of equal records,
       absence of the hash fields; compare with the expectation so the
       Valhalla job fails on silent identity fallback.
-- [ ] VT-V6: value-type errors pass through unchanged (`:mutable-field`,
-      `:invalid-field` cases per the value-type contract).
+- [ ] VT-V6: value-type errors pass through unchanged, as the Ramora VT-V6
+      row. Both expectations (value-type checks these at macroexpansion,
+      before the policy): a `^:non-nil` field gives `{:value-type/error
+      :invalid-field :reason :non-nil-unsupported}`; a `^:nil-restricted`
+      field gives `{:value-type/error :invalid-field :reason
+      :removed-nil-restricted}`. Expectation `value` only (when the class is
+      defined): a user method that reads `__hash` gives `{:value-type/error
+      :invalid-field :reason :removed-field-access}`. No `:mutable-field`
+      case: closed-record `check-field-metadata` rejects mutable fields
+      before `emit` builds the form.
 - [ ] Does-not-load subprocess check: subprocess expands and evaluates a
       no-option and a `:value-type false` definition, asserts
       `value-type.core` not in `(loaded-libs)`.
 - [ ] VT-V5 subprocess check: `-Dvalue-type.fallback=error`, definition
       throws value-type's `Error`; runs only when the expectation is
       `identity`.
-- [ ] VT-V7: compile a value-type record namespace and load the classes in a
-      subprocess JVM of the same kind, following the value-type AOT rules;
-      runs for the job's expected representation.
+- [ ] VT-V7: test `closed-record.value-type.aot-test` in the suite (no CI
+      step of its own): write a `:value-type true` record namespace to
+      `<tmp>/src`; subprocess 1 compiles it to `<tmp>/classes` (both on its
+      class path); subprocess 2 (only `<tmp>/classes` added) loads the
+      classes and checks behaviour and representation against the
+      expectation; follows the value-type AOT rules.
 - [ ] Create `test/value-type-clj-1.11/` with the Clojure 1.11 VT-V1 case:
       every `:value-type true` expansion (not only the first) throws
       `:closed-record/value-type-unavailable` with a cause.
@@ -133,8 +171,8 @@
       `openjdk-27-jep401ea3+1-1_linux-x64_bin.tar.gz` from
       `download.java.net`, verify SHA-256
       `b8bdd7b181c6a5ea2dd9959255e222cd9d9a9f42cca4f2400991b9b2ff7ffb7d`,
-      cache with the SHA-256 as key; run the Valhalla suite command and the
-      value-output VT-V7; upload `scry-value-type-valhalla`.
+      cache with the SHA-256 as key; run the Valhalla suite command (it
+      includes VT-V7 for value output); upload `scry-value-type-valhalla`.
 - [ ] Verify: no `continue-on-error`; artifact names unique in the workflow;
       runtime matrix unchanged; release workflow runs the new jobs through
       `workflow_call` with no change.
@@ -142,17 +180,22 @@
 
 ## Slice 7: VT-V8 bench
 
-- [ ] Add the VT-V8 entry namespace in `dev/bench` with its own child
-      command, measuring value-output and ordinary records in the same child
+- [ ] Add the VT-V8 entry namespace `closed-record.bench.value-type`
+      (`dev/bench/closed_record/bench/value_type.clj`) with its own child
+      command (`-m closed-record.bench.value-type <fork> <result-file>`), measuring value-output and ordinary records in the same child
       JVM via the criterium fork harness; verify no other namespace requires
       it.
-- [ ] Extend `dev/bench/timing/run.sh` to accept aliases and JVM options;
-      verify the default run (no arguments: Clojure 1.11.4, V-11, S-03 pass
+- [ ] Extend `dev/bench/timing/run.sh` with `BENCH_ALIASES` (appended to
+      `:bench` in the JAR lookup and the run) and `BENCH_JVM_OPTS` (`-J`
+      options, run only), both default empty; arguments unchanged; verify
+      the default run (no arguments: Clojure 1.11.4, V-11, S-03 pass
       rule and exit code) is unchanged.
 - [ ] Verify the `:test` alias does not load value-type through `dev/bench`.
-- [ ] Run VT-V8 manually: `:bench` + value-type alias + `:clj-1.12`,
-      `JAVA_CMD`=Valhalla java, `--enable-preview`; record commands, runtime
-      and results in implementation.md.
+- [ ] Run VT-V8 manually: `JAVA_CMD=<valhalla-jdk>/bin/java
+      BENCH_ALIASES=:value-type-test:clj-1.12
+      BENCH_JVM_OPTS=-J--enable-preview sh dev/bench/timing/run.sh -m
+      closed-record.bench.value-type`; record commands, runtime and results
+      in implementation.md.
 - [ ] Record the result and its limits (one Valhalla build, Linux x64,
       manual, informational) in `doc/performance.md`; commit.
 
@@ -190,8 +233,10 @@
       `:type` to D-03).
 - [ ] Update `ramora/defclosedrecord/embodiment/artifacts.md` remaining
       rows: `deps.edn`, `src/closed_record/impl/jvm.clj`,
-      `test/runtime/closed_record/*_test.clj`, the fixture file row, the new
-      test directory rows, `ci.yml`, `dev/bench/`.
+      `test/runtime/closed_record/*_test.clj`, the fixture rows
+      (`expansion_fixture.clj` and `expansion_fixture.edn`), the
+      `subprocess.clj` row, the new test directory rows, `ci.yml`,
+      `dev/bench/`.
 - [ ] Update `mementum/state.md`; commit.
 
 ## Slice 9: Quality gate

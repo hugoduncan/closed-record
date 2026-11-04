@@ -388,3 +388,23 @@ Paths:
   `^:non-nil` / `^:nil-restricted` fields (both JVMs) and
   `:removed-field-access` from a user method that names `__hash` (value
   output only, so Valhalla expectation only).
+
+## Plan-review design-steps pass (2026-11-03)
+
+- All 6 plan steps resolved in plan.md and steps.md. design.md unchanged.
+- value-type error facts (`src/value_type/core.clj`, `defvaluetype*`
+  docstring, ~line 370): the key is `:value-type/error`. `^:non-nil` gives
+  `:reason :non-nil-unsupported`, `^:nil-restricted` gives
+  `:reason :removed-nil-restricted`; both are checked at macroexpansion
+  before the policy, so both JVMs. `:removed-field-access` comes when the
+  capture loader defines the class (evaluation), value output only.
+- value-type: lib coordinate `org.hugoduncan/value-type` (`build.clj`). The
+  local repository HEAD is `66d5ff7` with a clean tree (checked now; check
+  again before the slice-3 `:local/root` run).
+- `test/bench/closed_record/timing_launcher_test.clj` calls
+  `run.sh -e …` (arguments as main arguments). The environment-variable
+  choice keeps it valid; run `test/bench` after the `run.sh` change.
+- `.clj-kondo/config.edn` has only
+  `:lint-as {closed-record.core/defclosedrecord clojure.core/defrecord}`.
+- The `:test` alias has no `:main-opts`, so `clojure -M:test -e …` (the
+  fixture record command) reaches `clojure.main`.
