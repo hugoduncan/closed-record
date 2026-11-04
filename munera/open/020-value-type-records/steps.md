@@ -542,3 +542,26 @@
       tform))` checks the same thing and is easier to read.
       Done: ordinary suite 186/2792; value-type suite 82/314 (Temurin 21),
       82/316 (Valhalla); Clojure 1.11 case 1/7.
+
+## Test review follow-ups, eighth round
+
+- [ ] Push the branch and get a green CI run of `1bc278a`. The
+      seventh-round follow-up changed
+      `test/runtime/closed_record/value_type_option_test.clj`,
+      `test/value-type-clj-1.11/closed_record/value_type/clj_1_11_test.clj`
+      (new version check) and
+      `test/value-type/closed_record/value_type/representation_test.clj`;
+      they have run only locally. The last green run (`9f657a9`, run
+      41887056544) comes before it, and `origin/020-value-type-records` is
+      still at `9f657a9`. Push (approved at slice 6), read the run with the
+      slice-6 `gh run` commands, and record the SHA, run URL and job
+      conclusions in implementation.md as a new acceptance note
+      (criterion 3).
+- [ ] Remove the assertion `(is (= :value expected))` of the value branch of
+      `closed-record.value-type.subprocess-test/error-policy-test`
+      ("value output: the policy does not apply"). `expectation/representation`
+      gives only `:value` or `:identity`, so in the else branch of
+      `(if (= :identity expected) …)` the assertion cannot fail. It adds an
+      assertion to the counts and no signal. Use `(when (= :identity
+      expected) …)`, with a comment that VT-V5 applies to identity output
+      only, and keep test and assertion counts in implementation.md current.

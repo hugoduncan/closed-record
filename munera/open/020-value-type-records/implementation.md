@@ -1147,3 +1147,7 @@ Paths:
   clean.
 - The last green CI run (`9f657a9`) is before this change; acceptance
   criterion 3 needs a push and a green run.
+
+## Test review, eighth round (2026-11-04)
+
+- added 2 steps to be addressed
