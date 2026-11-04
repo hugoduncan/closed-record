@@ -300,3 +300,16 @@
   is the AC3 evidence, and slice 9 records the commits after it and why no
   push is necessary. If (b), state which local checks replace the CI jobs
   for the changed files.
+- [ ] Plan inconsistency: the slice-8 item for
+  `ramora/value-type-records/embodiment.md` names only the Status ("Not
+  implemented") and the verification limits. The design-review round-5
+  note in implementation.md says that the whole page must change, and that
+  three more statements become false: the Elements table row
+  `.github/workflows/ci.yml` ("The Valhalla job of VT-D10"; the
+  `Value-type tests (Temurin 21)` job and the failure uploads are absent),
+  the Tests row ("VT-V1 runs in the ordinary `:test` alias"; VT-V1 now has
+  three placements: ordinary suite with the absent-var subprocess,
+  value-type suite subprocess, Clojure 1.11 directory) and the Verification
+  limits text "Until the job exists". Carry this note into the slice-8
+  step of steps.md (the active surface), as round 2 did for the earlier
+  notes.

@@ -569,3 +569,9 @@ Paths:
   free choices (they must end in `-test`). An uncaught parent exception in
   VT-V8 (for example from `timing-tool/declaration`) exits 1, the same as
   the default run.
+- inconsistency review (plan round 4) added 1 new design step
+- Checked, not filed: VT-V8 table brackets (fork-mean min and max, not a
+  confidence interval) agree with `doc/performance.md` "Evidence and
+  runtime". The artifact-map rows that steps.md names exist as stated
+  (`jvm.clj` line 7, `*_test.clj` glob line 8, `dev/bench/` line 16,
+  `ci.yml` line 22, `deps.edn` line 25).
