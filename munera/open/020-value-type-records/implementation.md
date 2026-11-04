@@ -341,3 +341,345 @@ Paths:
 - Plan-only items that are not in design.md: add the value-type alias to
   `dependency-bases` in `dev/quality/closed_record/lint_dependencies.clj`.
   Keep the Clojure CLI clause at `doc/development.md` line 53.
+
+## Plan review (2026-11-03)
+
+- ambiguity review added 5 new design steps
+- Context: scry 0.1.61 discovers namespaces with the default pattern
+  `.*-test$`. Shared check and helper namespaces in `test/runtime` are not
+  run as tests if their names do not end in `-test`.
+- Shared-check step is the main one: ordinary tests bind to top-level types
+  by name (reader literals, `.field` interop), so a function-only extraction
+  loses checks. A macro over the record options keeps them.
+- inconsistency review added 1 new design step
+- Checked, not filed: plan.md copies the design list of identity
+  properties (hash cache, `locking`, reference `identical?`). The round-5
+  and round-6 notes show that no shared check needs a branch for these;
+  D-06 serialization is the only branch, and steps.md slice 5 states it.
+
+## Notes for the plan-review design-steps pass
+
+- Six open steps (5 ambiguity, 1 inconsistency). All are plan choices:
+  resolve them in plan.md and steps.md. design.md is stable; change it only
+  if a choice contradicts it. Keep VT-D1 to VT-D10, VT-I2 first, and no
+  `:local/root` in a committed alias.
+- Shared-check step facts:
+  - Reader literal checks build the literal as a string with the class name
+    (`read-literal "#closed_record.defclosedrecord_test.H{…}"`,
+    `defclosedrecord_test.clj` ~line 219), and `literal_test.clj` has a
+    `constant` macro (line 29) for code constants. A shared macro must
+    derive these class names from the calling namespace
+    (`namespace-munge *ns*`), not hard-code them.
+  - Existing helpers to reuse or move: `in-test-ns`
+    (`defclosedrecord_test.clj` line 61, `literal_test.clj` line 13),
+    `eval-in-new-ns` (line 403), `expansion-cause` (line 488).
+- Subprocess helper: `fork/default-child-cmd`
+  (`dev/bench/closed_record/bench/fork.clj` line 19) is the pattern (java
+  from `java.home`, input arguments, `java.class.path`) but fixes
+  `-m closed-record.bench`. The test helper needs a free main and extra
+  class path entries and `-D` properties.
+- run.sh step: keep `run.sh -m <ns>` and the no-argument default working;
+  the JAR lookup (`-Spath -M:bench`) must find exactly one Criterium JAR
+  with the extra aliases too.
+- Slice-3 step: for a local value-mode check before the alias exists, the
+  value-type source is `~/projects/hugoduncan/value-type/value-type-master`
+  at `66d5ff7` (through `-Sdeps` only, not committed).
+- VT-V6 step: reachable value-type errors are `:invalid-field` from
+  `^:non-nil` / `^:nil-restricted` fields (both JVMs) and
+  `:removed-field-access` from a user method that names `__hash` (value
+  output only, so Valhalla expectation only).
+
+## Plan-review design-steps pass (2026-11-03)
+
+- All 6 plan steps resolved in plan.md and steps.md. design.md unchanged.
+- value-type error facts (`src/value_type/core.clj`, `defvaluetype*`
+  docstring, ~line 370): the key is `:value-type/error`. `^:non-nil` gives
+  `:reason :non-nil-unsupported`, `^:nil-restricted` gives
+  `:reason :removed-nil-restricted`; both are checked at macroexpansion
+  before the policy, so both JVMs. `:removed-field-access` comes when the
+  capture loader defines the class (evaluation), value output only.
+- value-type: lib coordinate `org.hugoduncan/value-type` (`build.clj`). The
+  local repository HEAD is `66d5ff7` with a clean tree (checked now; check
+  again before the slice-3 `:local/root` run).
+- `test/bench/closed_record/timing_launcher_test.clj` calls
+  `run.sh -e …` (arguments as main arguments). The environment-variable
+  choice keeps it valid; run `test/bench` after the `run.sh` change.
+- `.clj-kondo/config.edn` has only
+  `:lint-as {closed-record.core/defclosedrecord clojure.core/defrecord}`.
+- The `:test` alias has no `:main-opts`, so `clojure -M:test -e …` (the
+  fixture record command) reaches `clojure.main`.
+
+## Plan review, second round (2026-11-03)
+
+- ambiguity review added 1 new design step
+- Context for the VT-V8 step: `report/ops` (six S-03 texts),
+  `report/fork-count` 5, `report/fork-stats`, `report/table` and
+  `report/exit-code` serve the default run only. `fork/parent` takes a
+  `child-cmd` but always prints the S-03 table and returns the S-03 exit
+  code. The step is actionable because `legacy-transport/decode` rejects a
+  result that is not six `[op p r]` entries, so `fork/parent` cannot take
+  a two-op VT-V8 result as it is.
+- Checked, not filed: `macroexpand-1` of `defclosedrecord` gives the
+  `jvm/emit` output directly (`core.cljc`), so the fixture captures the
+  emitter. A user method can name `__hash` (no closed-record check), so
+  the VT-V6 `:removed-field-access` case is reachable. `run.sh` must put
+  `BENCH_ALIASES` before `:corrected-timing`, which clears the main opts.
+- inconsistency review added 2 new design steps
+- Both steps carry earlier implementation.md notes (run `test/bench` after
+  the `run.sh` change; keep the Clojure CLI clause) into steps.md, the
+  active surface. All existing CI jobs pin `cli: '1.12.6.1673'`.
+
+## Notes for the round-2 plan-review design-steps pass
+
+- Three open steps (VT-V8 parent and report, `test/bench` launcher test,
+  Clojure CLI pin). All are plan choices: resolve them in plan.md and
+  steps.md. design.md stays unchanged. Keep VT-I2: the default `:bench`
+  run, its output, exit code and the tests of `fork`, `report` and
+  `legacy-transport` do not change.
+- VT-V8 precedent: the `assoc-timing` family in
+  `dev/bench/closed_record/bench/` (`assoc_timing_cli.clj`, `_run.clj`,
+  `_command.clj`, `_child.clj`, `_report.clj`) is a non-S-03 forked
+  Criterium measurement with its own command, child, result and report. It
+  reuses `fork/in-order` and `fork/capture-process!` and validates
+  `timing-tool` observations, with no change to `fork/parent`. Prefer this
+  pattern (smaller, in the VT-V8 entry namespace) over making
+  `fork/parent` generic.
+- `test/bench` has no alias and no documented command. Earlier tasks ran it
+  with an ad hoc `-Sdeps` alias that adds `test/bench` to the class path
+  (`munera/closed/019-space-time-performance/features.md`). Find the
+  aliases it needs (scry from `:test`, Criterium from `:bench`) before the
+  plan states the command. The launcher test inherits the environment, so
+  run it with `BENCH_ALIASES` and `BENCH_JVM_OPTS` unset.
+- CLI pin: `.github/workflows/ci.yml` lines 27, 133, 161
+  (`DeLaGuardo/setup-clojure@13.4`, `cli: '1.12.6.1673'`). The Clojure CLI
+  script uses `JAVA_CMD` for dependency resolution and for the program, so
+  the Valhalla job can work without Temurin. State the choice.
+
+## Plan-review design-steps pass, round 2 (2026-11-03)
+
+- All 3 plan steps resolved in plan.md and steps.md. design.md unchanged.
+  No step of steps.md is done; this pass changes the plan only.
+- VT-V8 choice: own parent loop, child result and table in
+  `closed-record.bench.value-type`; no change to any other `dev/bench`
+  namespace. The S-03 parts that do not fit: `report/header` (fixed, has
+  "Result"), private `report/mean-interval` (t quantile for 5 forks) and
+  `report/stats-error`. Thus VT-V8 shows the min–max range of fork means,
+  not a t interval. `report/ratio` takes any two `{:mean …}` maps.
+- `closed-record.bench/bench-op` is a public macro; its syntax-quote
+  resolves to `criterium.bench/bench` and `report/per-call-stats`, so
+  requiring `closed-record.bench` loads what it needs. That direction of
+  require is allowed (only the reverse is forbidden).
+- `test/bench` launcher test: `--dir test/bench` does not put the
+  directory on the class path (scry error "Could not locate
+  closed_record/timing_launcher_test…"); the `-Sdeps` `:bench-test` alias
+  does. Do not use `-M:bench` with scry: its `:main-opts` run
+  `closed-record.bench` first. Run left only ignored `target/timing-run.*`
+  directories.
+- Clojure CLI 1.12.6.1673 script (`libexec/bin/clojure`): `JAVA_CMD`
+  defaults to `type -p java` and is used for `make-classpath2` (resolution)
+  and the program JVM. CI pins: `.github/workflows/ci.yml` lines 21-27,
+  127-133, 155-161, 185-191.
+
+## Plan review, third round (2026-11-03)
+
+- ambiguity review (plan round 3) added 3 new design steps
+- Facts for the steps: value-type `origin` is
+  `git@github.com:hugoduncan/value-type.git`; the HTTPS URL is public, its
+  HEAD is `5d2656b`; `66d5ff7` is still not on GitHub. value-type has only
+  `.clj` sources and no `:deps/prep-lib`, so a Git dependency needs no
+  prep step. Local JDKs: `~/.local/share/mise/installs/java/temurin-21.0.10+7.0.LTS`
+  and `.../openjdk-27.0.0-jep401ea3+1-1` (macOS aarch64, build
+  `27-jep401ea3+1-1`); `~/.local/jdks/jdk-27.jdk` is the same build.
+- Checked, not filed: VT-V4 `.isValue` on Temurin 21 (method absent) can
+  use the reflective rule that plan.md gives for the VT-V8 child. In the
+  Clojure 1.11 case, the top-level Clojure 1.11.4 wins over the Clojure
+  1.12.6 of value-type `:deps`.
+- no inconsistency review feedback (plan round 3)
+- Checked, not filed: the public vars that plan.md names for VT-V8 exist
+  (`fork/in-order`, `report/per-call-stats`, `report/fork-count`,
+  `report/ratio`, `timing-tool/observe`, `declaration`,
+  `validate-observation`, macro `closed-record.bench/bench-op`); `src/`,
+  `deps.edn`, `.github`, `dev/bench` and `test` have no diff from `ac25942`.
+  The tooling test `classpath_cache.clj` also resolves every entry of
+  `dependency-bases`, so after slice 4 it fetches the value-type Git
+  dependency too (network needed).
+
+## Notes for the plan-review round-3 design-steps pass
+
+- Three open steps (value-type coordinate, slice-6 push, local JDKs and
+  VT-V8 platform). All are plan choices: resolve them in plan.md and
+  steps.md. design.md stays unchanged; it already says AC4 (SHA on GitHub)
+  and the CI-only "Linux x64" limit. Keep VT-I2 and no committed
+  `:local/root`.
+- Coordinate step: the existing Git dependency pattern is the `:quickdoc`
+  alias in `deps.edn` (`:git/tag` + `:git/sha`). value-type has no tags,
+  so use `:git/url` + `:git/sha` only. Use the same coordinate in the
+  README instruction for unreleased value-type (README Installation shows
+  only the Clojars coordinate of closed-record).
+- Push step: do not choose an autonomous push to `master`; a stop-and-ask
+  point (as at the slice-4 gate) agrees with the precedents in
+  `munera/closed/014-github-ci/steps.md` and
+  `munera/closed/017-markdown-link-checks/steps.md` (line 46 of each).
+  `ci.yml` triggers: `push` to `master`, `pull_request` (any branch),
+  `workflow_call`. `gh` is at `/opt/homebrew/bin/gh`.
+- JDK step: the VT-V8 limits in `doc/performance.md` follow the existing
+  style of that page (it names the machine "macOS arm64 MacBook Pro" and
+  the runtime builds).
+
+## Plan-review design-steps pass, round 3 (2026-11-03)
+
+- All 3 plan steps resolved in plan.md (Alias, Local JDKs, VT-V8 limits, CI
+  Push) and steps.md (slices 4 to 8). design.md unchanged. No step of
+  steps.md is done.
+- value-type `66d5ff7` full SHA: `66d5ff7680c227bcf44ffe0824628288ffab0ebf`.
+  tools.deps needs the full SHA when no `:git/tag` is given.
+- Observed: `git fetch https://github.com/hugoduncan/value-type.git
+  66d5ff7680c2…` exits 0 although the commit is not on GitHub (the object
+  is local). `merge-base --is-ancestor 66d5ff7 FETCH_HEAD` after a fetch of
+  `master` gives 1. Use only the merge-base check.
+- Local JDK binaries checked: `temurin-21.0.10+7.0.LTS/bin/java` gives
+  `21.0.10+7-LTS`; `openjdk-27.0.0-jep401ea3+1-1/bin/java` gives
+  `27-jep401ea3+1-1` (both under `~/.local/share/mise/installs/java/`).
+  `uname -sm` is `Darwin arm64`.
+- `gh` 2.102.0 has `gh run list --commit`. For a `pull_request` run,
+  `headSha` is the head commit of the pull request branch.
+- Open point for review: slices 7 to 9 commit after the slice-6 CI run
+  (bench, docs, quality fixes). The plan does not require a second push;
+  the quality job (lint, prose, links) checks those files in CI only after
+  a later push.
+
+## Plan review, fourth round (2026-11-03)
+
+- ambiguity review (plan round 4) added 1 new design step
+- The step resolves the "Open point for review" of the round-3
+  design-steps pass. It is actionable because slice 8 changes `src` (the
+  docstring), so the slice-6 run does not test the final tree.
+- Slice-6 context: value-type `release.yml` (at `66d5ff7`, lines 47-60)
+  has the full archive URL
+  `https://download.java.net/java/early_access/valhalla/27/1/openjdk-27-jep401ea3+1-1_linux-x64_bin.tar.gz`,
+  the `sha256sum -c` check and `tar -xzf … --strip-components=1`. It sets
+  `JAVA_CMD` for each step. Its `--add-exports` option is for value-type's
+  own tests; closed-record does not need it (the probe got value output
+  with `--enable-preview` only).
+- Checked, not filed: value-type is not on the `:test` class path, so a
+  `dev/bench` load of the VT-V8 entry would fail the ordinary suite. A grep
+  for requires of `closed-record.bench.value-type` and a green ordinary
+  suite are enough for the slice-7 check. The test namespace names of
+  VT-V2, VT-V4, VT-V5, VT-V6, does-not-load and the Clojure 1.11 case are
+  free choices (they must end in `-test`). An uncaught parent exception in
+  VT-V8 (for example from `timing-tool/declaration`) exits 1, the same as
+  the default run.
+- inconsistency review (plan round 4) added 1 new design step
+- Checked, not filed: VT-V8 table brackets (fork-mean min and max, not a
+  confidence interval) agree with `doc/performance.md` "Evidence and
+  runtime". The artifact-map rows that steps.md names exist as stated
+  (`jvm.clj` line 7, `*_test.clj` glob line 8, `dev/bench/` line 16,
+  `ci.yml` line 22, `deps.edn` line 25).
+
+## Notes for the plan-review round-4 design-steps pass
+
+- Two open steps (post-slice-6 CI evidence, value-type embodiment page
+  rows). Both are plan choices: resolve them in plan.md and steps.md.
+  design.md stays unchanged; AC3 says only "pass in CI" and names no
+  commit. Keep the slice-6 stop-and-ask rule and "merge is the user's
+  decision".
+- CI evidence step: the commits after slice 6 that the CI jobs test are
+  `src/closed_record/core.cljc` (docstring, slice 8), `dev/bench/` and
+  `dev/bench/timing/run.sh` (slice 7; no CI job runs them), and any slice-9
+  fix. The quality job (`ci.yml` job `quality`) runs format, lint, Vale,
+  API freshness and `test/tooling`; job `links` runs lychee. Locally the
+  same checks are `bb clj-fmt:check`, `bb clj-kondo:lint`, `bb vale`,
+  `bb api-docs --check`, `bb lychee:check`. Option (a) reuses the slice-6
+  ref and the `gh run …` commands of plan.md, CI.
+- Embodiment step: page `ramora/value-type-records/embodiment.md`. Edit the
+  existing slice-8 item; do not add a new step for each row. Ramora rule:
+  no progress history (state the current embodiment only).
+
+## Plan-review design-steps pass, round 4 (2026-11-03)
+
+- Both plan steps resolved in plan.md (CI: Final push, record list, slice
+  order 9) and steps.md (slices 6, 8 and 9). design.md unchanged. No step
+  of steps.md is done.
+- Choice: option (a). Slice 9 pushes the final tree to the slice-6 ref and
+  reads a second run. The slice-6 question asks for approval of both
+  pushes; if the user approves only the first, slice 9 stops and asks.
+  The AC3 evidence is the run of the last commit outside the task
+  directory; the evidence commit (task files only) is not pushed, so no
+  run-record recursion.
+- The slice-8 embodiment item now names the rows of
+  `ramora/value-type-records/embodiment.md` that become false: Status,
+  Elements `ci.yml` and Tests rows, Verification limits. The Permitted
+  dependencies and Generated type sections hold as written; check them
+  against the code at slice 8.
+
+## Plan review, fifth round (2026-11-03)
+
+- ambiguity review (plan round 5) added 1 new design step
+- Context for the step: quoted lists in a loaded file carry `:line` and
+  `:column`; vectors and maps do not. Checked with a temporary namespace on
+  the `:test` class path: the top form and plain symbols print no position,
+  but a method body list does. `read-string` uses no line-numbering reader,
+  so its forms carry no position metadata. `cljfmt` scope covers all of
+  `test/` (`quality_scope.clj`).
+- Checked, not filed: `fork/in-order` returns `[p r]` for thunks
+  `p-run r-run`, so VT-V8 passes the `V` thunk first to get `[op v p]`.
+  `run.sh` JAR lookup with `-Spath -M:bench…` accepts extra aliases.
+- no inconsistency review feedback (plan round 5)
+- Checked, not filed: `emit` gives `(vec fields)` with metadata to the
+  type form (only the factories get `plain-fields`), so the VT-V6
+  `^:non-nil` and `^:nil-restricted` cases reach `defvaluetype*`. No
+  ordinary test file name collides with `aot` or `expectation` under
+  `closed-record.value-type.*`.
+
+## Notes for the plan-review round-5 design-steps pass
+
+- One open step: reader position metadata in the fixture input forms. It is
+  a plan choice; resolve it in plan.md (Expansion fixture first) and
+  steps.md slice 1. design.md stays unchanged: the fixture is not recorded
+  yet, and the change is to the input side only. The comparison rule
+  (`*print-meta*` true, gensym normalisation) stays.
+- Keep other metadata: field tags (`^long b`), type hints and `:no-print`
+  style metadata must still reach the emitter and the printed form. Remove
+  only `:line`, `:column` and `:file`.
+- Observed on Clojure 1.11.4: `clojure.walk/postwalk` drops all metadata
+  of rebuilt lists (also `:tag`), and keeps symbol metadata. A strip
+  helper must rebuild lists with `(with-meta … (dissoc (meta f) :line
+  :column :file))`, or the fixture forms must have no hinted lists. The
+  `read-string` option has no such issue, but the forms are then strings
+  that cljfmt and clj-kondo do not check.
+- `with-option` builds a new top list; apply the strip rule to its result
+  too (or strip inside `expansion`, so every caller gets it).
+- Paths: emitter `src/closed_record/impl/jvm.clj` (`emit`, `user-methods`
+  copy method bodies with their metadata). cljfmt config `.cljfmt.edn`.
+
+## Plan-review design-steps pass, round 5 (2026-11-03)
+
+- The one plan step is resolved in plan.md (Expansion fixture first,
+  Position metadata; slice order 1) and steps.md (slice 1, new
+  `strip-positions` item). design.md unchanged. No step of steps.md is done.
+- Choice: `expansion` removes `:line`, `:column` and `:file` from the input
+  form before `macroexpand-1`. The forms stay code, so cljfmt and clj-kondo
+  check them. This replaces the round-3 note "a quoted form … gives no
+  `:line` metadata", which is false for nested lists.
+- Observed on Clojure 1.11.4 and 1.13 (`clojure -M:test -i <tmp file>`):
+  a hand-written strip helper (`seq?` → `apply list`, `map-entry?` before
+  `vector?`, `with-meta` of `(dissoc (meta x) :line :column :file)` on each
+  `IObj`) removes all positions, keeps a `^String` list hint, and gives the
+  same printed expansion (modulo gensyms) as the `read-string` form. The
+  emitter adds no position metadata of its own (a `read-string` input
+  prints no `:line`).
+
+## Plan review, sixth round (2026-11-03)
+
+- no ambiguity review feedback (plan round 6)
+- no inconsistency review feedback (plan round 6)
+
+## Notes after plan round 6
+
+- No open design steps: both round-6 plan reviews found nothing, and all
+  design-steps.md items are checked. The plan is ready for execution at
+  slice 1.
+- Verified for the reviews: `deps.edn` `:test` alias has extra-paths
+  `["test/runtime" "dev/bench"]`, so the fixture EDN resolves as a
+  resource and the slice-7 "does not load value-type via dev/bench" check
+  is necessary; `:clj-1.12` is 1.12.6, `:clj-1.13` is 1.13.0-alpha9.

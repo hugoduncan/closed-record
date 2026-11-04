@@ -159,3 +159,176 @@
   existing format and lint scope (all of `test/`) also assumes that both
   directories are under `test/`; state this as a constraint on the paths
   that the plan selects.
+- [x] Plan ambiguity: state how the shared VT-V3/VT-V4 checks get the
+  record types that they test. The ordinary tests use types defined at the
+  top level (`defclosedrecord R [a b]` in
+  `test/runtime/closed_record/defclosedrecord_test.clj` and other files) and
+  bind to them by name: `->R`, `map->R`, reader literals with the class name,
+  `.a` field interop, `instance?`. Plan "both suites call them" suggests
+  functions, which cannot express the literal and interop checks. Choose
+  and record in plan.md: for example, a macro that takes the record options
+  and expands the type definitions and the `deftest`s in the calling
+  namespace, or check functions over a descriptor of factories (state how
+  the type-bound checks run then). Also state how a check gets the
+  representation (D-06 serialization on identity only), the namespace names
+  and paths of the shared check and subprocess-helper namespaces (in
+  `test/runtime`, loadable without value-type, names that do not match the
+  scry discovery pattern `.*-test$`).
+- [x] Plan ambiguity: state the path, format and record procedure of the
+  expansion fixture file. Plan and steps say only "a fixture file in
+  `test/runtime`". The design requires a re-record in the same change after
+  an intended expansion change, and an artifact-map row for the file. State:
+  the file path; the content (for example an EDN map of form name to
+  normalised printed expansion, or forms and expansions together); where the
+  input forms live (test file or fixture file); and how to record it again
+  (a function or a command).
+- [x] Plan ambiguity: state the `dev/bench/timing/run.sh` argument syntax for
+  extra aliases and JVM options. Now `"$@"` are main args after
+  `-M:bench:corrected-timing` (`run.sh -m <ns>` selects an entry), and no
+  arguments select `-m closed-record.bench`. The script also finds the
+  Criterium JAR with `clojure -Srepro -Spath -M:bench`. State how the caller
+  gives aliases and `-J` options (for example environment variables such as
+  `BENCH_ALIASES` and `BENCH_JVM_OPTS`, or leading arguments before `--`),
+  whether the JAR lookup uses the same aliases, and the full VT-V8 command.
+- [x] Plan ambiguity: state where VT-V7 runs and where it compiles. Slice 5
+  puts VT-V7 in the `test/value-type/` suite. Slice 6 says the Valhalla job
+  runs "the Valhalla suite command and the value-output VT-V7", which can
+  mean a separate step (that would need its own upload name). State that
+  VT-V7 runs inside the suite command (or name its step, command and
+  artifact). Also state where the compile happens (test JVM or subprocess)
+  and the compile output path (for example a temporary directory on the
+  subprocess class path).
+- [x] Plan ambiguity: state how slice 3 verifies value mode. Slice 3 asks to
+  verify that no value-mode method reads or writes `__hash`/`__hasheq`, but
+  the alias arrives in slice 4 and `emit` resolves `defvaluetype*` before it
+  builds the form (VT-D4), so the value-mode expansion fails without
+  value-type. Choose: code reading only, a local run with an uncommitted
+  `-Sdeps` value-type dependency, a check of a form builder that runs after
+  resolution, or defer the check to VT-V2 in slice 5.
+- [x] Plan inconsistency: steps.md slice 5 VT-V6 names a `:mutable-field`
+  pass-through case. `defclosedrecord` cannot reach it:
+  `check-field-metadata` in `src/closed_record/impl/jvm.clj` throws
+  `IllegalArgumentException` for `:volatile-mutable` and
+  `:unsynchronized-mutable` fields before `emit` builds the form
+  (`argument-errors-test` asserts this). The Ramora VT-V6 row names only
+  `:non-nil` metadata → `:value-type/error :invalid-field`. Make the VT-V6
+  cases agree with the Ramora row: use `:invalid-field` cases that the
+  emitter can reach (`^:non-nil` or `^:nil-restricted` field; optionally a
+  user method that reads `__hash`, which gives `:removed-field-access` on
+  value output only). Remove the `:mutable-field` case.
+- [x] Plan ambiguity: state how the VT-V8 entry runs the forks and reports
+  the result. Plan and steps say only "its own child command" and "via the
+  criterium fork harness". The harness parent and transport are fixed to
+  S-03: `fork/parent` prints `report/table` of `report/fork-stats` and
+  returns `report/exit-code` (the S-03 pass rule); `legacy-transport/encode`
+  and `decode` and `report/decode-result` accept only the six `report/ops`
+  entries; `fork/run-fork` is private. VT-V8 measures `hash` and `=` only,
+  and the S-03 pass rule and exit code do not apply (design). State: the
+  parent loop (reuse `fork/parent`, or a VT-V8 loop in the entry namespace);
+  the child result format and its validation (including the collector
+  identity of `timing-tool/observe`); the output (table columns, ns per
+  call, ratio, no pass rule); the exit code; and which `dev/bench`
+  namespaces change, if any (for example `run-fork` made public, or `ops`
+  as a parameter). A change to `fork`, `report` or `legacy-transport` must
+  keep the default `:bench` run and its tests unchanged (VT-I2).
+- [x] Plan inconsistency: the `run.sh` change has no test step. The
+  plan-review design-steps notes in implementation.md say that
+  `test/bench/closed_record/timing_launcher_test.clj` calls
+  `run.sh -e …` (arguments as main arguments) and "run `test/bench` after
+  the `run.sh` change". Steps slice 7 checks only the default run, and slice
+  9 does not name `test/bench`. `test/bench` has no CI job and no command in
+  `doc/development.md`. Add to slice 7 a step that runs the `test/bench`
+  launcher test (state the command, for example
+  `clojure -M:test:bench -m scry.cli --dir test/bench`, after checking the
+  aliases that the suite needs) with `BENCH_ALIASES` and `BENCH_JVM_OPTS`
+  unset.
+- [x] Plan inconsistency: the Clojure CLI version of the new CI jobs.
+  `doc/development.md` line 53 says "Clojure jobs use Temurin Java 21 and
+  Clojure CLI `1.12.6.1673`". The "Notes after round 6" in
+  implementation.md say to keep the Clojure CLI clause when the Temurin
+  statement is replaced, but steps slice 8 (`doc/development.md` item) does
+  not say this, and steps slice 6 does not say that both new jobs install
+  Clojure CLI `1.12.6.1673` with `DeLaGuardo/setup-clojure@13.4`, as the
+  other jobs do. Add both: slice 6 pins that CLI version in both new jobs
+  (the Valhalla job sets `JAVA_CMD` and needs no Temurin), and slice 8
+  keeps the CLI clause for all Clojure jobs.
+- [x] Plan ambiguity: state the value-type coordinate of the
+  `:value-type-test` alias. Plan and steps say only "value-type at a pinned
+  Git SHA". The lib name `org.hugoduncan/value-type` does not let
+  tools.deps infer a URL (only `io.github.*` names do), so the alias needs
+  an explicit `:git/url`. The local value-type `origin` is the SSH URL
+  `git@github.com:hugoduncan/value-type.git`; CI and lint setup have no SSH
+  key. `https://github.com/hugoduncan/value-type.git` is public (anonymous
+  `git ls-remote` works). State: the lib name, the `:git/url` (HTTPS), and
+  the SHA rule at the slice-4 gate (pin `66d5ff7` when it is on GitHub, or
+  the commit that the user names; a later commit needs a check that the
+  value-type facts of design.md still hold).
+- [x] Plan ambiguity: state how slice 6 pushes and confirms CI. Steps say
+  only "Push and confirm both jobs pass in CI". Local `master` is 41
+  commits ahead of `origin/master`, CI runs on pushes to `master` and on
+  pull requests, and earlier tasks say "do not push solely for evidence"
+  (tasks 014, 017). Acceptance criterion 3 needs the jobs to pass in CI.
+  State: the ref to push (`master`, or a branch with a pull request), if
+  the push needs user approval first (stop and ask, as at the slice-4
+  gate), how the result is read (for example `gh run watch`), and what to
+  record in implementation.md.
+- [x] Plan ambiguity: name the local JDKs and the VT-V8 platform. Slice 5
+  says "Local runs on Temurin 21 and Valhalla (the Valhalla run requires the
+  pinned JDK)", and the VT-V8 command has `<valhalla-jdk>`. The pinned
+  archive is Linux x64; this machine is macOS arm64 and cannot run it. The
+  machine has Temurin `21.0.10+7` and the macOS aarch64 build of Valhalla
+  `27-jep401ea3+1-1` (mise, `~/.local/share/mise/installs/java/`), and the
+  default `java` is 25. Slice 7 records the VT-V8 limits as "one Valhalla
+  build, Linux x64", which is false for a local run. State: the `JAVA_CMD`
+  of each local run (slice 5 and VT-V8), that a local Valhalla run uses the
+  same build on another platform (not the pinned archive), and the platform
+  that the VT-V8 limits name (the machine of the run, as in
+  `doc/performance.md`).
+- [x] Plan ambiguity: state if the commits after the slice-6 CI run go to
+  CI. Slice 6 pushes local `master` to the pull request ref and reads one
+  green run. Slices 7 to 9 then commit more changes: `src` (the
+  `defclosedrecord` docstring, slice 8), `dev/bench`, `doc/`, Ramora and
+  quality fixes, which can touch `test/value-type` or `ci.yml` (slice 9).
+  The plan pushes again only after a failed run. Thus the pull request head
+  and the CI evidence of acceptance criterion 3 are for an earlier commit
+  than the final one, and the quality job (lint, prose, links, API
+  freshness) does not see the new files in CI. Slice 9 says "Verify all
+  acceptance criteria 1–8" but does not say which commit the AC3 run must
+  be for. Choose and state in plan.md and steps.md: (a) slice 9 pushes the
+  final commit to the same ref (the user approved the ref at slice 6, or
+  stop and ask again) and records a second green run; or (b) the slice-6 run
+  is the AC3 evidence, and slice 9 records the commits after it and why no
+  push is necessary. If (b), state which local checks replace the CI jobs
+  for the changed files.
+- [x] Plan inconsistency: the slice-8 item for
+  `ramora/value-type-records/embodiment.md` names only the Status ("Not
+  implemented") and the verification limits. The design-review round-5
+  note in implementation.md says that the whole page must change, and that
+  three more statements become false: the Elements table row
+  `.github/workflows/ci.yml` ("The Valhalla job of VT-D10"; the
+  `Value-type tests (Temurin 21)` job and the failure uploads are absent),
+  the Tests row ("VT-V1 runs in the ordinary `:test` alias"; VT-V1 now has
+  three placements: ordinary suite with the absent-var subprocess,
+  value-type suite subprocess, Clojure 1.11 directory) and the Verification
+  limits text "Until the job exists". Carry this note into the slice-8
+  step of steps.md (the active surface), as round 2 did for the earlier
+  notes.
+- [x] Plan ambiguity: state how the expansion fixture treats the reader
+  position metadata of its input forms. plan.md (Expansion fixture first)
+  puts `forms` as quoted forms in
+  `test/runtime/closed_record/expansion_fixture.clj` and compares printed
+  expansions with `*print-meta*` true. The reader gives each list in a
+  source file `:line` and `:column` metadata. The emitter copies user
+  method bodies into the expansion, so this metadata is in the printed
+  string. Observed (Clojure 1.11.4, current emitter): a quoted
+  `(defclosedrecord P [a b] Object (toString [_] (str (inc a))) …)` in a
+  loaded file gives `^{:line 2 :column …}` three times in the printed
+  `macroexpand-1`. (The round-3 note "a quoted form … gives no `:line`
+  metadata" checked a form with no nested list.) Thus an edit that moves a
+  form in that file (a new form, or a `cljfmt` fix in slice 9) changes the
+  fixture strings with no emitter change. A record again after slice 3 then
+  records the changed emitter, not `ac25942`, so VT-I2 has no reference.
+  Choose and state in plan.md and steps.md (slice 1): for example, remove
+  `:line` and `:column` (and `:file`) from the input forms before
+  expansion, or keep each form as a string and read it with `read-string`
+  (no position metadata). Also state that `with-option` keeps this rule.
