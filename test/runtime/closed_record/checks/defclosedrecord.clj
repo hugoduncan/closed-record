@@ -300,18 +300,17 @@
                     (java.io.ByteArrayInputStream. (.toByteArray bytes)))]
       (.readObject in))))
 
-(deftest serializable-test
-  ;; D-06 holds for identity output only; value output promises no
-  ;; serialization, so that branch asserts only the representation (a test
-  ;; with no assertion fails scry).
-  (if (= :identity support/representation)
+(when (= :identity support/representation)
+  ;; D-06 applies to identity output only: value output promises no
+  ;; serialization. scry fails a test with no assertion, so the test is
+  ;; defined only for identity output.
+  (deftest serializable-test
     (let [m (with-meta r {:m 1})
           s (round-trip m)]
       (is (= r s))
       (is (= R (class s)))
       (is (= {:m 1} (meta s)))
-      (is (= (hash r) (hash s))))
-    (is (= :value support/representation))))
+      (is (= (hash r) (hash s))))))
 
 ;;; Generated methods not in the V-01 tables (no extra keys)
 
