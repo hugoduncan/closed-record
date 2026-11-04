@@ -183,3 +183,12 @@ Paths:
   fits; the ordinary suite already starts real child JVMs
   (`bench_fork_test`, `bench_assoc_allocation_run_test`), and the stub never
   shares a class path with value-type (VT-I2 holds).
+- no ambiguity review feedback (round 4)
+- Checked, not filed: `macroexpand-1` wraps expansion errors in
+  `CompilerException`; the existing tests read `ex-cause`
+  (`expansion-cause`, `defclosedrecord_test.clj`). So the
+  `:closed-record/value-type-unavailable` `ex-info` is the cause of that
+  wrapper, and its own `ex-cause` is the cause of the Public contract.
+  value-type's fallback `Error` is a plain `java.lang.Error`
+  (`value_type/impl/runtime.clj`). `:value-type nil` is an "other value"
+  (`IllegalArgumentException`); use `contains?`, not truthiness.
