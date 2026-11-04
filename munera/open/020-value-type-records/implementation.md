@@ -261,3 +261,28 @@ Paths:
   (`ramora/release-workflow/contracts-and-flow.md`) needs nonempty
   Unreleased notes only at release time, and a release is out of scope.
   The release task must write the note for `:value-type`.
+
+## Notes for the round-5 design-steps pass
+
+- Two open steps: the shared-check selection with serialization on value
+  output (ambiguity), and the `doc/development.md` suite list
+  (inconsistency). Earlier principles apply: edit design.md in place, keep
+  VT-D1 to VT-D10 and the scope, no progress history in Ramora.
+- Selection step: edit Scope, Verification (the VT-V3/VT-V4 bullets). Keep
+  the selection rule a rule, not a list of test names; the plan maps it to
+  tests. Out of scope already excludes serialization of value output, so
+  "skip on value output" needs no new decision. The differences table row
+  ("not promised") is the authority. Consider adding the rule to the Ramora
+  VT-V3 row through the Documentation item for
+  `ramora/value-type-records/invariants-and-verification.md`, as for VT-V1.
+- Ordinary tests outside V-rows: `test/runtime/closed_record/`
+  `defclosedrecord_test.clj` (`serializable-test`, the section "Generated
+  methods not in the V-01 tables", hidden-field check near line 495, which
+  is emitter-level), `hidden_key_test.clj`, `differential_test.clj`
+  (V-02), `property_test.clj` (V-03), `literal_test.clj` (V-04),
+  `compiler_rules_test.clj` (V-13, excluded). V-rows:
+  `ramora/defclosedrecord/qualities.md` (Verification plan).
+- Suite-list step: extend the existing Documentation item for
+  `doc/development.md`; add the `test/` path constraint to the Dependencies
+  section (where the alias and the two directories are defined). Format and
+  lint scope: `dev/quality/closed_record/quality_scope.clj`.
