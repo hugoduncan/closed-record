@@ -100,8 +100,15 @@ value-type record, on value output and on identity fallback.
 - The option can be used with `:no-print` and `:load-ns`.
 - Macroexpansion with `:value-type true` fails when `value-type.core/defvaluetype*`
   cannot be resolved. The error is `ex-info` with
-  `:type :closed-record/value-type-unavailable` and `:class-name`, and the
-  resolution failure as cause. The compiler wraps it in a `CompilerException`.
+  `:type :closed-record/value-type-unavailable` and `:class-name`. The
+  compiler wraps it in a `CompilerException`.
+  - `:class-name` is the class-name symbol that `deftype*` receives: the
+    munged namespace name, a dot and the type name. `Point` in `my-app.geo`
+    gives `my_app.geo.Point`. It is a symbol, not a class.
+  - A missing library or a load failure (for example on Clojure 1.11):
+    the exception of `requiring-resolve` is the cause.
+  - `value-type.core` loads but has no `defvaluetype*`: the error has no
+    cause.
 - value-type errors pass through with no change. Examples:
   `:value-type/error :invalid-field` for `:non-nil` metadata, and the fallback
   policy `Error`.

@@ -683,3 +683,243 @@ Paths:
   `["test/runtime" "dev/bench"]`, so the fixture EDN resolves as a
   resource and the slice-7 "does not load value-type via dev/bench" check
   is necessary; `:clj-1.12` is 1.12.6, `:clj-1.13` is 1.13.0-alpha9.
+
+## Slice 1: expansion fixture (2026-11-03)
+
+- Fixture forms (`closed-record.expansion-fixture/forms`): `:plain`,
+  `:tagged` (`^long ^double ^String ^objects`), `:no-print`, `:load-ns`,
+  `:methods` (both options, `Object`, `Comparable` with a `^String` list
+  hint, `Supplier`), `:destructured` (`BiFunction`, vector and map params).
+  Java interfaces only.
+- Recorded from `src/` equal to `ac25942` (no diff). Same strings on
+  Clojure 1.11.4, 1.12.6, 1.13.0-alpha9.
+- `record!` writes the cljfmt-clean layout (`{k\n "…"\n k …}`), so a
+  re-record needs no `clj-fmt:fix`.
+- Public helpers: `expansion`, `with-option`, `normalise`, `fixture`
+  (reads the resource). `strip-positions` is private.
+- `value_type_option_test.clj` has the no-option assertion only; slice 2
+  adds the `:value-type false` assertion when `check-options` accepts it.
+
+## Slice 2: option and error contract (2026-11-03)
+
+- `check-options`: `:value-type` valid only as `true`/`false`/absent;
+  explicit `nil` throws too. `emit` dissocs `:value-type` before splicing
+  opts into `deftype*`.
+- `resolve-value-type` (private, `impl.jvm`) is called in `emit` only when
+  `:value-type true`; it returns the var, but slice 2 discards it and still
+  emits `deftype*`. Slice 3 uses it for the head. `:class-name` is
+  `classname` with its metadata removed.
+- Macroexpansion wraps the error in `Compiler$CompilerException`; tests
+  unwrap with `ex-cause`. Tests that check `:class-name` must bind `*ns*`
+  (scry runs with `*ns*` = `user`).
+- `closed-record.subprocess/run` `[args & {:keys [jvm-opts class-path]}]`
+  → `{:exit :out :err}`; absent-var test passes a `-e` script, reads the
+  printed EDN.
+- Suite green on 1.11.4, 1.12.6, 1.13.0-alpha9 (186 tests, 2793 assertions).
+
+## Slice 3: emitter value mode (2026-11-03)
+
+- `representation` (private, `impl.jvm`) gives `{:type-head :hidden-fields
+  :hash-form :with-meta-form}`; `emit` selects it once and passes it to
+  `generated-methods` as its first argument. Public `hidden-fields` stays
+  the ordinary layout (`core.cljc` uses it for reserved names);
+  value layout is private `value-hidden-fields`.
+- `withMeta` param is now built outside the syntax quote as
+  `(symbol (str (gensym "m__") "__auto__"))`, the name `m#` gave, so the
+  ordinary expansion is unchanged (fixture test passes).
+- Value mode still emits `__hash`/`__hasheq` fields (`^int`, not mutable);
+  no method reads them; constructors from factories/`assoc` use the short
+  compiler-generated constructors, unchanged.
+- Check (value-type HEAD `66d5ff7`): `clojure -Sdeps '{:deps
+  {org.hugoduncan/value-type {:local/root
+  "/Users/duncan/projects/hugoduncan/value-type/value-type-master"}}}'
+  -M:test:clj-1.12 -e "(require 'closed-record.core 'clojure.pprint)
+  (in-ns 'user) (binding [*print-meta* true] (clojure.pprint/pprint
+  (macroexpand-1 '(closed-record.core/defclosedrecord P [a b] :value-type
+  true))))"`. Result: head `value-type.core/defvaluetype*`, fields
+  `[a b __meta __extmap ^int __hash ^int __hasheq]`, `hashCode` =
+  `(APersistentMap/mapHash this)`, `hasheq` uncached, `withMeta` =
+  `(new P a b m __extmap)`; `__hash` occurs once (field vector). Evaluated
+  on Temurin 21 (identity fallback): hash, `with-meta`, `=` correct.
+- Options are keyword pairs (`:value-type true`), not a map.
+- Suite green on 1.11.4, 1.12.6, 1.13.0-alpha9 (186 tests, 2793 assertions).
+
+## Slice 4: SHA rule check (2026-11-03)
+
+- `git fetch https://github.com/hugoduncan/value-type.git master` →
+  FETCH_HEAD `5d2656b`; `git merge-base --is-ancestor 66d5ff7… FETCH_HEAD`
+  → exit 1. `git ls-remote` shows only `master` (`5d2656b`). `66d5ff7`
+  ("019: close task") is local only; GitHub master is behind it.
+- Per design Prerequisite: stop; no `:value-type-test` alias added.
+
+## Slice 4: SHA rule check, second run (2026-11-03)
+
+- The user squashed value-type and pushed it. GitHub `master` is
+  `8bb7c4f` (`8bb7c4f7a21d72c8eae553df89e17b71f34aeda3`).
+- `git fetch https://github.com/hugoduncan/value-type.git master` →
+  FETCH_HEAD `8bb7c4f…`; `git merge-base --is-ancestor 8bb7c4f… FETCH_HEAD`
+  → exit 0.
+- Value-type facts check (plan.md, Alias): `git diff --quiet 66d5ff7 8bb7c4f
+  -- src deps.edn` → exit 0. The full trees are equal (tree
+  `2882c2fa2f7265593e40f4e31e507e7e8f9bc813` for both). So the
+  `defvaluetype*` docstring, the design.md value-type facts and the error
+  facts in this file hold at `8bb7c4f` with no change.
+- Decision: pin `8bb7c4f7a21d72c8eae553df89e17b71f34aeda3`. `66d5ff7` stays
+  in earlier entries as the commit of the observations; it is not on
+  GitHub. The local `:local/root` checks of slices 1–3 used the same tree.
+- The slice-4 blocker is resolved.
+
+## Slice 4: alias and shared checks (2026-11-03)
+
+- `:value-type-test` alias added (`8bb7c4f…`, HTTPS `:git/url`); `clojure
+  -Srepro -Spath -M:value-type-test` cloned and resolved it. Added to
+  `dependency-bases`; `test/tooling` green (52 tests).
+- Selection mapping (shared → `closed-record.checks.<topic>`): all of
+  `equality`, `hidden-key`, `literal`, `rejected-key-message`, `malli`,
+  `differential`, `property`; `defclosedrecord` except
+  `accepted-options-test`, `load-ns-option-test`, `argument-errors-test`
+  (and their types NP, LN, NPS); `field-value` except
+  `field-declaration-test` (V-11; FL, DFL). Not shared: `compiler_rules`,
+  `value_type_option`, `bench_*`, `assoc_*`, `matrix_budget`.
+- Mechanism (deviation in form, not intent, from plan.md "Shared checks"):
+  each check ns holds the original test code as a quoted vector `body`;
+  `support/expand` rewrites it for the caller. Conventions: `$ns`,
+  `$ns/x`, `$P` (munged prefix, in strings and symbol names),
+  `$representation`. Symbols referred/aliased in the check ns are qualified;
+  symbols qualified with the check ns (from syntax-quote in body macros)
+  lose the namespace. So bodies keep their own helpers (`thrown`,
+  `in-test-ns`, `round-trip`) as before; `checks.support` holds only
+  `expand`. The check ns `:require`s exist only for qualification, so each
+  check ns turns off clj-kondo unused-namespace/referred-var in its ns
+  metadata. Quoted bodies are not linted by clj-kondo.
+- `defclosedrecord-test` non-shared tests: own `Measure` protocol (the
+  macro defines `Shape`/`area` in the same ns) and own `thrown`.
+- Counts unchanged: 186 tests, 2793 assertions on 1.11.4, 1.12.6,
+  1.13.0-alpha9.
+- Preview for slice 5 (ad hoc namespaces in /tmp, not committed):
+  `:record-opts [:value-type true]` over all 9 check namespaces: Temurin 21
+  73 tests pass; Valhalla `--enable-preview` all pass except
+  `serializable-test` when given `:representation :identity` (expected:
+  value output is not serializable). So the `$representation` gate works.
+
+## Slice 5: value-type suite (2026-11-03)
+
+- Files: `test/value-type/closed_record/value_type/` — `expectation`
+  (guard plus `value-class?`/`observed`), 9 `<topic>-test` wrappers of
+  `checks.*`, `representation-test` (VT-V2, VT-V4), `errors-test` (VT-V6),
+  `subprocess-test` (does-not-load, VT-V5), `aot-test` (VT-V7);
+  `test/value-type-clj-1.11/.../clj_1_11_test.clj` (A, B, C each throw with
+  cause).
+- src change: value-mode `representation` has `:preamble` =
+  `(require 'value-type.core)`, spliced first in the `let` (needed for VT-V7
+  class load without source). Ordinary preamble absent; fixture test green.
+- `checks.defclosedrecord/serializable-test`: value branch asserts
+  `(= :value $representation)` (scry fails a test with no assertion).
+- VT-V6 forms are read from text: quoted constants lose symbol metadata.
+- Guard: no property → scry exit 1 (`:scry.cli/runner-error`).
+- Commands (`-J` before `-M`):
+  - Temurin 21: `JAVA_CMD=$HOME/.local/share/mise/installs/java/temurin-21.0.10+7.0.LTS/bin/java clojure -J-Dclosed-record.test.representation=identity -M:test:value-type-test:clj-1.12 -m scry.cli --dir test/value-type`
+    → 81 tests, 300 assertions, exit 0. `openjdk version "21.0.10"`.
+  - Valhalla: `JAVA_CMD=$HOME/.local/share/mise/installs/java/openjdk-27.0.0-jep401ea3+1-1/bin/java clojure -J--enable-preview -J-Dclosed-record.test.representation=value -M:test:value-type-test:clj-1.12 -m scry.cli --dir test/value-type`
+    → 81 tests, 297 assertions, exit 0. `build 27-jep401ea3+1-1`.
+  - Clojure 1.11: `JAVA_CMD=<Temurin 21> clojure -M:test:value-type-test -m scry.cli --dir test/value-type-clj-1.11`
+    → 1 test, 7 assertions.
+- Ordinary suite on 1.11/1.12/1.13: 186 tests, 2793 assertions.
+
+## Slice 6: CI (2026-11-03)
+
+- `ci.yml` jobs `value-type-temurin-21` and `value-type-valhalla` after
+  `test`. Valhalla URL (from value-type `release.yml`):
+  `https://download.java.net/java/early_access/valhalla/27/1/<archive>`
+  (HTTP 200, 248889276 bytes). Cache `actions/cache@v4.2.3`, path
+  `$RUNNER_TEMP/valhalla-archive`, key `valhalla-<sha256>`; download only on
+  miss, SHA-256 check always; `JAVA_CMD` via `$GITHUB_ENV` before
+  `setup-clojure`.
+- 1.11 step: `if: ${{ !cancelled() }}`; each upload gated on its own step
+  outcome.
+- Checked: YAML parses (bb clj-yaml); no `continue-on-error`; artifact names
+  unique; runtime matrix and `release.yml` unchanged (`ci.yml` diff is
+  additions only).
+- Not yet run in CI: push needs user approval (gate).
+
+## Slice 6: push gate resolved (2026-11-03)
+
+- User decision: continue on a branch other than `master`; that branch may
+  be pushed freely. The task now works on the branch
+  `020-value-type-records` in the worktree
+  `/Users/duncan/projects/hugoduncan/closed-record/020-value-type-records`,
+  created from local `master` at `213ccbd`. The slice-9 push is approved too.
+- `master` is not pushed and gets no more task commits.
+- `ci.yml` triggers on `pull_request` (and pushes to `master`), so CI
+  evidence needs the pull request of plan.md (CI, Push).
+
+## Slice 6: first CI run (2026-11-03)
+
+- Ref `020-value-type-records`, SHA `33eab36e40bd3e97de36d5dd007cfe8c80115a84`, pull request
+  https://github.com/hugoduncan/closed-record/pull/1 (base `master`).
+- Run https://github.com/hugoduncan/closed-record/actions/runs/41869416187
+  (`pull_request`): all 9 jobs `success` — Release tooling, Runtime
+  1.11/1.12/1.13, Development quality, Markdown links, Build, Value-type
+  tests (Temurin 21), Value-type tests (Valhalla). No fix needed.
+- `origin/master` lags local `master`, so the pull request also carries
+  earlier task-020 commits; that is expected.
+- Next: slice 7 (VT-V8 bench). The slice-9 push goes to the same ref; the
+  pull request exists, so do not run `gh pr create` again.
+
+## Slice 7: VT-V8 bench (2026-11-03)
+
+- `closed-record.bench.value-type` added; no other ns requires it (grep).
+  `git diff` of `dev/bench`: only `run.sh` changed, plus the new file.
+  It defines its own `ops`, table, parent loop and child command; uses
+  `bench-op`, `fork/in-order` (V thunk first → `[op v p]`), `report/ratio`,
+  `report/fork-count`, `timing-tool/*`. The temp result file is deleted
+  before launch, so "missing result file" is detectable.
+- `run.sh`: `BENCH_ALIASES` in the JAR lookup and the run;
+  `BENCH_JVM_OPTS` unquoted before `-Srepro` (run only). Launcher test
+  (vars unset): 1 test, 4 assertions pass. Default run (no args): six
+  S-03 rows all pass, exit 0. `:test` JVM after requiring
+  `closed-record.bench.fork`: `value-type.core` not loaded, no resource.
+  Ordinary suite: 186 tests, 2793 assertions.
+- VT-V8 run: command of plan.md; `build 27-jep401ea3+1-1`, `Darwin arm64`,
+  `Mac17,7`; wall 35 s; exit 0. `(hash x)` V 93.29 [36.74, 185.90], P 3.58
+  [3.18, 4.02], V/P 26.022; `(= x y)` V 3.30 [3.11, 3.45], P 4.69 [4.26,
+  5.34], V/P 0.705. Recorded in `doc/performance.md` "Value-type records".
+  Vale rejects a bare "ns" header word; the table uses `ns/op [range]` as
+  the other tables do.
+- Next: slice 8 (documentation).
+
+## Slice 8: documentation (2026-11-03)
+
+- Docstring, `doc/API.md`, README "Value-type records" section (Git
+  coordinate `8bb7c4f…`, differences table, no performance claim),
+  `doc/development.md`, `doc/tool-installation.md`, Ramora pages and
+  `mementum/state.md` updated.
+- Vale rejects "classpath" and "macroexpansion" in README and API.md; the
+  new text uses "class path" and "macro expansion". Older Ramora text keeps
+  "macroexpansion" (Vale scope excludes it).
+- Ramora value-type embodiment now names the `require` preamble as a
+  generated-code dependency and in the generated type sketch.
+- Local checks after slice 8: fmt, kondo, Vale, API check, lychee clean;
+  ordinary suite 186/2793. `src` changed (docstring only), so slice 9 must
+  push and read a new CI run.
+
+## Slice 9: quality gate (2026-11-04)
+
+- Local: `bb clj-fmt:check`, `bb clj-kondo:lint` (0 findings), `bb vale`,
+  `bb api-docs --check`, `bb lychee:check` (0 errors) clean. Build tests
+  6/101 pass (stack trace in output is expected test output), `clojure -T:build jar`
+  exit 0, release tests 9/104 pass. No fixes needed.
+- Final push: ref `020-value-type-records`, SHA `d689459711b5cb22cb65afe9a6fab161d1fb1602`
+  (last commit outside the task dir), PR https://github.com/hugoduncan/closed-record/pull/1,
+  run https://github.com/hugoduncan/closed-record/actions/runs/41871685593:
+  all 9 jobs `success` (Build verification, Development quality, Runtime
+  tests 1.11/1.12/1.13, Markdown links, Value-type tests (Temurin 21),
+  Value-type tests (Valhalla), Release tooling verification).
+- Acceptance: 1 VT-V1/VT-V4 tests in both value-type jobs (green); 2 fixture
+  test + does-not-load subprocess (green); 3 run above; 4 `git diff ac25942
+  -- deps.edn` adds only the alias, SHA `8bb7c4f` on GitHub (slice 4);
+  5 both jobs in `ci.yml`, no `continue-on-error`, SHA-256 + `actions/cache`,
+  unique upload names; 6 VT-V8 in this file and `doc/performance.md`
+  "Reproduction and limits"; 7 slice 8 docs, API check clean, no progress
+  history in Ramora value-type pages (grep); 8 local checks above + CI.
+- This commit changes task files only; not pushed (plan.md, Final push).

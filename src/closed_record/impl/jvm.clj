@@ -16,6 +16,10 @@
     ^int ^:unsynchronized-mutable __hash
     ^int ^:unsynchronized-mutable __hasheq])
 
+(def ^:private value-hidden-fields
+  "The hidden fields in value mode: no mutable metadata (VT-D5)."
+  '[__meta __extmap ^int __hash ^int __hasheq])
+
 (def ^:private base-interfaces
   '[clojure.lang.IRecord
     clojure.lang.IHashEq
@@ -36,9 +40,29 @@
 
 (defn- check-options
   [opts]
-  (when-let [bad (seq (remove #{:no-print :load-ns} (keys opts)))]
+  (when-let [bad (seq (remove #{:no-print :load-ns :value-type} (keys opts)))]
     (throw (IllegalArgumentException.
-            ^String (apply print-str "Unsupported option(s) -" bad)))))
+            ^String (apply print-str "Unsupported option(s) -" bad))))
+  (when-not (contains? #{::absent true false} (:value-type opts ::absent))
+    (throw (IllegalArgumentException.
+            (str ":value-type must be true or false, not "
+                 (pr-str (:value-type opts)))))))
+
+(defn- resolve-value-type
+  "Resolve `value-type.core/defvaluetype*` (VT-D4). Throw ex-info
+  `:closed-record/value-type-unavailable` when it does not resolve: with the
+  `requiring-resolve` exception as cause, or with no cause when the var is
+  absent."
+  [classname]
+  (let [data {:type :closed-record/value-type-unavailable
+              :class-name classname}
+        msg (str "value-type.core/defvaluetype* is not available for "
+                 classname)
+        v (try
+            (requiring-resolve 'value-type.core/defvaluetype*)
+            (catch Throwable t
+              (throw (ex-info msg data t))))]
+    (or v (throw (ex-info msg data)))))
 
 (defn- maybe-destructured
   "Replace each non-symbol method parameter with a gensym, and destructure
@@ -90,6 +114,27 @@
          h#)
        c#)))
 
+(defn- representation
+  "The representation description: the differences between ordinary and
+  value mode (VT-D3, VT-D5, VT-D6, VT-D7). `hash-form` and `with-meta-form`
+  take the method locals and give the method body. `preamble` forms come
+  first in the expansion: value mode loads `value-type.core`, so classes
+  compiled ahead of time initialise without a require of value-type in user
+  code (VT-V7)."
+  [value-type?]
+  (if value-type?
+    {:preamble [`(require '~'value-type.core)]
+     :type-head 'value-type.core/defvaluetype*
+     :hidden-fields value-hidden-fields
+     :hash-form (fn [_field expr] expr)
+     :with-meta-form (fn [tname fields m]
+                       `(new ~tname ~@fields ~m ~'__extmap))}
+    {:type-head 'deftype*
+     :hidden-fields hidden-fields
+     :hash-form cached-hash
+     :with-meta-form (fn [tname fields m]
+                       `(new ~tname ~@fields ~m ~'__extmap ~'__hash ~'__hasheq))}))
+
 (defn- key-case
   "A `case` form on `k`, with one clause for each declared keyword and field
   pair, and then `default`. `(clause-fn kw fld)` gives the clause expression."
@@ -101,8 +146,10 @@
 (defn- generated-methods
   "The methods of the generated type. The field names are locals in the
   method bodies, so every generated local is a gensym."
-  [tname cname-str type-hash fields]
-  (let [kws (mapv keyword fields)
+  [{:keys [hash-form with-meta-form]} tname cname-str type-hash fields]
+  (let [;; The name that `m#` gives, so the ordinary expansion stays the same
+        m (symbol (str (gensym "m__") "__auto__"))
+        kws (mapv keyword fields)
         n (count fields)
         this (gensym "this__")
         k (gensym "k__")
@@ -114,17 +161,16 @@
         hinted-target (with-meta gtarget {:tag tname})]
     [;; IHashEq / Object
      `(~'hasheq [~this]
-                ~(cached-hash '__hasheq
-                              `(int (bit-xor ~type-hash
-                                             (clojure.lang.APersistentMap/mapHasheq ~this)))))
+                ~(hash-form '__hasheq
+                            `(int (bit-xor ~type-hash
+                                           (clojure.lang.APersistentMap/mapHasheq ~this)))))
      `(~'hashCode [~this]
-                  ~(cached-hash '__hash
-                                `(clojure.lang.APersistentMap/mapHash ~this)))
+                  ~(hash-form '__hash
+                              `(clojure.lang.APersistentMap/mapHash ~this)))
      `(~'equals [~this o#] (clojure.lang.APersistentMap/mapEquals ~this o#))
      ;; IObj
      `(~'meta [~this] ~'__meta)
-     `(~'withMeta [~this m#]
-                  (new ~tname ~@fields m# ~'__extmap ~'__hash ~'__hasheq))
+     `(~'withMeta [~this ~m] ~(with-meta-form tname fields m))
      ;; ILookup / IKeywordLookup
      `(~'valAt [~this ~k] (.valAt ~this ~k nil))
      `(~'valAt [~this ~k ~nf]
@@ -255,25 +301,30 @@
   [tname fields opts impls]
   (check-field-metadata fields)
   (check-options opts)
-  (let [classname (with-meta (symbol (str (namespace-munge *ns*) "." tname))
+  (let [value-type? (true? (:value-type opts))
+        rep (representation value-type?)
+        opts (dissoc opts :value-type)
+        classname (with-meta (symbol (str (namespace-munge *ns*) "." tname))
                     (meta tname))
+        _ (when value-type? (resolve-value-type (with-meta classname nil)))
         cname-str (str classname)
         plain-fields (mapv #(with-meta % nil) fields)
         type-hash (hash classname)
         ->name (symbol (str "->" tname))
         map->name (symbol (str "map->" tname))
-        methods (generated-methods tname cname-str type-hash plain-fields)]
+        methods (generated-methods rep tname cname-str type-hash plain-fields)]
     `(let []
+       ~@(:preamble rep)
        (declare ~->name)
        (declare ~map->name)
-       (deftype* ~(symbol (name (ns-name *ns*)) (name tname)) ~classname
-         ~(into (vec fields) hidden-fields)
-         :implements ~(vec (distinct (concat base-interfaces
-                                             [protocol-interface]
-                                             (user-interfaces impls))))
-         ~@(mapcat identity opts)
-         ~@methods
-         ~@(user-methods impls))
+       (~(:type-head rep) ~(symbol (name (ns-name *ns*)) (name tname)) ~classname
+                          ~(into (vec fields) (:hidden-fields rep))
+                          :implements ~(vec (distinct (concat base-interfaces
+                                                              [protocol-interface]
+                                                              (user-interfaces impls))))
+                          ~@(mapcat identity opts)
+                          ~@methods
+                          ~@(user-methods impls))
        (import ~classname)
        ~(positional-factory ->name classname cname-str plain-fields)
        ~(map-factory map->name classname cname-str plain-fields)

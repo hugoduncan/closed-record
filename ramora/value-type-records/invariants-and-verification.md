@@ -70,9 +70,9 @@ confidence: high
 
 | Id | Item | Check |
 |---|---|---|
-| VT-V1 | Selection | Run in the ordinary test JVM, without value-type: no option and `:value-type false` give the ordinary expansion and do not load value-type; `:value-type true` fails with `:closed-record/value-type-unavailable`; other values give `IllegalArgumentException`. |
+| VT-V1 | Selection | Ordinary test JVM, without value-type: no option and `:value-type false` give an expansion equal to the recorded expansion fixture (printed with `*print-meta*` true, gensyms normalised); `:value-type true` fails with `:closed-record/value-type-unavailable`, `:class-name` and the resolution exception as cause; other values give `IllegalArgumentException`. Absent-var case, in a subprocess JVM with a stub `value-type.core`: the error has no cause. Value-type suite, in a subprocess JVM: an ordinary record does not load value-type. Clojure 1.11 with value-type: `:value-type true` fails with the load failure as cause. |
 | VT-V2 | Expansion | With value-type: `defvaluetype*` replaces `deftype*`; immutable `^int` hash fields; no generated reference to `__hash` or `__hasheq`; the option is not passed to `deftype*`. |
-| VT-V3 | Identity fallback | Run V-01 to V-10, V-12, V-14 and V-15 on value-type records, on Temurin 21 with `value-type.fallback=silent` (the default). |
+| VT-V3 | Identity fallback | Run V-01 to V-10, V-12, V-14 and V-15 on value-type records, on Temurin 21 with `value-type.fallback=silent` (the default). The shared checks are the ordinary behaviour tests, except tests of options, of argument errors, of class reflection and of the compiler rules. The serialization round trip runs on identity fallback only. |
 | VT-V4 | Value output | Run VT-V3 on Valhalla `27-jep401ea3+1-1` with `--enable-preview`. Also check `.isValue`, `identical?` of equal records, and that the hash fields are absent. |
 | VT-V5 | Policy | With `value-type.fallback=error` on a JVM without value classes, definition throws value-type's `Error`. |
 | VT-V6 | Errors | value-type errors pass through: `:non-nil` metadata gives `:value-type/error :invalid-field`. |
@@ -107,17 +107,19 @@ confidence: high
 - Scope: CI.
 - Commitment: medium. Change the pin together with value-type.
 
-VT-V1, VT-V2, VT-V3, VT-V5 and VT-V6 run in Temurin 21 jobs. VT-V4 and the
-value-output part of VT-V7 run in the Valhalla job. VT-V8 runs manually.
+VT-V1, VT-V2, VT-V3, VT-V5, VT-V6 and the identity part of VT-V7 run in
+Temurin 21 jobs (the Clojure 1.11 part of VT-V1 in the job
+`Value-type tests (Temurin 21)`). VT-V4 and the value-output part of VT-V7 run
+in the Valhalla job. VT-V8 runs manually.
 
 ## Risks
 
-- VT-R1 `defvaluetype*` does not exist yet, or its contract changes before
-  release. Likelihood: medium. Effect: VT-D3 and VT-D5 change. Signal: VT-V2.
+- VT-R1 The `defvaluetype*` contract changes before the value-type release.
+  Likelihood: medium. Effect: VT-D3 and VT-D5 change. Signal: VT-V2.
 - VT-R2 JEP 401 rejects value-class constructors that call `this(…)`. The
   compiler-generated record constructors do this. Likelihood: low. Effect:
-  value output is not possible with the record shape. Signal: the value-type
-  spike, then VT-V4.
+  value output is not possible with the record shape. Signal: VT-V4. The pinned
+  build gives value output with the record shape.
 - VT-R3 The value-type dependency in tests is not reproducible, because
   value-type has no release. Likelihood: medium. Effect: CI differs from local
   tests. Mitigation: pin a Git SHA in the test alias.

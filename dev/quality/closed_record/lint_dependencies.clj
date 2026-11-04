@@ -7,7 +7,7 @@
 (def dependency-bases
   "Separate bases prevent dependency-replacing aliases from hiding imports."
   [nil :test :build :build-test :bench :nrepl :deploy :quickdoc
-   :tooling-test :clj-1.12 :clj-1.13])
+   :tooling-test :value-type-test :clj-1.12 :clj-1.13])
 
 (defn merge-classpaths
   "Combine classpaths in stable order without duplicate entries."

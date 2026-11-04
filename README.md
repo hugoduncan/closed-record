@@ -142,6 +142,51 @@ Call `map->Name` on the result only when the result has all the
 declared keys and no other keys. An undeclared key throws. A missing
 declared key gives nil.
 
+### Value-type records
+
+The `:value-type true` option defines the record through
+[value-type](https://github.com/hugoduncan/value-type):
+
+```clojure
+(defclosedrecord Point [x y] :value-type true)
+```
+
+On a JVM with JEP 401 value classes (a Valhalla early-access JDK with
+`--enable-preview`), the type is a value class. On other JVMs,
+value-type's fallback policy (system property `value-type.fallback`)
+selects an identity class, a warning, or an error.
+
+Requirements:
+
+- Clojure 1.12.6. value-type does not load on Clojure 1.11.
+- value-type on the class path at macro expansion and at run time, also
+  for AOT classes. value-type has no release yet. Add it as a Git
+  dependency:
+
+  ```clojure
+  {:deps {org.hugoduncan/value-type
+          {:git/url "https://github.com/hugoduncan/value-type.git"
+           :git/sha "8bb7c4f7a21d72c8eae553df89e17b71f34aeda3"}}}
+  ```
+
+Without value-type, macro expansion throws ex-info with
+`:type :closed-record/value-type-unavailable` and `:class-name` (the
+class name symbol, for example `user.Point`). Without the option,
+closed-record does not load value-type.
+
+The record contract does not change, with these differences:
+
+| Behaviour | Ordinary | Value output | Identity fallback |
+|---|---|---|---|
+| Hash values | as `defrecord` | same | same |
+| Hash caching | yes | no | no |
+| `identical?` | reference | field values | reference |
+| `locking`, weak references | work | throw `IdentityException` | work |
+| Serialization | as `defrecord` | not promised | as `defrecord` |
+
+Each `hash` call computes the hash again. The option makes no
+performance claim; see [performance](doc/performance.md#value-type-records).
+
 ## Development
 
 See [development instructions](doc/development.md) for tests, CI,

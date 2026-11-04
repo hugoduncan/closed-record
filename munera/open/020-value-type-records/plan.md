@@ -89,10 +89,11 @@ Key decisions:
   - Paths: `test/runtime/closed_record/checks/<topic>.clj`, namespace
     `closed-record.checks.<topic>`, one for each ordinary test file that has
     selected tests. `<topic>` is the test namespace name without `-test`
-    (for example `closed-record.checks.defclosedrecord`). Helpers that more
-    than one check namespace uses (for example `thrown`, `data-of`,
-    `round-trip`) are in `closed-record.checks.support`
-    (`test/runtime/closed_record/checks/support.clj`).
+    (for example `closed-record.checks.defclosedrecord`). Each body keeps its own helpers (`thrown`, `round-trip`, …) as
+    in the original test file. `closed-record.checks.support`
+    (`test/runtime/closed_record/checks/support.clj`) has `expand`, which
+    rewrites a quoted body for the calling namespace (slice-4 entry in
+    implementation.md).
   - Callers: each ordinary test namespace calls
     `(define-checks {:record-opts [] :representation :identity})` and keeps
     its tests that are not shared. The value-type suite has one test
@@ -138,8 +139,9 @@ Key decisions:
     key. value-type has only `.clj` sources and no `:deps/prep-lib`, so the
     dependency needs no prep step. README (slice 8) uses the same coordinate
     in its instruction for unreleased value-type.
-  - SHA rule at the slice-4 gate: pin `66d5ff7`
-    (`66d5ff7680c227bcf44ffe0824628288ffab0ebf`) when it is on GitHub.
+  - SHA rule at the slice-4 gate: pin `8bb7c4f`
+    (`8bb7c4f7a21d72c8eae553df89e17b71f34aeda3`), the squashed push of
+    `66d5ff7` (equal tree) on GitHub `master`.
     Check: `git -C ~/projects/hugoduncan/value-type/value-type-master fetch
     https://github.com/hugoduncan/value-type.git master`, then
     `git -C … merge-base --is-ancestor <sha> FETCH_HEAD` exits 0 (fetch the
@@ -167,7 +169,8 @@ Key decisions:
   dependency:
   `clojure -Sdeps '{:deps {org.hugoduncan/value-type {:local/root "/Users/duncan/projects/hugoduncan/value-type/value-type-master"}}}' -M:test:clj-1.12 -e <form>`,
   where `<form>` prints the `macroexpand-1` of a `:value-type true`
-  definition. First verify that the HEAD of that repository is `66d5ff7`. Record the
+  definition. First verify that the tree of that repository HEAD is `2882c2f` (the tree of
+  `66d5ff7` and `8bb7c4f`). Record the
   command and the result in implementation.md. The committed check is VT-V2
   (slice 5).
 - **VT-V7**: a test in the value-type suite,
@@ -183,6 +186,12 @@ Key decisions:
   the representation against the expectation. The compile is not in the
   test JVM, because `compile` needs `*compile-path*` on the class path and
   the load must not see the source.
+- **Value-mode preamble** (slice 5, VT-V7): the value-mode expansion starts
+  with `(clojure.core/require 'value-type.core)` before `defvaluetype*`, so
+  AOT classes initialise with no require of value-type in user code. The
+  ordinary expansion has no preamble (VT-I2: fixture unchanged).
+- **Clojure CLI option order**: `-J` options come before `-M`; after `-M`
+  the CLI passes them to `clojure.main` as file arguments.
 - **Local JDKs**: this machine is macOS arm64. Its default `java` is 25,
   which is not a target JVM, so each local value-type suite, Clojure 1.11
   case and VT-V8 command sets `JAVA_CMD`. Subprocess and fork child JVMs use
@@ -293,26 +302,24 @@ Key decisions:
     extracted pinned JDK. The Clojure CLI uses `JAVA_CMD` for dependency
     resolution and for the test JVM. `-J--enable-preview` applies only to
     the test JVM.
-  - Push (gate): acceptance criterion 3 needs the jobs to pass in CI. Local
-    `master` is ahead of `origin/master` by many commits, and tasks 014 and
-    017 do not push only for evidence. Thus slice 6 stops and asks the user
-    before the first push, as at the slice-4 gate. The proposed ref is a
-    new branch `020-value-type-records` with a pull request to `master`
-    (`ci.yml` runs on `pull_request`): `git push origin
-    master:refs/heads/020-value-type-records`, then `gh pr create --base
-    master --head 020-value-type-records`. If the user names another ref
-    (for example `master`), use it. A fix after a failed run is a new commit
-    on local `master`, pushed to the same ref. The question at slice 6 also
-    asks for approval of the slice-9 push to the same ref (Final push). A
-    merge of the pull request is the user's decision and is not part of
-    this task.
+  - Push: acceptance criterion 3 needs the jobs to pass in CI. User
+    decision (2026-11-03): the work continues on the branch
+    `020-value-type-records`, in the worktree
+    `/Users/duncan/projects/hugoduncan/closed-record/020-value-type-records`,
+    and that branch may be pushed with no further approval. Local `master`
+    does not get task commits and is not pushed. `ci.yml` runs on
+    `pull_request`, not on a push to another branch. Thus push with
+    `git push -u origin 020-value-type-records`, then open the pull request
+    with `gh pr create --base master --head 020-value-type-records` once. A
+    fix after a failed run is a new commit on the branch, pushed to the same
+    ref. A merge of the pull request is the user's decision and is not part
+    of this task.
   - Final push (slice 9): slices 7 to 9 change files that CI checks (the
     `src` docstring, `doc/`, Ramora, `dev/bench`, quality fixes). Thus the
     slice-6 run is not the acceptance criterion 3 evidence. After the
-    local quality, build and release checks of slice 9 pass, push local
-    `master` to the slice-6 ref and read the run with the CI result
-    commands. If the user did not approve this push at slice 6, stop and
-    ask first. A fix after a failed run is a new commit, pushed to the same
+    local quality, build and release checks of slice 9 pass, push the
+    branch `020-value-type-records` and read the run with the CI result
+    commands. The user approved this push (Push). A fix after a failed run is a new commit, pushed to the same
     ref. The acceptance criterion 3 evidence is the green run of the last
     commit that changes files outside
     `munera/open/020-value-type-records/`. The commit that records the run
@@ -331,11 +338,9 @@ Key decisions:
 
 ## Risks
 
-- **Prerequisite unmet (blocker for slice 4)**: value-type `66d5ff7`
-  (contains `defvaluetype*`) is not on GitHub; origin/master is at `5d2656b`.
-  Slices 1–3 can proceed (no committed value-type dependency). At slice 4
-  (test alias), apply the SHA rule (Alias): stop and ask the user per the
-  design, unless the user has pushed by then.
+- **Prerequisite**: met. value-type `8bb7c4f` (the squashed push of
+  `66d5ff7`, equal tree) is on GitHub `master`. If value-type `master` is
+  rewritten again before the alias is committed, apply the SHA rule again.
 - **Valhalla download flakiness**: `download.java.net` availability; mitigated
   by `actions/cache` keyed on the SHA-256.
 - **Shared check extraction churn**: refactoring the ordinary runtime tests
@@ -385,7 +390,7 @@ Key decisions:
    Clojure 1.11 VT-V1 case. Local runs on Temurin 21 and Valhalla.
 6. **CI** — the two required jobs, archive pin and cache, failure uploads,
    release workflow verified unchanged (`workflow_call` picks up new jobs);
-   push (**gate: requires user approval**) and CI result.
+   push of branch `020-value-type-records` (approved) and CI result.
 7. **VT-V8 bench** — entry namespace, `run.sh` environment variables,
    manual Valhalla run; results in `implementation.md` and `doc/performance.md`; default
    `:bench` run and the `test/bench` launcher test verified unchanged.
