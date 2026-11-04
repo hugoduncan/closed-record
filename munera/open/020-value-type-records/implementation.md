@@ -255,3 +255,9 @@ Paths:
   `identical?` (`conj nil`, `dissoc` of an undeclared key, `check`) still
   hold on value output, because `identical?` then compares fields. They need
   no differences-table assertion.
+- inconsistency review (round 5) added 1 new design step
+- Checked, not filed: `CHANGELOG.md` `## [Unreleased]` is empty, and the
+  design adds no entry for the option. The release contract
+  (`ramora/release-workflow/contracts-and-flow.md`) needs nonempty
+  Unreleased notes only at release time, and a release is out of scope.
+  The release task must write the note for `:value-type`.

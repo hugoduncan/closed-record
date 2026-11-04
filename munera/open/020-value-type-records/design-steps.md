@@ -146,3 +146,16 @@
   emitter or expansion tests), and state that the serialization check runs
   on identity fallback and does not run on value output (or another stated
   expectation).
+- [ ] Inconsistency: the Documentation item for `doc/development.md` does
+  not name its list of test suites. `doc/development.md` (lines 7-16) says
+  "Test suites share the `test/` parent directory", lists the five suites
+  (`test/runtime/` … `test/bench/`), and says "Each suite has a separate
+  source path. Select the suite directory explicitly". The design adds two
+  test directories (the value-type suite and the Clojure 1.11 case of
+  VT-V1) with their own commands. After the change, the list is incomplete,
+  and acceptance criterion 7 requires current documentation. Add to the
+  Documentation item for `doc/development.md`: the suite list names both
+  new directories and their value-type dependency requirement. The
+  existing format and lint scope (all of `test/`) also assumes that both
+  directories are under `test/`; state this as a constraint on the paths
+  that the plan selects.
