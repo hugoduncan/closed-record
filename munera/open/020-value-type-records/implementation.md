@@ -51,3 +51,34 @@ Paths:
   `matrix` entries that each have a `command`.
 - value-type sources: `~/projects/hugoduncan/value-type/value-type-master/ramora/`
   `deftype-star-design.md` and `defvaluetype-design.md`.
+
+## Design-steps pass (2026-11-03)
+
+- All 7 design steps resolved in design.md. No `SCOPE_QUESTION:` items.
+- `src/` at the task start equals `ac25942` (last `src/` commit `3a37315` is
+  an ancestor). The fixture can be recorded from the working tree before the
+  first emitter change.
+- Observed: the normalised expansion (`*print-meta*` true, regex
+  `\b([A-Za-z-]+__)(\d+)(__auto__)?\b` → first-appearance index) of
+  `(defclosedrecord P [a ^long b] :load-ns true Object (toString [_] "x"))`
+  is the same string on Clojure 1.11.4, 1.12.6 and 1.13.0-alpha9. The type
+  hash literal in `hasheq` depends on the class name, so fix the namespace.
+- value-type reads `value-type.fallback` once, in the `policy` def of
+  `value-type.impl.runtime` (at load); later changes are unsupported. This is
+  why VT-V5 needs a subprocess.
+- Bench facts for VT-V8:
+  - `dev/bench/timing/run.sh` runs `clojure … -M:bench:corrected-timing "$@"`.
+    `"$@"` comes after `-M`, so extra aliases and `-J` options cannot come
+    through the arguments now.
+  - `fork/default-child-cmd` fixes `-m closed-record.bench`. `fork/parent`
+    prints the six-op S-03 table and exit code through `report/*`. The VT-V8
+    entry needs its own child command and aggregation; reuse
+    `report/per-call-stats` and `fork/in-order`.
+  - The child calls `timing-tool/observe`, which rejects an unknown
+    Criterium collector SHA. VT-V8 children need the corrected overlay of
+    `run.sh` on the class path.
+  - Many `test/runtime` tests (`bench_*_test`, `matrix_budget_test`,
+    `assoc_timing_result_test`) load `dev/bench` namespaces. None may require
+    the VT-V8 entry namespace.
+  - `dev/bench/cases.edn` `:valhalla` is the task-019 probe configuration
+    (Clojure 1.11.4). It is not the VT-V8 configuration.

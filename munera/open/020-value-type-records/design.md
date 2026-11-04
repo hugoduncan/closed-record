@@ -168,7 +168,8 @@ the ordinary mode only in:
 
 All other generated methods and both factories stay the same in both modes
 (VT-D8). The emitter calls `requiring-resolve` only in value mode (VT-D4). The
-ordinary expansion stays equal to the current expansion (VT-I2).
+ordinary expansion stays equal to the current expansion (VT-I2), as the VT-V1
+expansion fixture defines (Verification).
 
 The emitter receives the mode as explicit data. It must not use a dynamic var
 or other global state: VT-D1 rejects a global selection. Choose between these
@@ -186,12 +187,23 @@ ordinary expansion unchanged.
 - The base `:deps` do not change. No runtime or ordinary test alias adds
   value-type. `closed-record.core`, `closed-record.runtime` and the ordinary
   test suite do not load value-type.
-- A new test alias adds value-type at the pinned Git SHA (VT-R3) and a separate
-  test directory. It is used with `:clj-1.12` (VT-K4). Because the base
-  `:deps` select Clojure 1.11.4, the value-type alias alone does not select
-  Clojure 1.12.6.
+- A new test alias adds value-type at the pinned Git SHA (VT-R3) and two
+  separate test directories: the value-type suite and the Clojure 1.11 case of
+  VT-V1 (Verification). It is used with `:clj-1.12` (VT-K4), except for the
+  Clojure 1.11 case. Because the base `:deps` select Clojure 1.11.4, the
+  value-type alias alone does not select Clojure 1.12.6.
+- The VT-V8 code in `dev/bench` is in a separate entry namespace. It is the
+  only `dev/bench` namespace that defines value-type records. No other
+  namespace requires it: not `closed-record.bench`, not its fork and report
+  layers, and no namespace that a test in `test/runtime` or `test/bench`
+  loads. Only the VT-V8 command loads it.
+- The default `:bench` run (`sh dev/bench/timing/run.sh` with no arguments:
+  Clojure 1.11.4, V-11, the S-03 pass rule and exit code) and its V-11 result
+  do not change. The `:test` alias, which has `dev/bench` on its class path,
+  does not load value-type through `dev/bench`. This applies O-VT3 and VT-I2
+  to the bench boundary.
 - The quality checks (format, lint, prose, API freshness, links) include the
-  new test directory and the new documentation.
+  new test directories and the new documentation.
 
 ### Verification
 
@@ -199,8 +211,34 @@ Implement VT-V1 to VT-V8 as the Ramora verification plan states. Additional
 rules:
 
 - VT-V1 runs in the ordinary `test/runtime` suite on Clojure 1.11, 1.12 and
-  1.13, without value-type on the class path. It also checks that the ordinary
-  expansion does not load `value-type.core`.
+  1.13, without value-type on the class path. There it checks the expansion
+  with no option and with `:value-type false` against the expansion fixture
+  (below), and the errors of `:value-type true` and of other values.
+- Expansion fixture (VT-I2, acceptance criterion 2). The emitter uses
+  `gensym`, so two expansions are not `=`. Thus:
+  - Reference: a fixture file in `test/runtime`, recorded from the emitter at
+    `ac25942` before any emitter change. (`src/` at the task start is the same
+    as at `ac25942`.) It holds the expansions of a fixed set of
+    `defclosedrecord` forms in a fixed namespace. The plan selects forms that
+    include `:no-print`, `:load-ns`, field tags, user interfaces and methods,
+    and destructured method parameters.
+  - Comparison: the printed expansion with `*print-meta*` true, so that field
+    tags and mutable metadata count, after gensym normalisation. The
+    normalisation replaces each symbol with a name `prefix__N` or
+    `prefix__N__auto__` (`N` digits) with `prefix__G<i>` or
+    `prefix__G<i>__auto__`, where `<i>` is the order of first appearance in the
+    printed form. The check passes if the strings are equal. The expansions
+    with no option and with `:value-type false` must both equal the fixture.
+  - A later intended change of the ordinary expansion records the fixture
+    again in the same change.
+- VT-V1 "does not load value-type" check. In the ordinary suite value-type is
+  not on the class path, so a check there cannot fail. The check runs in the
+  value-type suite, in a subprocess JVM that has not loaded value-type. The
+  subprocess has the `java` binary, the JVM input arguments and the class path
+  of the test JVM. The subprocess expands and evaluates a
+  definition with no option and one with `:value-type false`, then checks
+  that `value-type.core` is not in `(loaded-libs)`. Add this placement to the
+  Ramora VT-V1 row.
 - VT-V1 also has one check with value-type on the class path and Clojure 1.11:
   each expansion with `:value-type true`, not only the first, gives
   `:closed-record/value-type-unavailable` with a cause. Add this case to the
@@ -211,23 +249,67 @@ rules:
   on types defined with the option. Use shared check definitions, not copies of
   the ordinary tests. The ordinary suite must stay runnable without value-type.
   No library switch selects the representation for a whole test run (VT-D1).
+- Representation expectation. Each value-type suite command sets the JVM
+  system property `closed-record.test.representation` to `value` (Valhalla
+  job) or `identity` (Temurin 21 job). The value-type suite fails if the
+  property is absent or has another value. The checks compare the observed
+  representation with this expectation. JVM capability detection alone cannot
+  find silent fallback, so the checks do not use it as the expectation. The
+  property is test data only: closed-record and value-type do not read it,
+  and it does not select the representation. Thus it is not a library switch
+  (VT-D1).
 - Where an ordinary check depends on an identity property (hash cache,
   `locking`, reference `identical?`), the value-type check asserts the
-  differences table of the Ramora design, for the representation under test.
+  differences table of the Ramora design, for the expected representation.
 - VT-V4 also checks `.isValue`, `identical?` of equal records, and the absence
-  of the hash fields. The check fails if the Valhalla job gives identity
-  output: the job must not pass through silent fallback.
-- VT-V5 runs in a JVM with `-Dvalue-type.fallback=error` on a JVM without value
-  classes.
+  of the hash fields. These checks compare with the expectation, so the suite
+  fails if the Valhalla job gives identity output: the job must not pass
+  through silent fallback.
+- Checks that need their own JVM configuration:
+  - VT-V5. The fallback policy is read once, when value-type loads, so
+    `-Dvalue-type.fallback=error` cannot apply to one test in the suite JVM.
+    A test in the value-type suite starts a subprocess JVM with the `java`
+    binary, the JVM input arguments and the class path of the test JVM, and
+    `-Dvalue-type.fallback=error`. The subprocess defines a value-type record.
+    The test checks that the definition throws value-type's `Error`. The test
+    starts the subprocess only when the expectation is `identity`, so VT-V5
+    runs in the Temurin 21 job, with no separate command.
+  - Clojure 1.11 case of VT-V1. It needs Clojure 1.11.4, so it cannot run in
+    the value-type suite JVM. It is in its own test directory, with its own
+    command and CI step in the Temurin 21 job. The value-type suite command
+    does not scan that directory.
+- Commands and aliases. A command sets the expectation with
+  `-J-Dclosed-record.test.representation=…`.
+  - Value-type suite, Temurin 21: `:test`, the value-type alias and
+    `:clj-1.12`, with `closed-record.test.representation=identity`.
+  - Value-type suite, Valhalla: the same aliases, with `JAVA_CMD` set to the
+    pinned JDK, `-J--enable-preview` and
+    `closed-record.test.representation=value`.
+  - Clojure 1.11 case of VT-V1, Temurin 21: `:test` and the value-type alias,
+    without `:clj-1.12`.
 - VT-V7 compiles a value-type record namespace and loads the classes in a
   subprocess JVM of the same kind, once for each representation. It follows the
-  value-type AOT rules. Loading value-output classes on another JVM is out of
-  scope.
+  value-type AOT rules. Each job runs VT-V7 for its expected representation,
+  so the two jobs together cover both representations. Loading value-output classes on another JVM is out of scope.
 - VT-V8 is a manual, informational Criterium measurement of `hash` and `=`
-  on value output against ordinary closed records. Use the existing bench
-  structure. Add no new harness and no CI timing. Record the commands,
-  runtime and results in `implementation.md`, and the result and its limits in
-  `doc/performance.md`.
+  on value output against ordinary closed records. Add no new harness and no
+  CI timing. Record the commands, runtime and results in `implementation.md`,
+  and the result and its limits in `doc/performance.md`.
+  - Bench structure: the criterium fork harness of `closed-record.bench`
+    (`dev/bench/closed_record/bench.clj`, `bench/fork.clj`,
+    `bench/report.clj`: 5 child JVM forks, alternating run order, per-call
+    statistics), started through `dev/bench/timing/run.sh`, which supplies
+    the Criterium correction. VT-V8 does not use the Java probes in
+    `dev/bench/valhalla/` (task 019).
+  - The VT-V8 entry namespace (Dependencies) has its own child command and
+    measures both record kinds in the same child JVM. The S-03 pass rule and
+    its exit code do not apply to VT-V8.
+  - Command: the aliases `:bench`, the value-type alias and `:clj-1.12`, with
+    `JAVA_CMD` set to the Valhalla `27-jep401ea3+1-1` `java` and the JVM
+    option `--enable-preview`. The child JVMs use the same `java` binary and
+    JVM options. `run.sh` now fixes the alias `:bench`. The plan adds a way to
+    give it these aliases and the JVM option, with no change to the default
+    run.
 
 ### CI
 
@@ -236,11 +318,13 @@ Embody VT-D10 in `ci.yml`:
 - A required job `Value-type tests (Valhalla)`. It downloads the pinned
   archive from `download.java.net`, checks the SHA-256, keeps the archive in
   `actions/cache` with the SHA-256 as key, and runs the value-type suite with
-  `JAVA_CMD` set to that JDK, `:clj-1.12` and `-J--enable-preview`. It also runs
-  the value-output part of VT-V7.
+  the Valhalla command of Verification (`JAVA_CMD` set to that JDK,
+  `:clj-1.12`, `-J--enable-preview`, expectation `value`). It also runs the
+  value-output part of VT-V7.
 - A Temurin 21 job, or a matrix entry, for the value-type suite on identity
-  fallback (VT-V2, VT-V3, VT-V5, VT-V6, the identity part of VT-V7, and the
-  Clojure 1.11 case of VT-V1).
+  fallback (VT-V2, VT-V3, VT-V5, VT-V6, the identity part of VT-V7), with the
+  Temurin 21 command of Verification (expectation `identity`). The Clojure 1.11
+  case of VT-V1 is a separate step in this job, with its own command.
 - No `continue-on-error`. The release workflow runs the new jobs through
   `workflow_call` with no change.
 
@@ -257,11 +341,23 @@ Embody VT-D10 in `ci.yml`:
   x64, VT-V8 manual).
 - `ramora/value-type-records/invariants-and-verification.md`: update VT-R1 and
   VT-R2 to the current facts (`defvaluetype*` exists; the feasibility gate
-  observed `this(…)` constructors on `27-jep401ea3+1-1`), and the VT-V1 row
-  (Verification above). Do not add progress history.
-- `ramora/defclosedrecord/embodiment.md` and its artifact map: the value-type
-  alias, suite and CI job, and the permitted dependencies of the Ramora
-  value-type embodiment.
+  observed `this(…)` constructors on `27-jep401ea3+1-1`), the VT-V1 row
+  (Verification above), and the VT-D10 placement paragraph after VT-D10. That
+  paragraph must name the identity part of VT-V7 for the Temurin 21 job, as
+  the CI section does. Do not add progress history.
+- `ramora/defclosedrecord/embodiment.md` must stay current (Ramora document
+  rules). Update:
+  - Allocation: the option check accepts `:no-print`, `:load-ns` and
+    `:value-type`, and checks the value of `:value-type`.
+  - Generated type, Method behaviour (`hasheq` and `hashCode` "Cached") and
+    State (`__hash`, `__hasheq` mutable cache): state that these describe
+    the ordinary mode, and point to the value mode in
+    `ramora/value-type-records/embodiment.md`.
+  - Boundaries: the permitted dependencies of the Ramora value-type
+    embodiment.
+- `ramora/defclosedrecord/embodiment/artifacts.md`: the value-type alias
+  (`deps.edn` row), the value-type test directories, the CI jobs (`ci.yml`
+  row), and the VT-V8 entry namespace (`dev/bench/` row).
 - `mementum/state.md`: current state after the task.
 
 ## Invariants and ownership
@@ -296,7 +392,8 @@ Embody VT-D10 in `ci.yml`:
    policy. Other option values and the unavailable cases give the errors of
    the public contract.
 2. Without the option, the expansion is equal to the expansion before this
-   task, and it does not load value-type (VT-V1).
+   task (the VT-V1 expansion fixture and comparison), and it does not load
+   value-type (VT-V1).
 3. VT-V1 to VT-V7 pass in CI. The ordinary runtime suite passes on Clojure
    1.11, 1.12 and 1.13 without value-type. The Valhalla job fails if it gets
    identity output.
