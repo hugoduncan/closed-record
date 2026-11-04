@@ -6,10 +6,7 @@
    [clojure.java.io :as io]
    [clojure.test :refer [deftest is]]
    [closed-record.subprocess :as subprocess]
-   [closed-record.value-type.expectation :as expectation])
-  (:import
-   (java.nio.file Files)
-   (java.nio.file.attribute FileAttribute)))
+   [closed-record.value-type.expectation :as expectation]))
 
 (def ^:private expected (expectation/representation))
 
@@ -36,26 +33,27 @@
               ((resolve 'closed-record.value-type.expectation/observed) c)})))))
 
 (deftest aot-test
-  (let [tmp (.toFile (Files/createTempDirectory
-                      "closed-record-aot" (make-array FileAttribute 0)))
+  (let [tmp (subprocess/temp-dir "closed-record-aot")
         src (io/file tmp "src")
         classes (io/file tmp "classes")
         file (io/file src "aot_app" "geo.clj")]
-    (io/make-parents file)
-    (spit file source)
-    (.mkdirs classes)
-    (let [compiled (subprocess/run
-                    ["-e" (pr-str `(binding [*compile-path* ~(str classes)]
-                                     (compile '~'aot-app.geo)))]
-                    :class-path [src classes])]
-      (is (= 0 (:exit compiled)) (:err compiled))
-      (let [{:keys [exit out err]} (subprocess/run ["-e" load-script]
-                                                   :class-path [classes])]
-        (is (= 0 exit) err)
-        (is (= {:source false
-                := true
-                :hash= true
-                :assoc {:x 3 :y 2}
-                :meta {:m 1}
-                :representation expected}
-               (edn/read-string out)))))))
+    (try
+      (io/make-parents file)
+      (spit file source)
+      (.mkdirs classes)
+      (let [compiled (subprocess/run
+                      ["-e" (pr-str `(binding [*compile-path* ~(str classes)]
+                                       (compile '~'aot-app.geo)))]
+                      :class-path [src classes])]
+        (is (= 0 (:exit compiled)) (:err compiled))
+        (let [{:keys [exit out err]} (subprocess/run ["-e" load-script]
+                                                     :class-path [classes])]
+          (is (= 0 exit) err)
+          (is (= {:source false
+                  := true
+                  :hash= true
+                  :assoc {:x 3 :y 2}
+                  :meta {:m 1}
+                  :representation expected}
+                 (edn/read-string out)))))
+      (finally (subprocess/delete-tree tmp)))))

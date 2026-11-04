@@ -956,3 +956,18 @@ Paths:
 ## Implementation review, second round (2026-11-04)
 
 - added 2 steps to be addressed
+
+## Review follow-ups, second round (2026-11-04)
+
+- addressed 2 review steps.
+- Artifacts row of `checks/support.clj`: names `define-checks` (reads the
+  source, evaluates only the `ns` form), `expand` (`$P` only) and the
+  placeholder var `support/representation`.
+- Temporary files: new `closed-record.subprocess/temp-dir` and
+  `delete-tree` (does not follow symbolic links). `absent-var-test` and
+  `aot-test` delete their directory in a `finally`; VT-V8 `run-fork`
+  deletes the result file in a `finally`. New `delete-tree-test`: ordinary
+  suite 188/2799 on Clojure 1.11, 1.12, 1.13. Temurin 21 suite 81/308,
+  Valhalla suite 81/309, Clojure 1.11 case 1/7, VT-V8 run exit 0; no new
+  `closed-record-{stub,aot,vt-fork}` entries in `$TMPDIR` after the runs.
+  fmt, kondo, Vale clean. Not pushed.

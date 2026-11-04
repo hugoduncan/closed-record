@@ -1,10 +1,13 @@
 (ns closed-record.subprocess
-  "Run `clojure.main` in a child JVM with the runtime of the test JVM."
+  "Run `clojure.main` in a child JVM with the runtime of the test JVM, and
+  manage its temporary files."
   (:require
    [clojure.string :as str])
   (:import
    (java.io File)
    (java.lang.management ManagementFactory)
+   (java.nio.file Files)
+   (java.nio.file.attribute FileAttribute)
    (java.util.concurrent TimeUnit)))
 
 (defn- java-binary
@@ -49,3 +52,17 @@
            :out @out
            :err (str @err "\nclosed-record.subprocess: child JVM timed out after "
                      timeout-ms " ms")}))))
+
+(defn temp-dir
+  "Create a temporary directory with name prefix `prefix`; give the `File`."
+  ^File [prefix]
+  (.toFile (Files/createTempDirectory prefix (make-array FileAttribute 0))))
+
+(defn delete-tree
+  "Delete `file` and, if it is a directory, all of its contents. Do not
+  follow symbolic links."
+  [^File file]
+  (when (and (.isDirectory file)
+             (not (Files/isSymbolicLink (.toPath file))))
+    (run! delete-tree (.listFiles file)))
+  (.delete file))

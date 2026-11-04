@@ -9,9 +9,7 @@
    [closed-record.expansion-fixture :as fixture]
    [closed-record.subprocess :as subprocess])
   (:import
-   (java.io FileNotFoundException)
-   (java.nio.file Files)
-   (java.nio.file.attribute FileAttribute)))
+   (java.io FileNotFoundException)))
 
 (deftest ordinary-expansion-test
   ;; VT-I2: the ordinary expansion equals the expansion fixture.
@@ -52,8 +50,7 @@
 
 (deftest absent-var-test
   ;; value-type.core loads but has no defvaluetype*: the error has no cause.
-  (let [dir (.toFile (Files/createTempDirectory
-                      "closed-record-stub" (make-array FileAttribute 0)))
+  (let [dir (subprocess/temp-dir "closed-record-stub")
         stub (io/file dir "value_type" "core.clj")
         script (pr-str
                 '(do
@@ -68,12 +65,14 @@
                              (catch Throwable t (ex-cause t)))]
                      (prn {:data (ex-data e)
                            :cause (some-> (ex-cause e) class .getName)}))))]
-    (io/make-parents stub)
-    (spit stub "(ns value-type.core)")
-    (let [{:keys [exit out err]} (subprocess/run ["-e" script]
-                                                 :class-path [dir])]
-      (is (= 0 exit) err)
-      (is (= {:data {:type :closed-record/value-type-unavailable
-                     :class-name 'my_app.geo.Point}
-              :cause nil}
-             (edn/read-string out))))))
+    (try
+      (io/make-parents stub)
+      (spit stub "(ns value-type.core)")
+      (let [{:keys [exit out err]} (subprocess/run ["-e" script]
+                                                   :class-path [dir])]
+        (is (= 0 exit) err)
+        (is (= {:data {:type :closed-record/value-type-unavailable
+                       :class-name 'my_app.geo.Point}
+                :cause nil}
+               (edn/read-string out))))
+      (finally (subprocess/delete-tree dir)))))
