@@ -111,6 +111,11 @@ fork means, not confidence intervals. No pass rule applies.
 | `(= x y)` | 3.30 [3.11, 3.45] | 4.69 [4.26, 5.34] | 0.705 |
 
 Value output does not cache the hash, so each `hash` call computes it again.
+Value objects can also be larger than identity objects. In the value-type
+[object-size comparison](https://github.com/hugoduncan/value-type/blob/8bb7c4f7a21d72c8eae553df89e17b71f34aeda3/ramora/defvaluetype-design/object-size.md)
+(value-type `8bb7c4f`, Valhalla tests), standalone value objects with one to
+three `long` fields were 8 bytes larger than equal `deftype` objects. This run
+does not measure object size.
 The `V` hash means vary much between forks. This run does not support a
 performance claim for value output. Run it again with:
 

@@ -91,7 +91,7 @@ pre-commit `4.6.0`, and runs the focused tooling tests.
 
 Formatting differences, lint warnings, lint errors, prose warnings and errors,
 and stale API output fail the job.
-The runtime matrix runs the three test commands above; `deps.edn` owns
+The runtime matrix runs the three `test/runtime` commands above; `deps.edn` owns
 the Clojure versions. A separate job runs the build tests and JAR command
 below once, with full Git history. A separate job runs the release tests.
 The job `Value-type tests (Temurin 21)` runs the Temurin 21 value-type command

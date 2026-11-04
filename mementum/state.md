@@ -21,8 +21,8 @@ keys and `dissoc` of declared keys. Main form: `defclosedrecord`.
 - Unreleased: the `:value-type true` option (task 020, branch
   `020-value-type-records`, pull request #1). Design:
   `ramora/value-type-records.md`. Tests need the `:value-type-test` alias;
-  CI has a Temurin 21 and a Valhalla value-type job. The release task must
-  add a `CHANGELOG.md` note for the option.
+  CI has a Temurin 21 and a Valhalla value-type job. `CHANGELOG.md`
+  `## [Unreleased]` has a note for the option.
 - Verification limits (hosted CI, publication, benchmark scope) are in each
   design's `embodiment.md`.
 

@@ -1234,3 +1234,15 @@ Paths:
 ## Documentation review (2026-11-04)
 
 - added 5 steps to be addressed
+
+## Documentation review follow-ups (2026-11-04)
+
+- addressed 5 review steps.
+- `CHANGELOG.md` Unreleased note for `:value-type true`; `mementum/state.md`
+  updated. `doc/performance.md` "Value-type records" states the value-type
+  size result (+8 bytes for 1–3 `long` fields) with a link to value-type
+  `object-size.md` at the pinned SHA `8bb7c4f`; VT-R4 unchanged. VT-V2 row
+  names `defvaluetype*`; artifacts `checks/*.clj` row states that
+  `serializable-test` is defined only for identity output;
+  `doc/development.md` names the three `test/runtime` commands. Vale and
+  lychee clean. Documentation only; no CI run needed for criterion 3.

@@ -71,7 +71,7 @@ confidence: high
 | Id | Item | Check |
 |---|---|---|
 | VT-V1 | Selection | Ordinary test JVM, without value-type: no option and `:value-type false` give an expansion equal to the recorded expansion fixture (printed with `*print-meta*` true, gensyms normalised); `:value-type true` fails with `:closed-record/value-type-unavailable`, `:class-name` and the resolution exception as cause; other values give `IllegalArgumentException`. Absent-var case, in a subprocess JVM with a stub `value-type.core`: the error has no cause. Value-type suite, in a subprocess JVM: an ordinary record does not load value-type. Clojure 1.11 with value-type: `:value-type true` fails with the load failure as cause. |
-| VT-V2 | Expansion | With value-type: `defvaluetype*` replaces `deftype*`; immutable `^int` hash fields; no generated reference to `__hash` or `__hasheq`; the option is not passed to `deftype*`. |
+| VT-V2 | Expansion | With value-type: `defvaluetype*` replaces `deftype*`; immutable `^int` hash fields; no generated reference to `__hash` or `__hasheq`; the option is not passed to `defvaluetype*`. |
 | VT-V3 | Identity fallback | Run V-01 to V-10, V-12, V-14 and V-15 on value-type records, on Temurin 21 with `value-type.fallback=silent` (the default). The shared checks are the ordinary behaviour tests, except tests of options, of argument errors, of class reflection and of the compiler rules. The serialization round trip runs on identity fallback only. |
 | VT-V4 | Value output | Run VT-V3 on Valhalla `27-jep401ea3+1-1` with `--enable-preview`. Also check `.isValue`, `identical?` of equal records, and that the hash fields are absent. |
 | VT-V5 | Policy | With `value-type.fallback=error` on a JVM without value classes, definition throws value-type's `Error`. |
