@@ -31,7 +31,7 @@ Return x if x is a closed record with no extra literal keys.
   if x is a closed record read from a literal with undeclared keys. Throw
   ex-info with :type :closed-record/not-closed-record (and :value-class)
   for any other value, including nil.
-<p><sub><a href="https://github.com/hugoduncan/closed-record/blob/master/src/closed_record/core.cljc#L78-L97">Source</a></sub></p>
+<p><sub><a href="https://github.com/hugoduncan/closed-record/blob/master/src/closed_record/core.cljc#L93-L112">Source</a></sub></p>
 
 ## <a name="closed-record.core/defclosedrecord">`defclosedrecord`</a>
 ``` clojure
@@ -56,7 +56,22 @@ Macro.
   each field declares its corresponding keyword key. specs supplies protocol
   or interface names and method implementations, as in defrecord.
   Options are keyword/value pairs before specs. Supported options are
-  :no-print and :load-ns, passed to the JVM type compiler as in defrecord.
+  :no-print and :load-ns, passed to the JVM type compiler as in defrecord,
+  and :value-type.
+
+  :value-type true defines the type through value-type
+  (org.hugoduncan/value-type, Clojure 1.12.6). On a JVM with JEP 401
+  value classes (Valhalla, --enable-preview) the type is a value class;
+  otherwise value-type's fallback policy selects an identity class or an
+  error. value-type must be on the class path at macro expansion and at run
+  time, also for AOT classes. If value-type.core/defvaluetype* cannot be
+  resolved, macro expansion throws ex-info with
+  :type :closed-record/value-type-unavailable and :class-name (the class
+  name symbol). :value-type false or no option gives an ordinary closed
+  record and does not load value-type. The record contract stays the same,
+  with these differences: hashes are computed on each call (no cache); on
+  value output, identical? compares field values, locking and weak
+  references throw IdentityException, and serialization is not promised.
 
   Defines ->Name, which takes one value per field in declaration order,
   and map->Name, which takes a map of keyword keys to field values.
@@ -71,4 +86,4 @@ Macro.
   Compilation of a literal as a code constant and print/read round trips
   discard extra keys. Call check on a runtime-read literal before those
   operations; check cannot find keys that have already been discarded.
-<p><sub><a href="https://github.com/hugoduncan/closed-record/blob/master/src/closed_record/core.cljc#L36-L73">Source</a></sub></p>
+<p><sub><a href="https://github.com/hugoduncan/closed-record/blob/master/src/closed_record/core.cljc#L36-L88">Source</a></sub></p>

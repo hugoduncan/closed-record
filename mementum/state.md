@@ -18,6 +18,11 @@ keys and `dissoc` of declared keys. Main form: `defclosedrecord`.
   `v0.1.190`, and a GitHub Release. This is the first release.
 - The release workflow calls CI (`workflow_call`), so a CI failure stops a
   release. `doc/releases.md` has the steps.
+- Unreleased: the `:value-type true` option (task 020, branch
+  `020-value-type-records`, pull request #1). Design:
+  `ramora/value-type-records.md`. Tests need the `:value-type-test` alias;
+  CI has a Temurin 21 and a Valhalla value-type job. The release task must
+  add a `CHANGELOG.md` note for the option.
 - Verification limits (hosted CI, publication, benchmark scope) are in each
   design's `embodiment.md`.
 

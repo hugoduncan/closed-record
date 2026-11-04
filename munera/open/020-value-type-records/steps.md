@@ -263,26 +263,26 @@
 
 ## Slice 8: Documentation
 
-- [ ] Update the `defclosedrecord` docstring: the option, the runtime
+- [x] Update the `defclosedrecord` docstring: the option, the runtime
       dependency and the differences table, in brief.
-- [ ] Regenerate `doc/API.md`.
-- [ ] Update `README.md` and `doc/`: the option, differences table,
+- [x] Regenerate `doc/API.md`.
+- [x] Update `README.md` and `doc/`: the option, differences table,
       value-type dependency (unreleased: how to add it, with the
       `:git/url` and `:git/sha` coordinate of the `:value-type-test` alias),
       Clojure 1.12.6 and JVM requirements, hash cost, no performance claim
       (VT-R4).
-- [ ] Update `doc/development.md`: suite commands for both JVMs and the
+- [x] Update `doc/development.md`: suite commands for both JVMs and the
       Clojure 1.11 case; test suite list with both new directories and their
       requirements; CI section (Valhalla job JDK, other jobs Temurin 21,
       which jobs run which commands; keep the clause that all Clojure jobs
       use Clojure CLI `1.12.6.1673`); the three new failure artifact names.
-- [ ] Update `doc/tool-installation.md`: replace "CI uses Temurin Java 21"
+- [x] Update `doc/tool-installation.md`: replace "CI uses Temurin Java 21"
       with the Valhalla/Temurin statement; keep the pinned local Temurin
       archive.
-- [ ] Update `ramora/value-type-records.md` Public contract: the
+- [x] Update `ramora/value-type-records.md` Public contract: the
       `:class-name` value and the cause of each case; replace "the resolution
       failure as cause".
-- [ ] Update all of `ramora/value-type-records/embodiment.md` to state the
+- [x] Update all of `ramora/value-type-records/embodiment.md` to state the
       current embodiment (no progress history):
       - Status: replace "Not implemented".
       - Elements table, `.github/workflows/ci.yml` row: both jobs
@@ -296,25 +296,25 @@
         current limits (one Valhalla build; CI on Linux x64; VT-V8 manual,
         on the machine of the run).
       - Check the other rows and sections against the implementation.
-- [ ] Update `ramora/value-type-records/invariants-and-verification.md`:
+- [x] Update `ramora/value-type-records/invariants-and-verification.md`:
       VT-R1, VT-R2, the VT-V1 row (fixture, absent-var case, does-not-load
       placement, Clojure 1.11 case), the VT-V3 row (shared check selection,
       serialization on identity fallback only), the VT-D10 placement
       paragraph (names the identity part of VT-V7 for the Temurin 21 job).
       No progress history.
-- [ ] Update `ramora/defclosedrecord/embodiment.md`: Allocation (option
+- [x] Update `ramora/defclosedrecord/embodiment.md`: Allocation (option
       check), Generated type / Method behaviour / State (ordinary mode,
       pointer to value mode), Boundaries (permitted dependencies), Public
       surface (`:value-type` option and the
       `:closed-record/value-type-unavailable` ex-data; do not add the
       `:type` to D-03).
-- [ ] Update `ramora/defclosedrecord/embodiment/artifacts.md` remaining
+- [x] Update `ramora/defclosedrecord/embodiment/artifacts.md` remaining
       rows: `deps.edn`, `src/closed_record/impl/jvm.clj`,
       `test/runtime/closed_record/*_test.clj`, the fixture rows
       (`expansion_fixture.clj` and `expansion_fixture.edn`), the
       `subprocess.clj` row, the new test directory rows, `ci.yml`,
       `dev/bench/`.
-- [ ] Update `mementum/state.md`; commit.
+- [x] Update `mementum/state.md`; commit.
 
 ## Slice 9: Quality gate
 

@@ -8,7 +8,9 @@ succeeds. Downloads need network access.
 
 ## Java and Clojure CLI
 
-CI uses Temurin Java 21. The archive below pins the local patch version to
+CI uses Temurin Java 21, except the Valhalla value-type job, which uses a
+Valhalla early-access JDK (see [development](development.md#continuous-integration)).
+The archive below pins the local patch version to
 21.0.10+7. It installs under your home directory, without changing system Java.
 
 ```bash

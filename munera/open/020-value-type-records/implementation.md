@@ -887,3 +887,18 @@ Paths:
   Vale rejects a bare "ns" header word; the table uses `ns/op [range]` as
   the other tables do.
 - Next: slice 8 (documentation).
+
+## Slice 8: documentation (2026-11-03)
+
+- Docstring, `doc/API.md`, README "Value-type records" section (Git
+  coordinate `8bb7c4f…`, differences table, no performance claim),
+  `doc/development.md`, `doc/tool-installation.md`, Ramora pages and
+  `mementum/state.md` updated.
+- Vale rejects "classpath" and "macroexpansion" in README and API.md; the
+  new text uses "class path" and "macro expansion". Older Ramora text keeps
+  "macroexpansion" (Vale scope excludes it).
+- Ramora value-type embodiment now names the `require` preamble as a
+  generated-code dependency and in the generated type sketch.
+- Local checks after slice 8: fmt, kondo, Vale, API check, lychee clean;
+  ordinary suite 186/2793. `src` changed (docstring only), so slice 9 must
+  push and read a new CI run.
