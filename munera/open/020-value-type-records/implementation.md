@@ -927,3 +927,28 @@ Paths:
 ## Implementation review (2026-11-04)
 
 - added 3 steps to be addressed
+
+## Review follow-ups (2026-11-04)
+
+- addressed 3 review steps.
+- Shared checks: each `closed-record.checks.<topic>` now holds plain
+  top-level forms; no suite loads it. `closed-record.checks.support/define-checks`
+  (`(define-checks 'closed-record.checks.<topic> opts)`) reads the source,
+  evaluates only the `ns` form (aliases, refers), reads the rest in that
+  namespace (syntax-quote resolves as before) and applies `expand`. Quoted
+  `body` vectors, per-topic macros and clj-kondo `:off` metadata removed.
+  `$ns` → `(ns-name *ns*)` at load; `'($ns/constant …)` → `'(constant …)`
+  (expanded with `*ns*` bound); `$representation` → placeholder var
+  `support/representation`. clj-kondo 0 findings; an injected error in a
+  check file is reported. Counts kept: shared checks 186/2793 ordinary,
+  81 value-type.
+- VT-V6: `errors-test` asserts the first cause that is not a
+  `Compiler$CompilerException` is an `ExceptionInfo` with the same class,
+  message and `ex-data` as the error of the `defvaluetype*` form alone.
+- `closed-record.subprocess/run`: `:timeout-ms` (default 300000); on time
+  out `destroyForcibly`, `{:exit nil :timed-out true :out :err}` with the
+  output so far. Both streams read in futures. New
+  `closed-record.subprocess-test` (1 test, 4 assertions): ordinary suite now
+  187/2797 on Clojure 1.11, 1.12, 1.13.
+- Runs: Temurin 21 suite 81/308, Valhalla suite 81/309, Clojure 1.11 case
+  1/7; fmt, kondo, Vale, API check, lychee clean. Not pushed.

@@ -3,10 +3,11 @@
   that are not shared."
   (:require
    [clojure.test :refer [deftest is testing]]
-   [closed-record.checks.field-value :refer [define-checks]]
+   [closed-record.checks.support :refer [define-checks]]
    [closed-record.core :refer [defclosedrecord]]))
 
-(define-checks {:record-opts [] :representation :identity})
+(define-checks 'closed-record.checks.field-value
+  {:record-opts [] :representation :identity})
 
 (defclosedrecord FL [a ^long n])
 

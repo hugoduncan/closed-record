@@ -3,7 +3,7 @@
   that are not shared."
   (:require
    [clojure.test :refer [deftest is testing]]
-   [closed-record.checks.defclosedrecord :refer [define-checks]]
+   [closed-record.checks.support :refer [define-checks]]
    [closed-record.core :refer [defclosedrecord]]))
 
 (defprotocol Measure
@@ -14,7 +14,8 @@
   [f]
   (try (f) nil (catch Throwable e e)))
 
-(define-checks {:record-opts [] :representation :identity})
+(define-checks 'closed-record.checks.defclosedrecord
+  {:record-opts [] :representation :identity})
 
 (defclosedrecord NP [a] :no-print true)
 

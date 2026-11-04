@@ -1,23 +1,30 @@
 (ns closed-record.checks.support
-  "Expansion of shared check bodies. A shared check namespace keeps its
-  checks as a quoted body and a `define-checks` macro that calls `expand`.
-  The ordinary suite and the value-type suite then define the same types and
-  tests in their own namespaces, with their own record options.
+  "Expansion of shared checks. A shared check namespace holds its checks as
+  plain top-level forms, so clj-kondo lints them. No suite loads it:
+  `define-checks` reads its source and defines the same types and tests in
+  the calling namespace, with the record options of the caller. The ordinary
+  suite and the value-type suite both use it.
 
-  Body conventions:
+  Source conventions:
   - A symbol that the source namespace refers or names through an alias is
     qualified, so the calling namespace needs no requires.
   - A symbol qualified with the source namespace (from syntax-quote) loses
     its namespace, so it names the var of the calling namespace.
-  - `$ns` gives the quoted calling namespace symbol; `$ns/x` names `x` in
-    the calling namespace.
   - `$P` in a string or a symbol name gives the munged calling namespace
     (the class name prefix).
-  - `$representation` gives the representation form.
+  - `representation` of this namespace gives the representation form.
   - Each `defclosedrecord` form gets the record options after its field
     vector."
   (:require
-   [clojure.string :as str]))
+   [clojure.java.io :as io]
+   [clojure.string :as str])
+  (:import
+   (clojure.lang LineNumberingPushbackReader)))
+
+(def representation
+  "Placeholder in a shared check namespace. `define-checks` replaces it with
+  the `:representation` form of the caller."
+  :identity)
 
 (defn- record-form?
   [form]
@@ -28,11 +35,10 @@
   (apply list head tname fields (concat record-opts more)))
 
 (defn- resolve-symbol
-  [src-ns caller prefix sym]
+  [src-ns prefix sym]
   (let [sym-ns (namespace sym)
         sym-name (str/replace (name sym) "$P" prefix)]
     (cond
-      (= "$ns" sym-ns) (symbol (str caller) sym-name)
       (= (str (ns-name src-ns)) sym-ns) (symbol sym-name)
       sym-ns (if-let [target (get (ns-aliases src-ns) (symbol sym-ns))]
                (symbol (str (ns-name target)) sym-name)
@@ -47,9 +53,8 @@
   (let [prefix (namespace-munge caller)
         walk (fn walk [x]
                (let [y (cond
-                         (= '$ns x) (list 'quote caller)
-                         (= '$representation x) representation
-                         (symbol? x) (resolve-symbol src-ns caller prefix x)
+                         (symbol? x) (let [r (resolve-symbol src-ns prefix x)]
+                                       (if (= 'closed-record.checks.support/representation r) representation r))
                          (string? x) (str/replace x "$P" prefix)
                          (seq? x) (let [l (apply list (map walk x))]
                                     (if (record-form? l) (with-record-opts record-opts l) l))
@@ -63,8 +68,35 @@
                    y)))]
     (walk form)))
 
+(defn- read-source
+  "The namespace and the forms after the `ns` form of the source file of
+  namespace `src-sym`. Evaluate the `ns` form only (its requires, aliases
+  and refers), then read the forms in that namespace, so syntax-quote and
+  `::` keywords resolve as in the source."
+  [src-sym]
+  (let [path (str (-> (name src-sym) (str/replace "-" "_") (str/replace "." "/"))
+                  ".clj")
+        url (or (io/resource path)
+                (throw (ex-info (str "No shared check source " path)
+                                {:namespace src-sym})))]
+    (with-open [r (LineNumberingPushbackReader. (io/reader url))]
+      (let [ns-form (read r)
+            src-ns (binding [*ns* *ns*] (eval ns-form) *ns*)
+            forms (binding [*ns* src-ns]
+                    (doall (take-while #(not= ::eof %)
+                                       (repeatedly #(read r false ::eof)))))]
+        [src-ns forms]))))
+
 (defn expand
-  "The `do` form of `body` (a vector of quoted forms of `src-ns`) for the
-  current `*ns*`, with `opts` `{:record-opts [k v …] :representation form}`."
-  [src-ns opts body]
-  (cons 'do (map #(transform src-ns opts (ns-name *ns*) %) body)))
+  "The `do` form of `forms` of `src-ns` for the current `*ns*`, with `opts`
+  `{:record-opts [k v …] :representation form}`."
+  [src-ns opts forms]
+  (cons 'do (map #(transform src-ns opts (ns-name *ns*) %) forms)))
+
+(defmacro define-checks
+  "Define the checks of the shared check namespace `src-sym` (quoted) in the
+  calling namespace. `opts`: `{:record-opts [k v …] :representation form}`."
+  [src-sym opts]
+  (let [src-sym (if (seq? src-sym) (second src-sym) src-sym)
+        [src-ns forms] (read-source src-sym)]
+    (expand src-ns opts forms)))
