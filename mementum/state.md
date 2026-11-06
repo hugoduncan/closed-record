@@ -27,6 +27,9 @@ keys and `dissoc` of declared keys. Main form: `defclosedrecord`.
   branch). `:non-nil` field metadata passes to `defvaluetype*` unchanged
   (VT-D11); ordinary mode ignores it (VT-D12). The `:value-type-test` pin
   is value-type `edc3f79`.
+- Closed-record value records are not flat in `value-type.array` on
+  Valhalla `27-jep401ea3+1-1` (hidden `__meta`/`__extmap` fields). The
+  README and `doc/value-type-records.md` say this.
 - Verification limits (hosted CI, publication, benchmark scope) are in each
   design's `embodiment.md`.
 
@@ -38,6 +41,8 @@ keys and `dissoc` of declared keys. Main form: `defclosedrecord`.
 - Releases: `doc/releases.md`.
 - Performance results: `doc/performance.md`.
 - Public API: `doc/API.md` (generated).
+- Value-type record details: `doc/value-type-records.md`. The README has an
+  introduction only.
 - Reusable lessons: `mementum/knowledge/`, `mementum/memories/`.
 
 ## Local environment

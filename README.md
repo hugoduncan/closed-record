@@ -12,6 +12,10 @@ A Clojure record is an open map:
 These operations do not fail. Key typos stay hidden until a later
 failure, often a nil value far from the cause.
 
+A Clojure record is also an identity object. Two records with equal
+fields are different objects. The JVM cannot store a record inline in
+an array or in another object, and a field cannot reject nil.
+
 ## Approach
 
 `defclosedrecord` defines a record type with a fixed key set. It has
@@ -38,6 +42,12 @@ directives.
 A closed record is for use as an internal type. It does not validate
 values. Use malli or spec for that.
 
+The option `:value-type true` defines the record through
+[value-type](https://github.com/hugoduncan/value-type). On a JVM with
+JEP 401 value classes, the record is a value object: it has no
+identity, and `^:non-nil` fields reject nil. The closed key set does
+not change. Records without the option do not load value-type.
+
 ## AI usage
 
 AI coding agents wrote most of the code, tests and documentation of
@@ -52,6 +62,10 @@ The API changes only by addition. See the [changelog](CHANGELOG.md).
   supported.
 - Clojure versions: 1.11 and later. The tests run on 1.11, 1.12 and
   1.13.
+
+`:value-type true` is experimental and is not released. It depends on
+value-type, which has no release, and on a Valhalla early-access JDK
+for value classes. Its behaviour can change.
 
 ## Installation
 
@@ -68,6 +82,25 @@ Leiningen (`project.clj`):
 ```clojure
 [org.hugoduncan/closed-record "0.1.190"]
 ```
+
+### Value-type records (optional)
+
+`:value-type true` needs Clojure 1.12.6 and value-type on the class
+path, at macro expansion and at run time. value-type has no release.
+Add it as a Git dependency:
+
+```clojure
+{:deps {org.hugoduncan/value-type
+        {:git/url "https://github.com/hugoduncan/value-type.git"
+         :git/sha "edc3f79de77bcf044d6234df361e090edc46c813"}}}
+```
+
+For value classes, start the JVM from a Valhalla early-access JDK with
+`--enable-preview`. `value-type.array` also needs
+`--add-exports=java.base/jdk.internal.value=ALL-UNNAMED`. On other
+JVMs, value-type's fallback policy (system property
+`value-type.fallback`) selects an identity class, a warning, or an
+error.
 
 ## Usage
 
@@ -119,6 +152,62 @@ that is not a closed record.
 See the [API reference](doc/API.md) for arguments, options, constructors,
 and error contracts.
 
+### Value-type records
+
+```clojure
+(defclosedrecord Point [^long x ^long y] :value-type true)
+(defclosedrecord Segment [^Point ^:non-nil start
+                          ^Point ^:non-nil end]
+  :value-type true)
+
+(identical? (->Point 1 2) (->Point 1 2))  ;=> true on a value-class JVM
+
+(def s (->Segment (->Point 1 2) (->Point 3 4)))
+
+(assoc s :start nil)  ;; throws NullPointerException
+(assoc s :z 1)        ;; throws :closed-record/undeclared-key, as before
+```
+
+The record contract does not change, with these differences:
+
+- `identical?` compares field values. `locking` and weak references
+  throw `IdentityException`.
+- Each `hash` call computes the hash again.
+- Serialization is not promised.
+
+On identity fallback, `identical?`, `locking` and weak references work
+as with `defrecord`.
+
+#### Non-nil fields
+
+- A `^:non-nil` field needs a tag that names a concrete, non-primitive
+  class.
+- Nil gives `NullPointerException`, and a value of the wrong type gives
+  `ClassCastException`. This applies on value output and on identity
+  fallback.
+- Without `:value-type true`, `:non-nil` has no effect, as in
+  `defrecord`.
+
+#### Arrays and flattening
+
+`value-type.array` makes arrays that reject nil elements:
+
+```clojure
+(require '[value-type.array :as va])
+
+(def points (va/into-array Point [(->Point 1 2) (->Point 3 4)]))
+(aset points 0 nil)   ;; throws NullPointerException
+```
+
+The JVM can store value objects inline in an array or in another
+object. This is flattening. Flattening is a JVM choice, not a
+guarantee. On Valhalla `27-jep401ea3+1-1`, arrays of closed-record
+value records are not flat, because a record has hidden reference
+fields. Use `defvaluetype` directly when you need flat storage.
+
+See [value-type records](doc/value-type-records.md) for the full
+behaviour, field rules, errors and requirements.
+
 ### Use with malli
 
 A malli `[:map ...]` schema validates and explains a closed record as
@@ -142,85 +231,6 @@ Call `map->Name` on the result only when the result has all the
 declared keys and no other keys. An undeclared key throws. A missing
 declared key gives nil.
 
-### Value-type records
-
-The `:value-type true` option defines the record through
-[value-type](https://github.com/hugoduncan/value-type):
-
-```clojure
-(defclosedrecord Point [x y] :value-type true)
-```
-
-On a JVM with JEP 401 value classes (a Valhalla early-access JDK with
-`--enable-preview`), the type is a value class. On other JVMs,
-value-type's fallback policy (system property `value-type.fallback`)
-selects an identity class, a warning, or an error.
-
-Requirements:
-
-- Clojure 1.12.6. value-type does not load on Clojure 1.11.
-- value-type on the class path at macro expansion and at run time, also
-  for AOT classes. value-type has no release yet. Add it as a Git
-  dependency:
-
-  ```clojure
-  {:deps {org.hugoduncan/value-type
-          {:git/url "https://github.com/hugoduncan/value-type.git"
-           :git/sha "edc3f79de77bcf044d6234df361e090edc46c813"}}}
-  ```
-
-Without value-type, macro expansion throws ex-info with
-`:type :closed-record/value-type-unavailable` and `:class-name` (the
-class name symbol, for example `user.Point`). Without the option,
-closed-record does not load value-type.
-
-The record contract does not change, with these differences:
-
-| Behaviour | Ordinary | Value output | Identity fallback |
-|---|---|---|---|
-| Hash values | as `defrecord` | same | same |
-| Hash caching | yes | no | no |
-| `identical?` | reference | field values | reference |
-| `locking`, weak references | work | throw `IdentityException` | work |
-| Serialization | as `defrecord` | not promised | as `defrecord` |
-| Non-nil enforcement | none: `:non-nil` has no effect | native null restriction with a value-class tag on a JVM that supports native fields; otherwise constructor checks | constructor checks |
-| Field storage type | primitive tag: the primitive; other fields: `Object` | `:non-nil` field: the tag class; other fields: as Ordinary | `:non-nil` field: the tag class; other fields: as Ordinary |
-
-Each `hash` call computes the hash again. The option makes no
-performance claim; see [performance](doc/performance.md#value-type-records).
-
-#### Non-nil fields
-
-With `:value-type true`, field metadata `^:non-nil` makes a field
-non-nil:
-
-```clojure
-(defclosedrecord Point [^long x ^long y] :value-type true)
-(defclosedrecord Segment [^Point ^:non-nil start
-                          ^Point ^:non-nil end
-                          label]
-  :value-type true)
-```
-
-A non-nil field must have a tag that names a defined concrete,
-non-primitive class. value-type owns these rules; see its
-[field contract](https://github.com/hugoduncan/value-type/blob/edc3f79de77bcf044d6234df361e090edc46c813/doc/usage.md#portable-non-nil-fields).
-closed-record passes the metadata to value-type with no change.
-
-- Nil gives `NullPointerException`, and a value of the wrong type gives
-  `ClassCastException`, on `->Name`, `map->Name`, `assoc` and record
-  literals. On `->Name`, `map->Name` and `assoc`, closed-record does not
-  wrap these host exceptions, and they have no `ex-data`. On record
-  literals, the reader can wrap them in an exception with `ex-data`; the
-  host exception is in the cause chain.
-- `map->Name` without a key for a non-nil field gives
-  `NullPointerException`.
-- Key-set errors come first and do not change: `assoc` of an undeclared
-  key, `dissoc` of a declared key and `map->Name` with extra keys throw
-  ex-info as before.
-- Without `:value-type true`, `:non-nil` has no effect, as in
-  `defrecord`. The field accepts nil.
-
 ## Development
 
 See [development instructions](doc/development.md) for tests, CI,
@@ -230,4 +240,4 @@ benchmarks, and source JAR builds.
 
 See [release instructions](doc/releases.md) for local preparation,
 inspection, a separate push, manual preview and publication, credentials,
-and recovery after partial failure. No release has been published yet.
+and recovery after partial failure.
