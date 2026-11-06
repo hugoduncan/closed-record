@@ -73,12 +73,13 @@ flat (VT-V12).
     `create`;
   - value output removes `__hash` and `__hasheq` and ignores their
     constructor arguments; identity output keeps them;
-  - required, not yet provided (VT-D13, VT-R6): a closed record shape. The
-    `defvaluetype*` form has the record shape and a value-type selector for
-    the closed shape. Value output removes all four hidden fields. In both
-    outputs, the main constructor rejects a non-nil `__meta` or `__extmap`
-    argument with a value-type exception. value-type selects the selector
-    syntax and the exception;
+  - designed in value-type, not yet implemented (VT-D13, VT-R6; value-type
+    deftype* D9 and D10, value-type task 022): the closed record shape. The
+    `defvaluetype*` form has the record shape and the option
+    `:value-type/closed true`. Value output removes all four hidden fields.
+    In both outputs, the main constructor throws `IllegalArgumentException`
+    for a non-nil `__meta` or `__extmap` argument, before the non-nil field
+    checks;
   - the application property `value-type.fallback` selects silent fallback, a
     warning, or an `Error`;
   - field metadata `:non-nil true` makes a field non-nil, with a tag that
@@ -187,7 +188,7 @@ flat (VT-V12).
   record literal gives the reader error for a value that is not an `IMeta`.
 - Undeclared keys in map literals (VT-D15): a map literal
   `#ns.Name{...}` with an undeclared key throws when it is read. The cause
-  is the value-type exception of VT-D13; the reader can wrap it.
+  is the `IllegalArgumentException` of VT-D13; the reader can wrap it.
   closed-record does not wrap it. `map->Name` checks the key set first and
   throws `:closed-record/extra-keys`, as before.
 - `check` returns a value-type record, because it cannot hold an

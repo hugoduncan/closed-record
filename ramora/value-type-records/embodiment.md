@@ -10,7 +10,7 @@ the Git SHA of the `:value-type-test` alias (VT-R3).
 The pinned value-type (`edc3f79`) has no closed record shape (VT-R6). Until
 task 022:
 
-- The form has no closed-shape selector. Value output keeps `__meta` and
+- The form has no `:value-type/closed` option. Value output keeps `__meta` and
   `__extmap`, so value records do not flatten (VT-K8). VT-I7 and VT-I8 do not
   hold.
 - The type implements `IMeta` and `IObj`. `withMeta` calls the main

@@ -83,7 +83,7 @@ The commitment levels are the same.
 
 - Subject: the hidden fields in value mode.
 - Choice: the form has `__meta __extmap ^int __hash ^int __hasheq`, with
-  no mutable metadata, and the value-type closed-shape selector (VT-D13).
+  no mutable metadata, and the option `:value-type/closed true` (VT-D13).
   Value output removes all four fields. Identity output keeps them: the hash
   fields hold 0, and `__meta` and `__extmap` hold nil.
 - Rejected: the ordinary layout with `^:unsynchronized-mutable` hash fields.
@@ -192,14 +192,16 @@ See [verification](invariants-and-verification.md#vt-d10-value-output-on-ci).
 
 - Subject: `__meta` and `__extmap` on value output. They hold 64 bits with
   compressed references, so a value record does not flatten (VT-K8, O-VT1).
-- Choice: emit the record shape with the value-type closed-shape selector.
+- Choice: emit the record shape with the value-type option
+  `:value-type/closed true` (value-type deftype* D9).
   value-type output then:
   - removes `__meta`, `__extmap`, `__hash` and `__hasheq` on value output;
   - keeps all four on identity output;
   - in both outputs, rejects a non-nil `__meta` or `__extmap` argument of
-    the main constructor with a value-type exception.
+    the main constructor with `IllegalArgumentException`, before the
+    non-nil field checks (value-type deftype* D10).
   closed-record emits no check for these arguments. value-type owns the
-  selector syntax and the exception.
+  option and the exception.
 - Rejected:
   - closed-record emits a plain `deftype*` with no hidden fields. There is
     then no `create`, so map literals fail, printed records cannot be read,
@@ -222,7 +224,7 @@ See [verification](invariants-and-verification.md#vt-d10-value-output-on-ci).
 - Qualities: + layout: records with at most 64 bits of declared fields can
   flatten (VT-K8); objects are 8 bytes smaller. + A map literal with an
   undeclared key fails at read, not later at `check`. − No metadata
-  (VT-D14). − The literal error is a value-type exception, not
+  (VT-D14). − The literal error is an `IllegalArgumentException`, not
   `:closed-record/extra-keys`. − A new value-type contract (VT-R1, VT-R6).
 - Scope: JVM emitter, value mode.
 - Commitment: medium.

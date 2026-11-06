@@ -40,18 +40,20 @@ output; VT-D13 extends this to `__meta` and `__extmap`.
 ## Prerequisite
 
 value-type must provide the closed record shape of VT-D13. The pinned
-value-type (`edc3f79`) does not. The contract that closed-record needs:
+value-type (`edc3f79`) does not. value-type task 022
+(`munera/open/022-closed-record-shape` in value-type) implements it, under
+value-type deftype* D9 and D10. The contract that closed-record needs:
 
-- a selector in the `defvaluetype*` form for the closed shape, with the
+- the option `:value-type/closed true` in the `defvaluetype*` form, with the
   record field shape (`__meta __extmap ^int __hash ^int __hasheq`);
 - value output removes all four hidden fields; the record constructors,
   `create` and `getBasis` keep their descriptors;
 - identity output keeps all four; `__meta` and `__extmap` hold nil;
 - in both outputs, the main constructor rejects a non-nil `__meta` or
-  `__extmap` argument with a value-type exception.
+  `__extmap` argument with `IllegalArgumentException`, before the non-nil
+  field checks.
 
-value-type selects the selector syntax and the exception. This work is a
-value-type task. It is not part of this task. Start this task only when a
+This work is not part of this task. Start this task only when a
 value-type commit on GitHub `master` provides the contract. If the value-type
 contract differs from VT-D13, change Ramora first (VT-R6), then this design.
 
@@ -96,14 +98,14 @@ VT-V3 excludes these parts in value mode. VT-V11 replaces them.
 
 ### Emitter (value mode only)
 
-- Emit the value-type closed-shape selector (VT-D5, VT-D13).
+- Emit the option `:value-type/closed true` (VT-D5, VT-D13).
 - Do not implement `IMeta` or `IObj`; no `meta` or `withMeta` (VT-D14,
   VT-I9).
 - `assoc` calls the constructor with the declared fields only (VT-D7).
 - No generated reference to `__meta`, `__extmap`, `__hash` or `__hasheq`
   (VT-I4). `-extra-keys` returns nil.
 - No closed-record check of constructor arguments (VT-D13). No wrapping of
-  the value-type exception (VT-D15).
+  the `IllegalArgumentException` (VT-D15).
 - The ordinary expansion does not change (VT-I2). The expansion fixture does
   not change.
 
@@ -119,7 +121,7 @@ VT-V3 excludes these parts in value mode. VT-V11 replaces them.
 
 As Ramora states:
 
-- VT-V2: the selector, no hidden-field references, no `IMeta` or `IObj`.
+- VT-V2: the option, no hidden-field references, no `IMeta` or `IObj`.
 - VT-V3 and VT-V4: the shared checks without the metadata and hidden-key
   parts. VT-V4 checks that the instance fields are the declared fields.
 - VT-V9: no `with-meta` part.
