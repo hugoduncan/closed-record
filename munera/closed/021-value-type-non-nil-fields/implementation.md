@@ -601,3 +601,12 @@
 ## Code-shaper review, pass 8 (2026-11-04)
 
 - no new issues
+
+## Close (2026-11-04)
+
+- design.md now states the `ex-data` rule per path (Public contract,
+  VT-D11 qualities, Documentation), as README and Ramora do.
+- Closed at user request with the slice 7 push and CI steps not done.
+  The branch `020-value-type-records` is not pushed, so acceptance
+  criterion 7 (all CI jobs pass on the last commit) is not verified. The
+  push needs user approval; read the CI run of the pushed commit then.

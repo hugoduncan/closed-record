@@ -182,7 +182,9 @@ thunk, so it detects a return of the defect.
   the host exceptions from the constructor (`NullPointerException`,
   `ClassCastException`), on all closed-record paths: `->Name`, `map->Name`,
   `assoc` and record literals (map and positional). closed-record does not
-  wrap them. They have no `ex-data`.
+  wrap them. On `->Name`, `map->Name` and `assoc` they have no `ex-data`.
+  On record literals, the reader can wrap them in a `ReaderException` with
+  `ex-data`; the host exception is in the cause chain.
 - A compiled record constant comes from a record value that exists, so it
   cannot hold nil or a wrong type in a non-nil field. value-type owns the
   load of compiled constants with enabled fields (Invariants and ownership).
@@ -211,7 +213,8 @@ Add these to `ramora/value-type-records/decisions.md`. Numbers are proposals.
     callers, and are value validation (D-11). Same rationale as D-19.
   - Basis: D-11, D-19, VT-D3.
   - Qualities: + minimality, + one error contract for all paths.
-    − Nil and type errors have no `ex-data`.
+    − Nil and type errors have no `ex-data` (on record literals, only in
+    the reader's wrapper).
 - VT-D12 `:non-nil` in ordinary mode.
   - Choice: ignore it, as `defrecord` does. The field accepts nil. This is
     public behaviour under D-20.
@@ -314,8 +317,9 @@ VT-I6 check of VT-V2. The ordinary jobs run VT-V10.
 
 - README "Value-type records": a "Non-nil fields" part with an example; the
   tag rule in short with a link to value-type's field contract; nil and wrong
-  types give host exceptions with no `ex-data`; missing keys in `map->Name`
-  give `NullPointerException`; the metadata has no effect without
+  types give host exceptions with no `ex-data` on `->Name`, `map->Name` and
+  `assoc` (the reader can wrap them on record literals); missing keys in
+  `map->Name` give `NullPointerException`; the metadata has no effect without
   `:value-type true`. Add rows to the differences table: non-nil enforcement
   and field storage type. The non-nil enforcement row uses the Intent
   wording: native null restriction only on value output, with a value-class

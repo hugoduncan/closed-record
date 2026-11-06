@@ -302,7 +302,7 @@
 
 ## Docs review follow-up
 
-- [ ] Correct the "no `ex-data`" claim for record literals in
+- [x] Correct the "no `ex-data`" claim for record literals in
   `README.md` ("Non-nil fields", first bullet) and in the public contract
   of `ramora/value-type-records.md` ("Non-nil fields", second bullet).
   Both say that nil and wrong types give host exceptions with no
@@ -316,6 +316,8 @@
   - README and Ramora corrected; `bb vale` and `bb lychee:check` clean.
     Open: design.md (Public contract, line ~185) not changed; blocker in
     implementation.md.
+  - design.md corrected at close (Public contract, VT-D11 qualities,
+    Documentation).
 
 ## Code-shaper review follow-up
 
