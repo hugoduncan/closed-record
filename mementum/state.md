@@ -30,6 +30,10 @@ keys and `dissoc` of declared keys. Main form: `defclosedrecord`.
 - Closed-record value records are not flat in `value-type.array` on
   Valhalla `27-jep401ea3+1-1` (hidden `__meta`/`__extmap` fields). The
   README and `doc/value-type-records.md` say this.
+- Designed, not implemented: closed shape for value records (VT-D13 to
+  VT-D15): no hidden fields on value output, no metadata, map literals with
+  undeclared keys throw. Task 022. It needs a value-type closed record shape
+  first; the Ramora embodiment lists the current differences.
 - Verification limits (hosted CI, publication, benchmark scope) are in each
   design's `embodiment.md`.
 

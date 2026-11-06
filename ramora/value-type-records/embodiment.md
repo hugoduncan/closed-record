@@ -2,8 +2,26 @@
 
 ## Status
 
-Implemented. The tests use value-type at the Git SHA of the
-`:value-type-test` alias (VT-R3).
+Implemented, except VT-D13 to VT-D15 (task 022). The tests use value-type at
+the Git SHA of the `:value-type-test` alias (VT-R3).
+
+## Differences from the design
+
+The pinned value-type (`edc3f79`) has no closed record shape (VT-R6). Until
+task 022:
+
+- The form has no closed-shape selector. Value output keeps `__meta` and
+  `__extmap`, so value records do not flatten (VT-K8). VT-I7 and VT-I8 do not
+  hold.
+- The type implements `IMeta` and `IObj`. `withMeta` calls the main
+  constructor with the declared fields, `__meta` and `__extmap`, as `assoc`
+  does. VT-I9 does not hold.
+- A map literal with an undeclared key is read; the key is hidden in
+  `__extmap`, and `check` throws `:closed-record/extra-keys` (I-02, I-07,
+  I-08).
+- VT-V3 runs the metadata and hidden-key checks. VT-V11 and VT-V12 do not
+  exist.
+- The README and `doc/value-type-records.md` describe this behaviour.
 
 ## Elements that change
 

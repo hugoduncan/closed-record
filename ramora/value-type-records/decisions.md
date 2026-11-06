@@ -51,8 +51,9 @@ The commitment levels are the same.
     skips value-type policy.
   - Emit `defvaluetype`. `deftype` rejects the hidden names (E-07) and does
     not emit `create` (K-06).
-  - Drop or rename the hidden fields. `create`, both literal forms and code
-    constants then fail (D-01).
+  - Drop or rename the hidden fields in the form. `create`, both literal
+    forms and code constants then fail (D-01). value-type output removes
+    them instead (VT-D13).
 - Rationale: value-type owns representation and policy. closed-record owns the
   record methods. One form changes, so both modes share the method emitter.
 - Assumptions: `defvaluetype*` follows its design (VT-R1).
@@ -81,11 +82,14 @@ The commitment levels are the same.
 ## VT-D5 Hidden field layout
 
 - Subject: the hidden fields in value mode.
-- Choice: `__meta __extmap ^int __hash ^int __hasheq`, with no mutable
-  metadata.
+- Choice: the form has `__meta __extmap ^int __hash ^int __hasheq`, with
+  no mutable metadata, and the value-type closed-shape selector (VT-D13).
+  Value output removes all four fields. Identity output keeps them: the hash
+  fields hold 0, and `__meta` and `__extmap` hold nil.
 - Rejected: the ordinary layout with `^:unsynchronized-mutable` hash fields.
   value-type rejects mutable fields (VT-K1).
-- Rationale: K-06 and VT-K2 need all four fields with `int` hints.
+- Rationale: K-06 and VT-K2 need all four fields with `int` hints in the
+  form. VT-D13 removes them from value output.
 - Qualities: + parity.
 - Scope: JVM emitter.
 - Commitment: medium.
@@ -106,14 +110,15 @@ The commitment levels are the same.
 - Scope: JVM emitter.
 - Commitment: medium.
 
-## VT-D7 No generated access to the hash fields
+## VT-D7 No generated access to the hidden fields
 
-- Subject: generated methods that use `__hash` and `__hasheq`.
-- Choice: in value mode, no generated method reads or writes them. `withMeta`
-  calls the constructor with the declared fields, `__meta` and `__extmap`, as
-  `assoc` does.
-- Rejected: pass `0 0` to the main constructor. It has the same effect, but
-  the emitter then names fields that value output removes.
+- Subject: generated methods that use `__meta`, `__extmap`, `__hash` and
+  `__hasheq`.
+- Choice: in value mode, no generated method reads or writes them. `assoc`
+  calls the constructor with the declared fields only. There is no
+  `withMeta` or `meta` (VT-D14). `-extra-keys` returns nil.
+- Rejected: pass nil and `0 0` to the main constructor. It has the same
+  effect, but the emitter then names fields that value output removes.
 - Rationale: value-type rejects access to a removed field. The generated code
   must not depend on the fields.
 - Qualities: + robustness.
@@ -182,3 +187,82 @@ See [verification](invariants-and-verification.md#vt-d10-value-output-on-ci).
   where there is none. The docs state the limit.
 - Scope: public API, all hosts.
 - Commitment: high (D-20).
+
+## VT-D13 Closed record shape: no hidden fields on value output
+
+- Subject: `__meta` and `__extmap` on value output. They hold 64 bits with
+  compressed references, so a value record does not flatten (VT-K8, O-VT1).
+- Choice: emit the record shape with the value-type closed-shape selector.
+  value-type output then:
+  - removes `__meta`, `__extmap`, `__hash` and `__hasheq` on value output;
+  - keeps all four on identity output;
+  - in both outputs, rejects a non-nil `__meta` or `__extmap` argument of
+    the main constructor with a value-type exception.
+  closed-record emits no check for these arguments. value-type owns the
+  selector syntax and the exception.
+- Rejected:
+  - closed-record emits a plain `deftype*` with no hidden fields. There is
+    then no `create`, so map literals fail, printed records cannot be read,
+    and code constants need `IType` (K-08). It needs a second emitter and
+    breaks D-01.
+  - Keep the fields and make the class loosely consistent
+    (`@LooselyConsistentValue`) with non-atomic arrays. The contract does not
+    change, but data races can tear values, the annotation is internal to
+    the JDK, and each element keeps two reference slots.
+  - Remove only `__extmap`. The object gets 4 bytes smaller, but a record
+    with a `long` field still does not flatten.
+  - Keep metadata outside the object. A value object has no identity, so it
+    cannot be the key of a weak map.
+  - closed-record changes the bytecode. value-type owns the representation
+    (VT-D3).
+- Rationale: O-VT1. value-type already removes the hash fields with this
+  mechanism. VT-K7 makes one constructor check close all `create` paths.
+- Assumptions: value-type provides the closed shape (VT-R6). JEP 401 still
+  permits the record constructors (VT-R2).
+- Qualities: + layout: records with at most 64 bits of declared fields can
+  flatten (VT-K8); objects are 8 bytes smaller. + A map literal with an
+  undeclared key fails at read, not later at `check`. − No metadata
+  (VT-D14). − The literal error is a value-type exception, not
+  `:closed-record/extra-keys`. − A new value-type contract (VT-R1, VT-R6).
+- Scope: JVM emitter, value mode.
+- Commitment: medium.
+
+## VT-D14 No metadata in value mode
+
+- Subject: metadata on value-type records.
+- Choice: in value mode, the type does not implement `IMeta` or `IObj`, in
+  both representations. `meta` returns nil. `with-meta` gives the host
+  `ClassCastException`.
+- Rejected:
+  - `withMeta` throws `ex-info`. Generic code tests `IObj` before it adds
+    metadata. With a throwing `withMeta`, that code fails; without `IObj`, it
+    skips the record.
+  - `withMeta` returns the record without the metadata. The loss is then
+    silent.
+  - Metadata on identity fallback only. The two representations then have
+    different contracts (VT-D6 has the same rationale).
+- Rationale: VT-D13 removes `__meta`. A type with no metadata does not claim
+  the metadata interfaces.
+- Qualities: + explicitness, + generic code works. − C-08 does not apply in
+  value mode. − No `ex-data` on `with-meta`.
+- Scope: public API, JVM emitter, value mode.
+- Commitment: medium.
+
+## VT-D15 Undeclared literal keys fail at read in value mode
+
+- Subject: a map literal with an undeclared key, in value mode.
+- Choice: the value-type constructor check of VT-D13 rejects it when the
+  reader calls `create` (VT-K7). closed-record does not wrap the exception.
+  `check` keeps its contract; it never finds extra keys in a value-type
+  record. `map->Name` checks the key set first, as before.
+- Rejected:
+  - Wrap the exception in `:closed-record/extra-keys`. `create` is
+    generated by the compiler and calls no closed-record code (K-07).
+  - Drop the extra keys with no error. A key typo is then lost with no
+    signal, and `check` cannot find it.
+- Rationale: VT-D13 removes `__extmap`. In value mode, K-07 no longer stops a
+  read-time check, so D-09 and I-08 do not apply.
+- Qualities: + the closed key set holds on all paths, at the location of the
+  error. − The error has no closed-record `ex-data`.
+- Scope: public API, value mode.
+- Commitment: medium.

@@ -12,9 +12,9 @@ It extends the [defclosedrecord design](defclosedrecord.md). Read that design
 first. Identifiers in this design have the prefix `VT-`. Other identifiers
 (K-06, D-01, I-05 and so on) are in the defclosedrecord design.
 
-- [Decisions](value-type-records/decisions.md): VT-D1 to VT-D12.
+- [Decisions](value-type-records/decisions.md): VT-D1 to VT-D15.
 - [Invariants and verification](value-type-records/invariants-and-verification.md):
-  VT-I1 to VT-I6, VT-V1 to VT-V10, CI decision VT-D10, risks VT-R1 to VT-R5.
+  VT-I1 to VT-I9, VT-V1 to VT-V12, CI decision VT-D10, risks VT-R1 to VT-R7.
 - [Embodiment](value-type-records/embodiment.md): current implementation and
   verification limits.
 
@@ -29,9 +29,11 @@ first. Identifiers in this design have the prefix `VT-`. Other identifiers
 - With the option and without value-type on the classpath, macroexpansion
   fails.
 - The record contract does not change: closed keys, equality and hash values,
-  metadata, literals, code constants and `check`.
+  literals, code constants and `check`.
 - Differences: hashes are not cached. On value output, the instance has no
-  identity.
+  identity. The type has no metadata. A map literal with an undeclared key
+  throws when it is read. On value output, the instance has no hidden fields
+  (VT-D13).
 
 ## Purpose
 
@@ -49,8 +51,15 @@ Priorities: the closed-record contract first, then explicit selection, then
 minimality. Performance is not a target. value-type measured value objects as
 larger than identity objects, and value records compute hashes on each call.
 
+O-VT1 needs a small layout (VT-K8). For this outcome, value mode gives up two
+parts of the ordinary contract: metadata (C-08) and hidden extra keys from
+map literals (C-09, D-09). The closed key set does not change (VT-D13).
+
 Success: each behaviour test of the defclosedrecord design passes for a
-value-type record, on value output and on identity fallback.
+value-type record, on value output and on identity fallback, except the
+tests of metadata and of hidden literal keys (VT-V3). On the pinned Valhalla
+build, an array of a value record with at most 64 bits of declared fields is
+flat (VT-V12).
 
 ## Context
 
@@ -64,6 +73,12 @@ value-type record, on value output and on identity fallback.
     `create`;
   - value output removes `__hash` and `__hasheq` and ignores their
     constructor arguments; identity output keeps them;
+  - required, not yet provided (VT-D13, VT-R6): a closed record shape. The
+    `defvaluetype*` form has the record shape and a value-type selector for
+    the closed shape. Value output removes all four hidden fields. In both
+    outputs, the main constructor rejects a non-nil `__meta` or `__extmap`
+    argument with a value-type exception. value-type selects the selector
+    syntax and the exception;
   - the application property `value-type.fallback` selects silent fallback, a
     warning, or an `Error`;
   - field metadata `:non-nil true` makes a field non-nil, with a tag that
@@ -92,7 +107,32 @@ value-type record, on value output and on identity fallback.
   a later build can replace an old build. value-type tests
   `27-jep401ea3+1-1`.
 - VT-K6 After the first release, the public API changes only by accretion
-  (D-20). The option is an accretion.
+  (D-20). The option is an accretion. The option is not released, so its
+  contract can change before its release (K-03).
+- VT-K7 The compiler-generated `create` calls the main constructor with
+  `null` for `__meta` and `RT.seqOrElse(rest)` for `__extmap`. `rest` is the
+  input map without the declared keys. Thus the `__extmap` argument is nil
+  only when the map has no undeclared key. The constructor with the declared
+  fields only passes nil for both. (Observed: `Compiler.java` 8803–8855,
+  `emitStatics`, Clojure 1.12.1.) A main-constructor check of `__extmap`
+  therefore rejects undeclared keys on all `create` paths: map literals and
+  any other `create` call.
+- VT-K8 Flattening limit (observed, Valhalla `27-jep401ea3+1-1`,
+  `--enable-preview`, macOS arm64, compressed references). A null-restricted
+  atomic array is flat only when the instance fields fit in 64 bits:
+
+  | Instance fields | Flat atomic array |
+  |---|---|
+  | closed record `[^long x]`: `long` + `__meta` + `__extmap` | no |
+  | closed record `[^int x ^int y]`: 2 `int` + 2 references | no |
+  | `defvaluetype [^long x]` | yes |
+  | `defvaluetype [^int x ^int y]` | yes |
+  | `defvaluetype [x y]`: 2 references | yes |
+  | `defvaluetype [^long x ^long y]` | no |
+
+  Non-atomic arrays flatten larger layouts only for a class with the internal
+  annotation `@LooselyConsistentValue`. Flattening is a JVM choice. A later
+  build can change the limit.
 
 ## Public contract
 
@@ -141,6 +181,17 @@ value-type record, on value output and on identity fallback.
   - A compiled record constant cannot hold nil or a wrong type in a non-nil
     field. value-type owns the load of compiled constants with enabled
     fields.
+- Metadata (VT-D14): the type does not implement `IMeta` or `IObj`, on
+  value output and on identity fallback. `meta` returns nil. `with-meta`
+  and `vary-meta` give the host `ClassCastException`. Reader metadata on a
+  record literal gives the reader error for a value that is not an `IMeta`.
+- Undeclared keys in map literals (VT-D15): a map literal
+  `#ns.Name{...}` with an undeclared key throws when it is read. The cause
+  is the value-type exception of VT-D13; the reader can wrap it.
+  closed-record does not wrap it. `map->Name` checks the key set first and
+  throws `:closed-record/extra-keys`, as before.
+- `check` returns a value-type record, because it cannot hold an
+  undeclared key. For other values, `check` does not change.
 - Code that uses the option needs value-type at run time, also for AOT
   classes.
 
@@ -153,6 +204,9 @@ All behaviour of the defclosedrecord design applies, with these differences:
 | `identical?` | reference | field values | reference |
 | `locking`, weak references | work | throw `IdentityException` | work |
 | `__hash`, `__hasheq` fields | caches | absent | always 0 |
+| `__meta`, `__extmap` fields | metadata, hidden literal keys | absent | always nil |
+| Metadata | as `defrecord` | none: not `IMeta` | none: not `IMeta` |
+| Map literal with an undeclared key | read; key hidden; `check` throws | throws at read | throws at read |
 | Serialization | as `defrecord` | not promised | as `defrecord` |
 | Non-nil enforcement | none: `:non-nil` has no effect | native null restriction with a value-class tag on a JVM that supports native fields; otherwise constructor checks | constructor checks |
 | Field storage type | primitive tag: the primitive; other fields: `Object` | `:non-nil` field: the tag class; other fields: as Ordinary | `:non-nil` field: the tag class; other fields: as Ordinary |
