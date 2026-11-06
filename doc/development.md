@@ -50,7 +50,9 @@ Start a REPL. The nREPL server writes the port to `.nrepl-port`:
     clojure -M:test:nrepl
 
 Start a REPL for `:value-type true` records on a Valhalla early-access JDK.
-The `:enable-preview` alias adds the JVM option `--enable-preview`:
+The `:enable-preview` alias adds the JVM options `--enable-preview` and
+`--add-exports=java.base/jdk.internal.value=ALL-UNNAMED`. `value-type.array`
+needs the export:
 
     JAVA_CMD=<Valhalla java> clojure -M:test:value-type-test:clj-1.12:enable-preview:nrepl
 

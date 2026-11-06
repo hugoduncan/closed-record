@@ -1,34 +1,35 @@
 {:paths ["src"]
- :deps {org.clojure/clojure {:mvn/version "1.11.4"}}
+ :deps  {org.clojure/clojure {:mvn/version "1.11.4"}}
  :aliases
- {:quickdoc {:extra-paths ["dev/quality"]
-             :extra-deps {io.github.borkdude/quickdoc
-                          {:git/tag "v0.2.6"
-                           :git/sha "ce8678000afa5f835639dd7267dc191fd90495a2"}}}
-  :tooling-test {:extra-paths ["dev/quality" "test/tooling"]
-                 :extra-deps {org.hugoduncan/scry {:mvn/version "0.1.61"}}}
-  :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.10"}}
-          :ns-default build}
-  :release {:extra-paths ["dev/release"]}
-  :release-test {:extra-paths ["test/release"]}
-  :deploy {:extra-deps {slipset/deps-deploy {:mvn/version "0.2.2"}}}
-  :build-test {:extra-paths ["." "test/build"]
-               :extra-deps {io.github.clojure/tools.build {:mvn/version "0.10.10"}}}
-  :test {:extra-paths ["test/runtime" "dev/bench"]
-         :extra-deps {org.hugoduncan/scry {:mvn/version "0.1.61"}
-                      org.clojure/test.check {:mvn/version "1.1.3"}
-                      metosin/malli {:mvn/version "0.20.3"}}}
+ {:quickdoc        {:extra-paths ["dev/quality"]
+                    :extra-deps  {io.github.borkdude/quickdoc
+                                  {:git/tag "v0.2.6"
+                                   :git/sha "ce8678000afa5f835639dd7267dc191fd90495a2"}}}
+  :tooling-test    {:extra-paths ["dev/quality" "test/tooling"]
+                    :extra-deps  {org.hugoduncan/scry {:mvn/version "0.1.61"}}}
+  :build           {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.10"}}
+                    :ns-default build}
+  :release         {:extra-paths ["dev/release"]}
+  :release-test    {:extra-paths ["test/release"]}
+  :deploy          {:extra-deps {slipset/deps-deploy {:mvn/version "0.2.2"}}}
+  :build-test      {:extra-paths ["." "test/build"]
+                    :extra-deps  {io.github.clojure/tools.build {:mvn/version "0.10.10"}}}
+  :test            {:extra-paths ["test/runtime" "dev/bench"]
+                    :extra-deps  {org.hugoduncan/scry    {:mvn/version "0.1.61"}
+                                  org.clojure/test.check {:mvn/version "1.1.3"}
+                                  metosin/malli          {:mvn/version "0.20.3"}}}
   :value-type-test {:extra-paths ["test/value-type" "test/value-type-clj-1.11"]
-                    :extra-deps {org.hugoduncan/value-type
-                                 {:git/url "https://github.com/hugoduncan/value-type.git"
-                                  :git/sha "edc3f79de77bcf044d6234df361e090edc46c813"}}}
-  :bench {:extra-paths ["dev/bench"]
-          :extra-deps {org.hugoduncan/criterium {:mvn/version "0.5.251-ALPHA"}}
-          :jvm-opts ["-XX:+UnlockExperimentalVMOptions"
-                     "-XX:CompileCommand=blackhole,criterium.blackhole.Blackhole::consume"]
-          :main-opts ["-m" "closed-record.bench"]}
-  :nrepl {:extra-deps {nrepl/nrepl {:mvn/version "1.8.0"}}
-          :main-opts ["-m" "nrepl.cmdline"]}
-  :enable-preview {:jvm-opts ["--enable-preview"]}
-  :clj-1.12 {:override-deps {org.clojure/clojure {:mvn/version "1.12.6"}}}
-  :clj-1.13 {:override-deps {org.clojure/clojure {:mvn/version "1.13.0-alpha9"}}}}}
+                    :extra-deps  {org.hugoduncan/value-type
+                                  {:git/url "https://github.com/hugoduncan/value-type.git"
+                                   :git/sha "edc3f79de77bcf044d6234df361e090edc46c813"}}}
+  :bench           {:extra-paths ["dev/bench"]
+                    :extra-deps  {org.hugoduncan/criterium {:mvn/version "0.5.251-ALPHA"}}
+                    :jvm-opts    ["-XX:+UnlockExperimentalVMOptions"
+                                  "-XX:CompileCommand=blackhole,criterium.blackhole.Blackhole::consume"]
+                    :main-opts   ["-m" "closed-record.bench"]}
+  :nrepl           {:extra-deps {nrepl/nrepl {:mvn/version "1.8.0"}}
+                    :main-opts  ["-m" "nrepl.cmdline"]}
+  :enable-preview  {:jvm-opts ["--enable-preview"
+                               "--add-exports=java.base/jdk.internal.value=ALL-UNNAMED"]}
+  :clj-1.12        {:override-deps {org.clojure/clojure {:mvn/version "1.12.6"}}}
+  :clj-1.13        {:override-deps {org.clojure/clojure {:mvn/version "1.13.0-alpha9"}}}}}
