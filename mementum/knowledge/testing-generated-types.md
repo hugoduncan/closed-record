@@ -50,6 +50,12 @@ Observed in task 003 (Clojure 1.11.4; suite passes on 1.12 and 1.13). Pattern: `
 - ❌ A record literal in test source (for example in a `deftest` body) is a code constant. `emitValue` rebuilds it
   and drops `__extmap`. To test a value with extra keys, `read-string` the literal at run time (with `*ns*` bound).
   First assert that `check` throws `extra-keys`. Without this assertion, the test can pass when it tests nothing.
+- ❌ A record literal with a value that the constructor rejects (nil or a wrong type in a hinted or non-nil
+  field) fails at read time, so the namespace does not load. `read-string` it at run time. The reader wraps the
+  constructor exception in a `ReaderException` that has `ex-data`; the host exception is only in the cause chain.
+  Thus "host exception, no `ex-data`" holds on `->Name`, `map->Name` and `assoc`, not on literals. State the
+  contract per path in docs, and assert `(nil? (ex-data e))` on the direct paths only. Select those paths by a
+  flag in the path data (`:direct? true`), not by the label string. Found in task 021 (test and docs reviews).
 - To test a compiled constant: a macro reads a literal string at expansion time and returns the object. Use the
   macro in a function body. Do not `eval` in the macro: `eval` of a form that holds the object goes through
   `emitValue`, so `__extmap` is dropped before the macro returns. `macroexpand-1` of the macro gives the object
