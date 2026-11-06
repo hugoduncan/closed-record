@@ -245,3 +245,198 @@
 - [ ] Run `bb lychee:check` (the CI `Markdown links` job checks every
   tracked `*.md` file, task files included, and checks bare URLs online).
   Fix any failure. Then commit the record (task files only; no push).
+
+## Implementation review follow-up
+
+- [x] In `test/value-type/closed_record/value_type/non_nil_test.clj`,
+  reuse `closed-record.probe-support` (`thrown`, `data-of`) instead of
+  the local `cause-classes` and `error-type` try/catch helpers:
+  `error-type` is `(:type (data-of f))`, and `cause-classes` can walk
+  the `ex-cause` chain of `(thrown f)`. The probe-support docstring names
+  the value-type suites as users.
+- [x] In `non-nil-expansion-test`
+  (`test/value-type/closed_record/value_type/representation_test.clj`),
+  derive the expected `:non-nil` count in the printed expansion from the
+  non-nil field symbols, not the literal `2`, so that part (a) stays
+  correct if the fixture form changes.
+- [x] Update the ns docstring of
+  `test/value-type/closed_record/value_type/representation_test.clj`
+  so that it names the VT-I6 check of VT-V2 (`non-nil-expansion-test`).
+  The plan review (pass 3) asked for this update in slice 3; slice 4 did
+  the same for `value_type_option_test.clj` (VT-V10).
+
+## Test review follow-up
+
+- [x] In `invalid-value-test`
+  (`test/value-type/closed_record/value_type/non_nil_test.clj`), check the
+  public contract "closed-record does not wrap them; they have no
+  `ex-data`". Today the test checks only that the host exception is in the
+  cause chain, so an `ex-info` wrapper from closed-record passes. For the
+  direct paths (`->NN`, `map->NN` with a nil value and with a missing key,
+  `assoc`), check that `(data-of f)` is nil. Do not check the literal
+  paths: the reader wraps them in a `ReaderException` with `ex-data`.
+  Checked on T-ID: these paths throw `NullPointerException` or
+  `ClassCastException` directly, with no `ex-data`.
+
+## Test review, pass 3 follow-up
+
+- [x] In `test/value-type/closed_record/value_type/non_nil_test.clj`,
+  remove the overlap of `untagged-nil-test` with
+  `valid-construction-test`. Today `valid` has `:u nil` and `r` is
+  `(->NN inner "s" nil)`. Thus `valid-construction-test` already builds
+  a record with `u` nil on every path, and `untagged-nil-test` checks
+  nothing new. Give `u` a value that is not nil in `valid`, in `r` and in
+  the positional literal (for example `1`), so that only
+  `untagged-nil-test` checks the nil acceptance of the untagged field.
+  `paths` then sets `:u nil` on each path.
+
+## Test review, pass 4 follow-up
+
+- [x] In `key-set-precedence-test`
+  (`test/value-type/closed_record/value_type/non_nil_test.clj`), add
+  `testing` labels for each case (`assoc :z`, and for each `k`: `dissoc`
+  and `map->NN` with an extra key). Today the `doseq` over `[:i :s]` has
+  no label, so a failure does not tell which field or path broke the
+  key-set precedence. The other tests in the file label each field and
+  path.
+
+## Docs review follow-up
+
+- [ ] Correct the "no `ex-data`" claim for record literals in
+  `README.md` ("Non-nil fields", first bullet) and in the public contract
+  of `ramora/value-type-records.md` ("Non-nil fields", second bullet).
+  Both say that nil and wrong types give host exceptions with no
+  `ex-data` on all paths, record literals included. But the reader wraps
+  the literal paths in a `ReaderException` with `ex-data`; the host
+  exception is in the cause chain (`non_nil_test.clj`, `direct-paths`
+  docstring). State that the host exception has no `ex-data` on `->Name`,
+  `map->Name` and `assoc`, and that on record literals the reader can
+  wrap it (host exception in the cause chain). Make design.md (Public
+  contract) agree. Run `bb vale` and `bb lychee:check`.
+  - README and Ramora corrected; `bb vale` and `bb lychee:check` clean.
+    Open: design.md (Public contract, line ~185) not changed; blocker in
+    implementation.md.
+
+## Code-shaper review follow-up
+
+- [x] In `test/value-type/closed_record/value_type/non_nil_test.clj`, do
+  not select the `ex-data` check by the path label string.
+  `check-host-exception` checks `(data-of f)` only when `label` is in
+  `direct-paths`, and the missing-key case passes the labels as literals.
+  A label rename in `paths` or a typo turns the check off with no failure.
+  Make each path in `paths` carry a direct flag (for example
+  `{:label "->NN" :f ... :direct? true}`) and pass that flag to
+  `check-host-exception`; remove `direct-paths`. Also call `f` once
+  (`thrown`), and derive the cause classes and the `ex-data` from that
+  one exception.
+- [x] In `test/value-type/closed_record/value_type/representation_test.clj`,
+  derive `plain-form` from `non-nil-form` with `remove-non-nil`, not as a
+  second literal form. Today the two forms repeat the type name, the
+  fully qualified `VP` tag and the field list; a change to one form only
+  makes part (b) compare forms that differ in more than `:non-nil`.
+  Part (b) then checks that `remove-non-nil` commutes with the expansion.
+
+## Code-shaper review, pass 2 follow-up
+
+- [x] In `test/value-type/closed_record/value_type/non_nil_test.clj`,
+  build the valid base record from one source. Today `valid`
+  (`{:i inner :s "s" :u 1}`) and three copies of `(->NN inner "s" 1)`
+  (`valid-construction-test`, `paths`, `key-set-precedence-test`) and the
+  positional literal values `[inner "s" 1]` state the same field values
+  separately; a change to one copy only makes `(= r v)` and the path
+  checks compare different records. Add one private `base`
+  (for example `(def ^:private base (map->NN valid))`, or `->NN` from
+  `(map valid [:i :s :u])`) and use it in the three places; derive the
+  positional literal values from `valid`.
+  - `base` is `(apply ->NN (positional-values valid))`; `paths`, the
+    `->NN` path and the positional literals use `positional-values`.
+
+## Code-shaper review, pass 3 follow-up
+
+- [x] In `test/value-type/closed_record/value_type/non_nil_test.clj`,
+  name the non-nil field keys once. Today `[:i :s]` occurs in
+  `invalid-value-test` and `key-set-precedence-test`, and `bad` has the
+  same keys. A new non-nil field in `NN` needs three edits, and a missed
+  edit removes checks with no failure. Add one private `non-nil-keys`
+  (or use `(keys bad)`) and use it in both `doseq` forms.
+- [x] In the same file, make `check-fields` read the expected values from
+  `valid` (`(:i valid)`, `(:s valid)`), not the literals `inner` and
+  `"s"`; make the `assoc` cases of `valid-construction-test` use the
+  `valid` values too (`(assoc base k (valid k))` for each of
+  `field-keys`). Remove the `(let [r base] ...)` alias in
+  `valid-construction-test` and `key-set-precedence-test`; use `base`.
+  Then `valid` is the only source of the field values.
+  - `non-nil-keys` is `(keys bad)`; the `assoc` cases come from
+    `field-keys`; no `r` alias.
+
+## Code-shaper review, pass 4 follow-up
+
+- [x] In `non-nil-expansion-test`
+  (`test/value-type/closed_record/value_type/representation_test.clj`),
+  derive the expected non-nil fields from `non-nil-form`, not the literal
+  `'[p s]`. Today the literal repeats the field vector of `non-nil-form`,
+  and the count check compares against `non-nil-fields` from the
+  expansion; if the emitter drops `:non-nil` from a field, only the
+  literal catches it. Add one private value (for example the
+  `:non-nil` symbols of `(nth non-nil-form 2)`), compare
+  `non-nil-fields` to it, and use its count in the "no other place"
+  check. Then `non-nil-form` is the only source of the non-nil fields.
+  - `declared-non-nil-fields` is the `:non-nil` symbols of
+    `(nth non-nil-form 2)`; both checks use it.
+
+## Code-shaper review, pass 5 follow-up
+
+- [x] In `invalid-value-test`
+  (`test/value-type/closed_record/value_type/non_nil_test.clj`), give the
+  missing-key case the same data shape as `paths`. Today it builds two
+  path maps inline, with no `:label`, and repeats the labels `"map->NN"`
+  and `"map literal"` as `testing` strings. Add a private
+  `missing-key-paths` (field `k` → vector of `{:label :f :direct?}`, built
+  from `(dissoc valid k)`), and loop over it as the nil and wrong-type
+  cases loop over `paths`. Also correct the `paths` docstring: it returns
+  a vector of maps, not "a map of each path".
+- [x] Name the cause-chain walk once. `(take-while some? (iterate ex-cause
+  e))` occurs in `cause-classes` (`non_nil_test.clj`) and `first-cause`
+  (`errors_test.clj`). Add `causes` (exception → seq of the exception and
+  its causes) to `closed-record.probe-support`, and use it in both
+  places. The copy in the `subprocess_test.clj` script text stays (it is
+  code in a string that a child JVM evaluates).
+  - `missing-key-paths` added; `paths` docstring corrected; `causes` in
+    `probe-support`, used by `cause-classes` and `first-cause`.
+
+## Code-shaper review, pass 6 follow-up
+
+- [x] Rewrap the two docstrings that the pass-5 follow-up made longer
+  than the 80-column wrap that the rest of each file uses:
+  `paths` in `test/value-type/closed_record/value_type/non_nil_test.clj`
+  (line ~124, 97 columns) and the ns docstring of
+  `test/runtime/closed_record/probe_support.clj` (line 3, 91 columns).
+  `bb clj-fmt:check` does not rewrap docstrings, so no check finds this.
+  - Both docstrings rewrapped to 80 columns; no line over 80 columns in
+    either file.
+
+## Code-shaper review, pass 7 follow-up
+
+- [x] Name the fixture expansion steps once. `fixture-expansion` and
+  `printed` in
+  `test/value-type/closed_record/value_type/representation_test.clj`
+  copy the body of `expansion` in
+  `test/runtime/closed_record/expansion_fixture.clj` (bind `*ns*` to the
+  fixture namespace, `macroexpand-1` of `strip-positions`, then
+  `normalise` of `pr-str` with `*print-meta*` true). A change to one copy
+  only makes VT-I6 compare expansions that the fixture does not record.
+  Split `expansion` into two public functions (for example `expand`:
+  form → unprinted expansion; `printed`: form → normalised printed
+  text), define `expansion` as their composition, and use both in
+  `non-nil-expansion-test`. Remove the local copies. Run T-RT (the
+  fixture namespace changes) and T-ID.
+- [x] Name the metadata-key removal walk once. `remove-non-nil`
+  (`representation_test.clj`) and `strip-positions`
+  (`expansion_fixture.clj`) are the same `form/walk-form` over `IObj`
+  values with `(not-empty (dissoc (meta x) ...))`; only the keys differ.
+  Add one function (for example `strip-meta`: form, keys → form) beside
+  `strip-positions`; define `strip-positions` and `remove-non-nil` with
+  it.
+  - `expand`, `printed`, `expansion` (`printed` of `expand`) and
+    `strip-meta` in `expansion_fixture.clj`; local copies in
+    `representation_test.clj` removed.

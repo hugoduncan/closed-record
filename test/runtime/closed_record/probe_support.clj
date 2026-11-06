@@ -1,13 +1,18 @@
 (ns closed-record.probe-support
   "Test probe helpers: evaluate a form in a new namespace, catch the
-  exception of a call, and catch the exception of a macroexpansion. The
-  ordinary suite, the value-type suites and the shared check namespaces use
-  them.")
+  exception of a call, walk a cause chain, and catch the exception of a
+  macroexpansion. The ordinary suite, the value-type suites and the shared
+  check namespaces use them.")
 
 (defn thrown
   "Call `f`; return the exception that it throws, or nil."
   [f]
   (try (f) nil (catch Throwable e e)))
+
+(defn causes
+  "The exception `e` and its causes, in cause-chain order."
+  [e]
+  (take-while some? (iterate ex-cause e)))
 
 (defn data-of
   "Call `f`; return the `ex-data` of the exception that it throws, or nil."

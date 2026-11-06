@@ -6,6 +6,7 @@
   (:require
    [clojure.test :refer [deftest is testing]]
    [closed-record.core]
+   [closed-record.probe-support :refer [causes]]
    [closed-record.value-type.expectation :as expectation]
    [closed-record.value-type.support :as support])
   (:import
@@ -18,7 +19,7 @@
   `Compiler$CompilerException`."
   [t]
   (first (remove #(instance? Compiler$CompilerException %)
-                 (take-while some? (iterate ex-cause t)))))
+                 (causes t))))
 
 (defn- eval-error
   "The `first-cause` of the evaluation of `form`, or nil."

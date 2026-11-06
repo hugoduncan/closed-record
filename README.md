@@ -209,7 +209,10 @@ closed-record passes the metadata to value-type with no change.
 
 - Nil gives `NullPointerException`, and a value of the wrong type gives
   `ClassCastException`, on `->Name`, `map->Name`, `assoc` and record
-  literals. These host exceptions have no `ex-data`.
+  literals. On `->Name`, `map->Name` and `assoc`, closed-record does not
+  wrap these host exceptions, and they have no `ex-data`. On record
+  literals, the reader can wrap them in an exception with `ex-data`; the
+  host exception is in the cause chain.
 - `map->Name` without a key for a non-nil field gives
   `NullPointerException`.
 - Key-set errors come first and do not change: `assoc` of an undeclared

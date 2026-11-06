@@ -124,7 +124,10 @@ value-type record, on value output and on identity fallback.
   - Nil and wrong-type values give the host `NullPointerException` and
     `ClassCastException` on all closed-record paths: `->Name`, `map->Name`,
     `assoc`, and map and positional record literals. closed-record does not
-    wrap them. They have no `ex-data`.
+    wrap them. On `->Name`, `map->Name` and `assoc`, they have no
+    `ex-data`. On record literals, the reader can wrap them in a
+    `ReaderException` with `ex-data`; the host exception is in the cause
+    chain.
   - `map->Name` without a key for a non-nil field gives
     `NullPointerException`, as D-19.
   - Key-set errors come first, with no change, on the paths that check the

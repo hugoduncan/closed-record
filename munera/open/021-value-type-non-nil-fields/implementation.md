@@ -410,3 +410,194 @@
 - blocker: The plan requires user approval before the first push of branch `020-value-type-records`, and acceptance criterion 7 needs CI results for the pushed commit.
 - required-human-action: Approve `git push origin 020-value-type-records` (or push it yourself). Then the next pass reads the CI run and records the result.
 <!-- IMPLEMENTATION_BLOCKER: END -->
+
+## Implementation review (2026-11-04)
+
+- T-ID rerun: 89 tests / 421 assertions pass. Design contract, Ramora,
+  README, docstring and CHANGELOG agree; no emitter change.
+- added 2 steps to be addressed
+
+## Review follow-up (2026-11-04)
+
+- addressed 2 review steps: `non_nil_test.clj` uses
+  `closed-record.probe-support` (`thrown`, `data-of`);
+  `non-nil-expansion-test` derives the `:non-nil` count from the field
+  symbols. T-ID 89 / 421, T-VAL 87 / 422; fmt and kondo clean.
+- Push steps stay blocked (user approval, see blocker above).
+
+## Implementation review, pass 2 (2026-11-04)
+
+- added 1 step to be addressed
+
+## Review follow-up, pass 2 (2026-11-04)
+
+- addressed 1 review step: the `representation_test.clj` ns docstring
+  names the VT-I6 check of VT-V2 (`non-nil-expansion-test`). T-ID 89 /
+  421; fmt clean.
+- Push steps stay blocked (user approval, see blocker above).
+
+## Implementation review, pass 3 (2026-11-04)
+
+- no new issues; T-VAL 87 / 422 pass
+
+## Test review (2026-11-04)
+
+- added 1 step to be addressed
+
+## Test review follow-up (2026-11-04)
+
+- addressed 1 review step: `invalid-value-test` checks `(data-of f)` is
+  nil on the direct paths (`->NN`, `map->NN` nil value and missing key,
+  `assoc`); literal paths not checked (reader wraps). T-ID 89 / 435,
+  T-VAL 87 / 436; fmt and kondo clean.
+- Push steps stay blocked (user approval, see blocker above).
+
+## Test review, pass 2 (2026-11-04)
+
+- no new issues; T-VAL 87 / 436 pass
+
+## Test review, pass 3 (2026-11-04)
+
+- added 1 step to be addressed
+
+## Test review, pass 3 follow-up (2026-11-04)
+
+- addressed 1 review step: `non_nil_test.clj` gives `u` the value `1` in
+  `valid`, the base records and the positional literal; only
+  `untagged-nil-test` checks nil in `u`. T-ID 89 / 435, T-VAL 87 / 436.
+- Push steps stay blocked (user approval, see blocker above).
+
+## Test review, pass 4 (2026-11-04)
+
+- added 1 step to be addressed
+
+## Test review, pass 4 follow-up (2026-11-04)
+
+- addressed 1 review step: `key-set-precedence-test` labels each case
+  (`assoc :z`; per field: `dissoc`, `map->NN with an extra key`).
+  T-ID 89 / 435, T-VAL 87 / 436; fmt and kondo clean.
+- Push steps stay blocked (user approval, see blocker above).
+
+## Test review, pass 5 (2026-11-04)
+
+- no new issues; T-ID 89 / 435 pass
+
+## Docs review (2026-11-04)
+
+- added 1 step to be addressed
+
+## Docs review follow-up (2026-11-04)
+
+- addressed 1 review step in part: `README.md` ("Non-nil fields") and
+  `ramora/value-type-records.md` (public contract) now state no
+  `ex-data` only on `->Name`, `map->Name` and `assoc`; on record literals
+  the reader can wrap the host exception (cause chain). `bb vale` and
+  `bb lychee:check` clean.
+- Blocker: design.md (Public contract, line ~185, "They have no
+  `ex-data`") still claims all paths. This pass had design.md as
+  read-only context. Step stays unchecked until a pass may edit design.md.
+- Push steps stay blocked (user approval, see blocker above).
+
+## Docs review, pass 2 (2026-11-04)
+
+- no new issues
+
+## Code-shaper review (2026-11-04)
+
+- added 2 steps to be addressed
+
+## Code-shaper review follow-up (2026-11-04)
+
+- addressed 2 review steps: `paths` entries carry `:direct?`;
+  `check-host-exception` calls `f` once; `direct-paths` removed.
+  `plain-form` is `(remove-non-nil non-nil-form)`.
+  T-ID 89 / 435, T-VAL 87 / 436; fmt and kondo clean.
+- Docs review follow-up step stays open: design.md still read-only
+  context in this pass (blocker above).
+- Push steps stay blocked (user approval, see blocker above).
+
+## Code-shaper review, pass 2 (2026-11-04)
+
+- added 1 step to be addressed
+
+## Code-shaper review, pass 2 follow-up (2026-11-04)
+
+- addressed 1 review step: one private `base` from `valid`
+  (`field-keys`, `positional-values`); no other copy of the field values.
+  T-ID 89 / 435, T-VAL 87 / 436; fmt and kondo clean.
+- Docs review follow-up step stays open: design.md still read-only
+  context in this pass (blocker above).
+- Push steps stay blocked (user approval, see blocker above).
+
+## Code-shaper review, pass 3 (2026-11-04)
+
+- added 2 steps to be addressed
+
+## Code-shaper review, pass 3 follow-up (2026-11-04)
+
+- addressed 2 review steps: one private `non-nil-keys` (`(keys bad)`)
+  in both `doseq` forms; `check-fields` and the `assoc` cases read
+  `valid`; `r` alias removed. T-ID 89 / 435, T-VAL 87 / 436; fmt and
+  kondo clean.
+- Docs review follow-up step stays open: design.md still read-only
+  context in this pass (blocker above).
+- Push steps stay blocked (user approval, see blocker above).
+
+## Code-shaper review, pass 4 (2026-11-04)
+
+- added 1 step to be addressed
+
+## Code-shaper review, pass 4 follow-up (2026-11-04)
+
+- addressed 1 review step: private `declared-non-nil-fields` from
+  `non-nil-form`; the field check and the count check use it. T-ID
+  89 / 435, T-VAL 87 / 436; fmt and kondo clean.
+- Docs review follow-up step stays open: design.md still read-only
+  context in this pass (blocker above).
+- Push steps stay blocked (user approval, see blocker above).
+
+## Code-shaper review, pass 5 (2026-11-04)
+
+- added 2 steps to be addressed
+
+## Code-shaper review, pass 5 follow-up (2026-11-04)
+
+- addressed 2 review steps: private `missing-key-paths` with the `paths`
+  shape; `paths` docstring corrected; `causes` in
+  `closed-record.probe-support`, used in `non_nil_test.clj` and
+  `errors_test.clj`. T-ID 89 / 435, T-VAL 87 / 436, T-RT 187 / 2798 on
+  1.11/1.12/1.13; fmt and kondo clean.
+- Docs review follow-up step stays open: design.md still read-only
+  context in this pass (blocker above).
+- Push steps stay blocked (user approval, see blocker above).
+
+## Code-shaper review, pass 6 (2026-11-04)
+
+- added 1 step to be addressed
+
+## Code-shaper review, pass 6 follow-up (2026-11-04)
+
+- addressed 1 review step: `paths` docstring and `probe-support` ns
+  docstring rewrapped to 80 columns. Docstring-only change; fmt and kondo
+  clean.
+- Docs review follow-up step stays open: design.md still read-only
+  context in this pass (blocker above).
+- Push steps stay blocked (user approval, see blocker above).
+
+## Code-shaper review, pass 7 (2026-11-04)
+
+- added 2 steps to be addressed
+
+## Code-shaper review, pass 7 follow-up (2026-11-04)
+
+- addressed 2 review steps: `expand`, `printed` and `strip-meta` in
+  `closed-record.expansion-fixture`; `expansion` is `printed` of `expand`;
+  `strip-positions` and `remove-non-nil` use `strip-meta`. T-ID 89 / 435,
+  T-VAL 87 / 436, T-RT 187 / 2798 on 1.11/1.12/1.13; fmt and kondo clean.
+- Docs review follow-up step stays open: design.md still read-only
+  context in this pass (blocker above).
+- Push steps stay blocked (user approval, see blocker above).
+
+## Code-shaper review, pass 8 (2026-11-04)
+
+- no new issues

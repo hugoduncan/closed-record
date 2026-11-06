@@ -43,16 +43,22 @@
     :non-nil
     (closed-record.core/defclosedrecord NonNil [^String ^:non-nil s])})
 
+(defn strip-meta
+  "Remove the metadata keys `ks` from the metadata of `form` and of every
+  element in it. Keep all other metadata."
+  [form ks]
+  (form/walk-form
+   (fn [x]
+     (if (instance? clojure.lang.IObj x)
+       (with-meta x (not-empty (apply dissoc (meta x) ks)))
+       x))
+   form))
+
 (defn strip-positions
   "Remove `:line`, `:column` and `:file` from the metadata of `form` and of
   every element in it. Keep all other metadata."
   [form]
-  (form/walk-form
-   (fn [x]
-     (if (instance? clojure.lang.IObj x)
-       (with-meta x (not-empty (dissoc (meta x) :line :column :file)))
-       x))
-   form))
+  (strip-meta form [:line :column :file]))
 
 (def ^:private gensym-pattern
   #"\b([A-Za-z_-]+__)(\d+)(__auto__)?\b")
@@ -71,13 +77,22 @@
                                  i))]
                      (str prefix "G" i auto))))))
 
-(defn expansion
-  "The normalised printed `macroexpand-1` of `form`, with `*ns*` bound to
-  this namespace and `*print-meta*` true."
+(defn expand
+  "The `macroexpand-1` of `form` without positions, with `*ns*` bound to
+  this namespace."
   [form]
   (binding [*ns* (the-ns 'closed-record.expansion-fixture)]
-    (let [expanded (macroexpand-1 (strip-positions form))]
-      (normalise (binding [*print-meta* true] (pr-str expanded))))))
+    (macroexpand-1 (strip-positions form))))
+
+(defn printed
+  "The normalised printed text of `x`, with `*print-meta*` true."
+  [x]
+  (normalise (binding [*print-meta* true] (pr-str x))))
+
+(defn expansion
+  "The normalised printed `macroexpand-1` of `form`: `printed` of `expand`."
+  [form]
+  (printed (expand form)))
 
 (def fixture-path
   "The path of the fixture file, relative to the repository root."

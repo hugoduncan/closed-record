@@ -6,6 +6,7 @@
   (:require
    [clojure.test :refer [deftest is testing]]
    [closed-record.core :refer [check defclosedrecord]]
+   [closed-record.probe-support :refer [causes data-of thrown]]
    [closed-record.value-type.expectation :as expectation])
   (:import
    (java.lang.reflect Field)))
@@ -37,20 +38,31 @@
   (str class-prefix (pr-str (vec vs))))
 
 (defn- cause-classes
-  "The classes in the cause chain of the exception of `f`, or nil."
-  [f]
-  (try (f) nil
-       (catch Throwable t
-         (set (map class (take-while some? (iterate ex-cause t)))))))
+  "The classes in the cause chain of the exception `e`."
+  [e]
+  (set (map class (causes e))))
 
 (defn- error-type
   "The `:type` of the `ex-data` of the exception of `f`, or nil."
   [f]
-  (try (f) nil (catch Throwable t (:type (ex-data t)))))
+  (:type (data-of f)))
 
 (def ^:private inner (->Inner 1))
 
-(def ^:private valid {:i inner :s "s" :u nil})
+(def ^:private valid {:i inner :s "s" :u 1})
+
+(def ^:private field-keys
+  "The `NN` fields in declaration order."
+  [:i :s :u])
+
+(defn- positional-values
+  "The values of `m` in `NN` field order."
+  [m]
+  (mapv m field-keys))
+
+(def ^:private base
+  "The valid base record, built from `valid`."
+  (apply ->NN (positional-values valid)))
 
 (defn- field-type
   [field]
@@ -70,77 +82,103 @@
   [r]
   (is (= NN (class r)))
   (testing "keyword lookup at a call site"
-    (is (= inner (:i r)))
-    (is (= "s" (:s r))))
+    (is (= (:i valid) (:i r)))
+    (is (= (:s valid) (:s r))))
   (testing "get"
-    (is (= inner (get r :i)))
-    (is (= "s" (get r :s))))
+    (is (= (:i valid) (get r :i)))
+    (is (= (:s valid) (get r :s))))
   (testing "field access"
-    (is (= inner (.-i ^NN r)))
-    (is (= "s" (.-s ^NN r)))))
+    (is (= (:i valid) (.-i ^NN r)))
+    (is (= (:s valid) (.-s ^NN r)))))
 
 (deftest valid-construction-test
-  (let [r (->NN inner "s" nil)]
-    (doseq [[label v] [["->NN" r]
-                       ["map->NN" (map->NN valid)]
-                       ["assoc :i" (assoc r :i (->Inner 1))]
-                       ["assoc :s" (assoc r :s "s")]
-                       ["assoc :u" (assoc r :u nil)]
-                       ["map literal" (read-literal (map-literal valid))]
-                       ["positional literal"
-                        (read-literal (positional-literal [inner "s" nil]))]]]
-      (testing label
-        (check-fields v)
-        (is (= r v))))
-    (testing "with-meta keeps the fields"
-      (let [m (with-meta r {:k 1})]
-        (check-fields m)
-        (is (= {:k 1} (meta m)))))
-    (testing "check returns a valid record"
-      (is (identical? r (check r))))))
+  (doseq [[label v] (concat
+                     [["->NN" base]
+                      ["map->NN" (map->NN valid)]]
+                     (for [k field-keys]
+                       [(str "assoc " k) (assoc base k (valid k))])
+                     [["map literal" (read-literal (map-literal valid))]
+                      ["positional literal"
+                       (read-literal
+                        (positional-literal (positional-values valid)))]])]
+    (testing label
+      (check-fields v)
+      (is (= base v))))
+  (testing "with-meta keeps the fields"
+    (let [m (with-meta base {:k 1})]
+      (check-fields m)
+      (is (= {:k 1} (meta m)))))
+  (testing "check returns a valid record"
+    (is (identical? base (check base)))))
 
 (def ^:private bad
   "For each non-nil field: the wrong-type value."
   {:i "x" :s 1})
 
+(def ^:private non-nil-keys
+  "The non-nil fields of `NN`."
+  (keys bad))
+
 (defn- paths
-  "For field `k` and value `v`: the label and a thunk of each path."
+  "For field `k` and value `v`: a vector of the paths, each a map with
+  `:label`, a thunk `:f` and `:direct?`. A direct path throws the host
+  exception with no wrapper; the reader wraps the literal paths in a
+  `ReaderException` with `ex-data`."
   [k v]
-  (let [m (assoc valid k v)
-        r (->NN inner "s" nil)]
-    [["->NN" #(->NN (:i m) (:s m) (:u m))]
-     ["map->NN" #(map->NN m)]
-     ["assoc" #(assoc r k v)]
-     ["map literal" #(read-literal (map-literal m))]
-     ["positional literal"
-      #(read-literal (positional-literal [(:i m) (:s m) (:u m)]))]]))
+  (let [m (assoc valid k v)]
+    [{:label "->NN" :f #(apply ->NN (positional-values m)) :direct? true}
+     {:label "map->NN" :f #(map->NN m) :direct? true}
+     {:label "assoc" :f #(assoc base k v) :direct? true}
+     {:label "map literal" :f #(read-literal (map-literal m)) :direct? false}
+     {:label "positional literal"
+      :f #(read-literal (positional-literal (positional-values m)))
+      :direct? false}]))
+
+(defn- missing-key-paths
+  "For field `k`: a vector of the paths that build `NN` from `valid` without
+  `k`, each a map with `:label`, a thunk `:f` and `:direct?`."
+  [k]
+  (let [m (dissoc valid k)]
+    [{:label "map->NN" :f #(map->NN m) :direct? true}
+     {:label "map literal" :f #(read-literal (map-literal m)) :direct? false}]))
+
+(defn- check-host-exception
+  "Check that `f` throws `cls` in the cause chain; when `direct?`, also
+  check that the exception has no `ex-data` (closed-record does not wrap)."
+  [{:keys [f direct?]} cls]
+  (let [e (thrown f)]
+    (is (contains? (cause-classes e) cls))
+    (when direct?
+      (is (nil? (ex-data e))))))
 
 (deftest invalid-value-test
-  (doseq [k [:i :s]]
+  (doseq [k non-nil-keys]
     (testing (str k " nil")
-      (doseq [[label f] (paths k nil)]
+      (doseq [{:keys [label] :as path} (paths k nil)]
         (testing label
-          (is (contains? (cause-classes f) NullPointerException)))))
+          (check-host-exception path NullPointerException))))
     (testing (str k " wrong type")
-      (doseq [[label f] (paths k (bad k))]
+      (doseq [{:keys [label] :as path} (paths k (bad k))]
         (testing label
-          (is (contains? (cause-classes f) ClassCastException)))))
+          (check-host-exception path ClassCastException))))
     (testing (str k " missing key")
-      (is (contains? (cause-classes #(map->NN (dissoc valid k)))
-                     NullPointerException))
-      (is (contains? (cause-classes
-                      #(read-literal (map-literal (dissoc valid k))))
-                     NullPointerException)))))
+      (doseq [{:keys [label] :as path} (missing-key-paths k)]
+        (testing label
+          (check-host-exception path NullPointerException))))))
 
 (deftest untagged-nil-test
-  (doseq [[label f] (paths :u nil)]
+  (doseq [{:keys [label f]} (paths :u nil)]
     (testing label
       (is (nil? (:u (f)))))))
 
 (deftest key-set-precedence-test
-  (let [r (->NN inner "s" nil)]
-    (is (= :closed-record/undeclared-key (error-type #(assoc r :z 1))))
-    (doseq [k [:i :s]]
-      (is (= :closed-record/declared-key-dissoc (error-type #(dissoc r k))))
-      (is (= :closed-record/extra-keys
-             (error-type #(map->NN (assoc (dissoc valid k) :z 1))))))))
+  (testing "assoc :z"
+    (is (= :closed-record/undeclared-key (error-type #(assoc base :z 1)))))
+  (doseq [k non-nil-keys]
+    (testing (str k)
+      (testing "dissoc"
+        (is (= :closed-record/declared-key-dissoc
+               (error-type #(dissoc base k)))))
+      (testing "map->NN with an extra key"
+        (is (= :closed-record/extra-keys
+               (error-type #(map->NN (assoc (dissoc valid k) :z 1)))))))))
