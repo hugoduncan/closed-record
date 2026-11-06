@@ -54,7 +54,7 @@
 (deftest non-nil-field-test
   (check-pass-through "(closed-record.core/defclosedrecord NN [^:non-nil a]
                         :value-type true)"
-                      :non-nil-unsupported))
+                      :missing-tag))
 
 (deftest nil-restricted-field-test
   (check-pass-through "(closed-record.core/defclosedrecord NR [^:nil-restricted a]

@@ -38,9 +38,12 @@
     :destructured
     (closed-record.core/defclosedrecord Destructured [a]
       java.util.function.BiFunction
-      (apply [_ [x y] {:keys [z]}] (list a x y z)))})
+      (apply [_ [x y] {:keys [z]}] (list a x y z)))
 
-(defn- strip-positions
+    :non-nil
+    (closed-record.core/defclosedrecord NonNil [^String ^:non-nil s])})
+
+(defn strip-positions
   "Remove `:line`, `:column` and `:file` from the metadata of `form` and of
   every element in it. Keep all other metadata."
   [form]

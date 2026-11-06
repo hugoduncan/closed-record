@@ -166,7 +166,7 @@ Requirements:
   ```clojure
   {:deps {org.hugoduncan/value-type
           {:git/url "https://github.com/hugoduncan/value-type.git"
-           :git/sha "8bb7c4f7a21d72c8eae553df89e17b71f34aeda3"}}}
+           :git/sha "edc3f79de77bcf044d6234df361e090edc46c813"}}}
   ```
 
 Without value-type, macro expansion throws ex-info with
@@ -183,9 +183,40 @@ The record contract does not change, with these differences:
 | `identical?` | reference | field values | reference |
 | `locking`, weak references | work | throw `IdentityException` | work |
 | Serialization | as `defrecord` | not promised | as `defrecord` |
+| Non-nil enforcement | none: `:non-nil` has no effect | native null restriction with a value-class tag on a JVM that supports native fields; otherwise constructor checks | constructor checks |
+| Field storage type | primitive tag: the primitive; other fields: `Object` | `:non-nil` field: the tag class; other fields: as Ordinary | `:non-nil` field: the tag class; other fields: as Ordinary |
 
 Each `hash` call computes the hash again. The option makes no
 performance claim; see [performance](doc/performance.md#value-type-records).
+
+#### Non-nil fields
+
+With `:value-type true`, field metadata `^:non-nil` makes a field
+non-nil:
+
+```clojure
+(defclosedrecord Point [^long x ^long y] :value-type true)
+(defclosedrecord Segment [^Point ^:non-nil start
+                          ^Point ^:non-nil end
+                          label]
+  :value-type true)
+```
+
+A non-nil field must have a tag that names a defined concrete,
+non-primitive class. value-type owns these rules; see its
+[field contract](https://github.com/hugoduncan/value-type/blob/edc3f79de77bcf044d6234df361e090edc46c813/doc/usage.md#portable-non-nil-fields).
+closed-record passes the metadata to value-type with no change.
+
+- Nil gives `NullPointerException`, and a value of the wrong type gives
+  `ClassCastException`, on `->Name`, `map->Name`, `assoc` and record
+  literals. These host exceptions have no `ex-data`.
+- `map->Name` without a key for a non-nil field gives
+  `NullPointerException`.
+- Key-set errors come first and do not change: `assoc` of an undeclared
+  key, `dissoc` of a declared key and `map->Name` with extra keys throw
+  ex-info as before.
+- Without `:value-type true`, `:non-nil` has no effect, as in
+  `defrecord`. The field accepts nil.
 
 ## Development
 

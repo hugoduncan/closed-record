@@ -336,3 +336,77 @@
   implementation from steps slice 1, not a design-steps slice.
 - Keep: the slice-1 fixture form comes first (the `f034647` baseline holds
   only while `src/` and `test/` have no change); stop before the first push.
+
+## Slice 1 (2026-11-04)
+
+- `git diff --quiet f034647 -- src` held before the fixture change; the
+  `:non-nil` fixture entry is recorded from the `f034647` emitter. `git
+  diff` of `expansion_fixture.edn`: two added lines only.
+- Pin `edc3f79` in `deps.edn` and README. VT-V6 now expects
+  `:missing-tag`. No emitter change.
+- Results: T-ID 82 tests, T-VAL 80, T-11 1, T-RT 186 on 1.11/1.12/1.13;
+  all pass.
+
+## Slice 2 (2026-11-04)
+
+- VT-V9 in `test/value-type/closed_record/value_type/non_nil_test.clj`.
+  Fixtures `Inner` (value record) and `NN [^Inner ^:non-nil i ^String
+  ^:non-nil s u]`. No emitter change.
+- Literals with nil or wrong types are read at run time (`read-string` in
+  the test ns). Extra check beyond design: a map literal that omits a
+  non-nil key also gives `NullPointerException`.
+- Key-set precedence types: `:closed-record/undeclared-key`,
+  `:closed-record/declared-key-dissoc`, `:closed-record/extra-keys`.
+- Results: T-ID 88 tests / 417 assertions, T-VAL 86 / 418; all pass.
+
+## Slice 3 (2026-11-04)
+
+- VT-I6 check `non-nil-expansion-test` in `representation_test.clj`.
+  `strip-positions` in `expansion_fixture.clj` is now public (reused);
+  `*ns*` bound to `closed-record.expansion-fixture`. Tag of `p` is the
+  fully qualified `VP` class name. Part (a) also counts `:non-nil` in the
+  printed expansion (exactly 2). No emitter change.
+- Results: T-ID 89 / 421, T-VAL 87 / 422, T-RT 186 on 1.11/1.12/1.13; pass.
+
+## Slice 4 (2026-11-04)
+
+- VT-V10 `non-nil-ordinary-test` in `value_type_option_test.clj`; type
+  `NonNilField [^String ^:non-nil s]`. Nil accepted on `->Name`,
+  `map->Name`, `assoc`. Extra check: field storage type is `Object`
+  (supports the "Field storage type" Ordinary cell). ns docstring names
+  VT-V10.
+- Results: T-RT 187 tests on 1.11/1.12/1.13; pass.
+
+## Slice 5 (2026-11-04)
+
+- Ramora done. VT-D11 and VT-D12 go after the VT-D10 stub in
+  `decisions.md` (numeric order). VT-I6 after VT-I5. VT-V9 and VT-V10 rows
+  go before VT-V8 in the table (VT-V8 stays last: informational).
+- Job placement sentence is now a bullet list (all VT-V ids placed).
+- The `c366f15` defect is in the VT-V9 row as technical evidence only.
+- No emitter change; the embodiment `impl.jvm` row states this.
+- `bb vale` and `bb lychee:check` pass.
+
+## Slice 6 (2026-11-04)
+
+- README: "Non-nil fields" is a `####` part after the differences table
+  (inside "Value-type records"); the two new table rows use the plan.md
+  cells. Docstring: one sentence after the differences sentence.
+  CHANGELOG: a second bullet under `[Unreleased]`.
+- `bb api-docs` regenerated `doc/API.md`; `api-docs --check`, `vale`,
+  `clj-fmt:check`, `lychee:check` pass. Test suites not rerun (docstring
+  only); slice 7 runs them.
+
+## Slice 7 (2026-11-04)
+
+- `mementum/state.md` names task 021 state (VT-D11, VT-D12, pin `edc3f79`).
+- Results: T-ID 89 / 421, T-VAL 87 / 422, T-11 1 / 7, T-RT 187 / 2798 on
+  1.11, 1.12, 1.13. All quality checks pass (fmt, kondo, vale, api-docs,
+  link_check_test, lychee).
+- Remaining: push (needs user approval, plan.md CI and push), read CI run,
+  record it.
+
+<!-- IMPLEMENTATION_BLOCKER: START -->
+- blocker: The plan requires user approval before the first push of branch `020-value-type-records`, and acceptance criterion 7 needs CI results for the pushed commit.
+- required-human-action: Approve `git push origin 020-value-type-records` (or push it yourself). Then the next pass reads the CI run and records the result.
+<!-- IMPLEMENTATION_BLOCKER: END -->

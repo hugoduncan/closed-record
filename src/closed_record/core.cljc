@@ -67,6 +67,9 @@
   with these differences: hashes are computed on each call (no cache); on
   value output, identical? compares field values, locking and weak
   references throw IdentityException, and serialization is not promised.
+  With :value-type true, ^:non-nil field metadata has value-type's meaning
+  and passes to value-type unchanged: nil gives NullPointerException and a
+  wrong type gives ClassCastException; without the option it has no effect.
 
   Defines ->Name, which takes one value per field in declaration order,
   and map->Name, which takes a map of keyword keys to field values.

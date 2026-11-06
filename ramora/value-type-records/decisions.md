@@ -146,3 +146,39 @@ The commitment levels are the same.
 ## VT-D10 Value output on CI
 
 See [verification](invariants-and-verification.md#vt-d10-value-output-on-ci).
+
+## VT-D11 Non-nil fields through value-type
+
+- Subject: `:non-nil` field metadata with `:value-type true`.
+- Choice: pass `:non-nil` field metadata to `defvaluetype*` unchanged.
+  value-type owns the contract, the enforcement choice and the errors.
+  closed-record emits no value check.
+- Rejected: closed-record checks in `->Name`, `map->Name` and `assoc` with
+  an `ex-info`. They duplicate value-type, miss record literals and Java
+  callers, and are value validation (D-11). Same rationale as D-19.
+- Rationale: D-11, D-19, VT-D3. value-type owns the field contract;
+  closed-record owns the closed key set.
+- Assumptions: `defvaluetype*` follows its field contract (VT-R1).
+- Qualities: + minimality, + one error contract for all paths. − Nil and
+  type errors have no `ex-data`.
+- Scope: public API, JVM.
+- Commitment: high.
+
+## VT-D12 `:non-nil` in ordinary mode
+
+- Subject: `:non-nil` field metadata without `:value-type true`.
+- Choice: ignore it, as `defrecord` does. The field accepts nil. This is
+  public behaviour under D-20.
+- Rejected:
+  - An `IllegalArgumentException` at macroexpansion. The released version
+    accepts the metadata, so rejection is a change of behaviour, not an
+    accretion (D-20).
+  - Ordinary enforcement of `:non-nil`. The released version accepts nil in
+    such a field, so enforcement is also a change of behaviour (D-20).
+    Ordinary enforcement can come only under a new name or a new option.
+- Rationale: D-20, O-VT3, `defrecord` syntax parity. The released version
+  accepts the metadata and accepts nil in such a field.
+- Qualities: + compatibility, + parity. − A user can expect enforcement
+  where there is none. The docs state the limit.
+- Scope: public API, all hosts.
+- Commitment: high (D-20).

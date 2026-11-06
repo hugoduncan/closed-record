@@ -12,9 +12,9 @@ It extends the [defclosedrecord design](defclosedrecord.md). Read that design
 first. Identifiers in this design have the prefix `VT-`. Other identifiers
 (K-06, D-01, I-05 and so on) are in the defclosedrecord design.
 
-- [Decisions](value-type-records/decisions.md): VT-D1 to VT-D10.
+- [Decisions](value-type-records/decisions.md): VT-D1 to VT-D12.
 - [Invariants and verification](value-type-records/invariants-and-verification.md):
-  VT-I1 to VT-I5, VT-V1 to VT-V8, CI decision VT-D10, risks VT-R1 to VT-R5.
+  VT-I1 to VT-I6, VT-V1 to VT-V10, CI decision VT-D10, risks VT-R1 to VT-R5.
 - [Embodiment](value-type-records/embodiment.md): current implementation and
   verification limits.
 
@@ -66,7 +66,13 @@ value-type record, on value output and on identity fallback.
     constructor arguments; identity output keeps them;
   - the application property `value-type.fallback` selects silent fallback, a
     warning, or an `Error`;
-  - `:non-nil` field metadata is rejected.
+  - field metadata `:non-nil true` makes a field non-nil, with a tag that
+    names a concrete, non-primitive class. Enforcement is native null
+    restriction on value output with a value-class tag on a JVM that
+    supports native fields; otherwise constructor checks. The field has
+    storage of the tag class. Nil and wrong types give
+    `NullPointerException` and `ClassCastException`. Declaration errors are
+    `:value-type/error :invalid-field`.
 - The JVM. Value output needs a Valhalla early-access JDK with
   `--enable-preview`. Other JVMs give identity fallback.
 - The Clojure compiler. K-06 to K-08 apply with no change.
@@ -110,8 +116,28 @@ value-type record, on value output and on identity fallback.
   - `value-type.core` loads but has no `defvaluetype*`: the error has no
     cause.
 - value-type errors pass through with no change. Examples:
-  `:value-type/error :invalid-field` for `:non-nil` metadata, and the fallback
-  policy `Error`.
+  `:value-type/error :invalid-field` with `:reason :missing-tag` for a
+  `:non-nil` field with no tag, and the fallback policy `Error`.
+- Non-nil fields (VT-D11, VT-D12):
+  - With `:value-type true`, `:non-nil` field metadata has value-type's
+    meaning. closed-record passes it to `defvaluetype*` with no change.
+  - Nil and wrong-type values give the host `NullPointerException` and
+    `ClassCastException` on all closed-record paths: `->Name`, `map->Name`,
+    `assoc`, and map and positional record literals. closed-record does not
+    wrap them. They have no `ex-data`.
+  - `map->Name` without a key for a non-nil field gives
+    `NullPointerException`, as D-19.
+  - Key-set errors come first, with no change, on the paths that check the
+    key set: `assoc` of an undeclared key, `dissoc` of a declared key, and
+    `map->Name` with extra keys.
+  - `:non-nil` declaration errors are value-type errors. They pass through
+    with no change at macroexpansion.
+  - Without `:value-type true`, closed-record ignores `:non-nil`, as
+    `defrecord` does. The field accepts nil, and the expansion does not
+    change (VT-I2).
+  - A compiled record constant cannot hold nil or a wrong type in a non-nil
+    field. value-type owns the load of compiled constants with enabled
+    fields.
 - Code that uses the option needs value-type at run time, also for AOT
   classes.
 
@@ -125,5 +151,7 @@ All behaviour of the defclosedrecord design applies, with these differences:
 | `locking`, weak references | work | throw `IdentityException` | work |
 | `__hash`, `__hasheq` fields | caches | absent | always 0 |
 | Serialization | as `defrecord` | not promised | as `defrecord` |
+| Non-nil enforcement | none: `:non-nil` has no effect | native null restriction with a value-class tag on a JVM that supports native fields; otherwise constructor checks | constructor checks |
+| Field storage type | primitive tag: the primitive; other fields: `Object` | `:non-nil` field: the tag class; other fields: as Ordinary | `:non-nil` field: the tag class; other fields: as Ordinary |
 
 The hidden fields stay internal. User code must not read them.

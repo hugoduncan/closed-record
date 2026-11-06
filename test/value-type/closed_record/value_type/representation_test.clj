@@ -5,6 +5,8 @@
   (:require
    [clojure.test :refer [deftest is testing]]
    [closed-record.core :refer [defclosedrecord]]
+   [closed-record.expansion-fixture :as fixture]
+   [closed-record.form-support :as form]
    [closed-record.probe-support :refer [eval-in-new-ns thrown]]
    [closed-record.value-type.expectation :as expectation]
    [closed-record.value-type.support :as support]))
@@ -45,6 +47,57 @@
       (is (not-any? #{'__hash '__hasheq} (symbols specs))))
     (testing "the option is not passed to defvaluetype*"
       (is (not-any? #{:value-type} tform)))))
+
+;; VT-I6: the expansion of a form with :non-nil fields, and of the same form
+;; without :non-nil, as the expansion fixture expands (fixture namespace,
+;; positions removed).
+
+(def ^:private non-nil-form
+  '(closed-record.core/defclosedrecord NN
+     [^closed_record.value_type.representation_test.VP ^:non-nil p
+      ^String ^:non-nil s
+      u]
+     :value-type true))
+
+(def ^:private plain-form
+  '(closed-record.core/defclosedrecord NN
+     [^closed_record.value_type.representation_test.VP p
+      ^String s
+      u]
+     :value-type true))
+
+(defn- fixture-expansion
+  [form]
+  (binding [*ns* (the-ns 'closed-record.expansion-fixture)]
+    (macroexpand-1 (fixture/strip-positions form))))
+
+(defn- printed
+  [form]
+  (fixture/normalise (binding [*print-meta* true] (pr-str form))))
+
+(defn- remove-non-nil
+  [form]
+  (form/walk-form
+   (fn [x]
+     (if (instance? clojure.lang.IObj x)
+       (with-meta x (not-empty (dissoc (meta x) :non-nil)))
+       x))
+   form))
+
+(deftest non-nil-expansion-test
+  ;; VT-V2, VT-I6: :non-nil reaches the defvaluetype* field vector unchanged
+  ;; and the emitter adds nothing else for it.
+  (let [expansion (fixture-expansion non-nil-form)
+        [_ _ _ fields] (support/type-form expansion)]
+    (testing "(a) the non-nil field symbols carry :non-nil true"
+      (is (= '[p s] (filter (comp :non-nil meta) fields)))
+      (is (every? #(true? (:non-nil (meta %)))
+                  (filter (comp :non-nil meta) fields))))
+    (testing "(a) no other place in the expansion carries :non-nil"
+      (is (= 2 (count (re-seq #":non-nil" (printed expansion))))))
+    (testing "(b) without :non-nil, the expansion equals the plain one"
+      (is (= (printed (fixture-expansion plain-form))
+             (printed (remove-non-nil expansion)))))))
 
 (defn- field-names
   [^Class c]

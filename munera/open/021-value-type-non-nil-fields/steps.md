@@ -2,7 +2,7 @@
 
 ## Slice 1: VT-V10 fixture form, pin and VT-V6
 
-- [ ] Do this step first, before any other change of this task. Confirm
+- [x] Do this step first, before any other change of this task. Confirm
   that `src/` has no change since `f034647`
   (`git diff --quiet f034647 -- src`). Then the current emitter is the
   `f034647` emitter. Add the ordinary form
@@ -15,79 +15,79 @@
   only the `:non-nil` entry and that the six existing entries are
   unchanged. The `forms` change and the `.edn` change go in the same
   commit (`ordinary-expansion-test` compares the two key sets).
-- [ ] Update the `:value-type-test` pin in `deps.edn` to value-type
+- [x] Update the `:value-type-test` pin in `deps.edn` to value-type
   `edc3f79de77bcf044d6234df361e090edc46c813`, with an explicit HTTPS
   `:git/url` and the full SHA.
-- [ ] Update the README dependency example to the same SHA. Do not change
+- [x] Update the README dependency example to the same SHA. Do not change
   the evidence link in `doc/performance.md`.
-- [ ] Change `non-nil-field-test` in
+- [x] Change `non-nil-field-test` in
   `test/value-type/closed_record/value_type/errors_test.clj` to the new
   VT-V6 example: a `:non-nil` field with no tag gives `:value-type/error
   :invalid-field` with `:reason :missing-tag`, as the cause of the
   macroexpansion failure.
-- [ ] Run T-ID, T-VAL, T-11 and T-RT (plan.md, Test commands); confirm
+- [x] Run T-ID, T-VAL, T-11 and T-RT (plan.md, Test commands); confirm
   the pin breaks nothing.
-- [ ] Commit slice 1.
+- [x] Commit slice 1.
 
 ## Slice 2: VT-V9 non-nil field tests
 
-- [ ] Put all VT-V9 tests of this slice in a new file
+- [x] Put all VT-V9 tests of this slice in a new file
   `test/value-type/closed_record/value_type/non_nil_test.clj`
   (ns `closed-record.value-type.non-nil-test`).
-- [ ] Add VT-V9 fixture types to that file: a value record
+- [x] Add VT-V9 fixture types to that file: a value record
   `Inner`, and a record with `^Inner ^:non-nil`, `^String ^:non-nil` and
   an untagged field.
-- [ ] Test field storage types: the non-nil fields store the tag classes;
+- [x] Test field storage types: the non-nil fields store the tag classes;
   the untagged field stores `Object`.
-- [ ] Test (value output only) that the record class is a value class.
-- [ ] Test valid-value construction: `->Name`, `map->Name`, `assoc` of
+- [x] Test (value output only) that the record class is a value class.
+- [x] Test valid-value construction: `->Name`, `map->Name`, `assoc` of
   each declared key, the map literal and the positional literal; read back
   by keyword at a call site (lookup thunk), by `get` and by field access;
   `with-meta` keeps the fields.
-- [ ] Test, for each non-nil field: nil gives `NullPointerException` and a
+- [x] Test, for each non-nil field: nil gives `NullPointerException` and a
   wrong type gives `ClassCastException`, in the cause chain, through
   `->Name`, `map->Name` (nil value and missing key), `assoc`, the map
   literal and the positional literal.
-- [ ] Test that the untagged field accepts nil on each path.
-- [ ] Test key-set precedence: `assoc` of an undeclared key, `dissoc` of a
+- [x] Test that the untagged field accepts nil on each path.
+- [x] Test key-set precedence: `assoc` of an undeclared key, `dissoc` of a
   non-nil field, and `map->Name` with an extra key and a missing non-nil
   key give the closed-record `ex-info` types.
-- [ ] Test that `check` returns a valid record.
-- [ ] Run T-ID and T-VAL (plan.md, Test commands); commit slice 2.
+- [x] Test that `check` returns a valid record.
+- [x] Run T-ID and T-VAL (plan.md, Test commands); commit slice 2.
 
 ## Slice 3: VT-V2 extension (VT-I6)
 
-- [ ] In `test/value-type/closed_record/value_type/representation_test.clj`,
+- [x] In `test/value-type/closed_record/value_type/representation_test.clj`,
   beside the VT-V2 test `value-expansion-test`, expand a value-type record
   form with
   `:non-nil` fields and the same form without, as the expansion fixture
   does (`macroexpand-1`, position metadata removed; reuse `normalise` and
   `strip-positions` from
   `test/runtime/closed_record/expansion_fixture.clj`, or expose a helper).
-- [ ] Check part (a): each `:non-nil` field symbol in the `defvaluetype*`
+- [x] Check part (a): each `:non-nil` field symbol in the `defvaluetype*`
   field vector carries `:non-nil true` unchanged, and no other place in
   the expansion carries `:non-nil`.
-- [ ] Check part (b): after removal of `:non-nil` from those field
+- [x] Check part (b): after removal of `:non-nil` from those field
   symbols, the printed expansion (`*print-meta*` true, normalised) equals
   the printed expansion of the form without `:non-nil`.
-- [ ] Run T-ID and T-VAL (plan.md, Test commands). If the slice changes
+- [x] Run T-ID and T-VAL (plan.md, Test commands). If the slice changes
   `test/runtime/closed_record/expansion_fixture.clj`, also run T-RT.
   Commit slice 3.
 
 ## Slice 4: VT-V10 ordinary mode
 
-- [ ] Add an ordinary-suite test to
+- [x] Add an ordinary-suite test to
   `test/runtime/closed_record/value_type_option_test.clj` (the ordinary
   VT-V1 placement): a closed record with a `^String ^:non-nil` field and
   no option accepts nil on `->Name`, `map->Name` and `assoc`. The VT-V10
   expansion fixture form is already in place (slice 1); do not run
   `record!` again.
-- [ ] Run T-RT (plan.md, Test commands: Clojure 1.11, 1.12 and 1.13);
+- [x] Run T-RT (plan.md, Test commands: Clojure 1.11, 1.12 and 1.13);
   commit slice 4.
 
 ## Slice 5: Ramora
 
-- [ ] Add VT-D11 and VT-D12 to `ramora/value-type-records/decisions.md`,
+- [x] Add VT-D11 and VT-D12 to `ramora/value-type-records/decisions.md`,
   in the 8-tuple shape (subject, choice, rejected, rationale, assumptions,
   qualities, scope, commitment). Choice, Rejected and Qualities come from
   design.md (Decisions to record in Ramora). The design.md "Basis" goes in
@@ -108,7 +108,7 @@
     - Assumptions: omit (no assumption applies).
     - Scope: public API, all hosts.
     - Commitment: high (D-20).
-- [ ] Add VT-I6 to `invariants-and-verification.md`, after VT-I5, in the
+- [x] Add VT-I6 to `invariants-and-verification.md`, after VT-I5, in the
   assertion record shape:
 
   ```text
@@ -126,7 +126,7 @@
   Add the VT-V9 and VT-V10 rows; extend the VT-V2 row with the VT-I6
   checks (parts (a) and (b); keep the id); change the VT-V6 row to the
   `:missing-tag` example.
-- [ ] Rewrite the job placement sentence after VT-D10 in
+- [x] Rewrite the job placement sentence after VT-D10 in
   `invariants-and-verification.md` (line ~110) so that it is complete.
   Both value-type jobs run all of `test/value-type` (`ci.yml`):
   - VT-V2, VT-V6 and VT-V9 run in both value-type jobs
@@ -140,16 +140,16 @@
     Temurin 21 value-type job.
   - VT-V10 runs in the runtime jobs (Clojure 1.11, 1.12 and 1.13).
   - VT-V7 and VT-V8 keep their current placement.
-- [ ] In `ramora/value-type-records.md`, update the index id lists
+- [x] In `ramora/value-type-records.md`, update the index id lists
   (lines ~15-17): decisions "VT-D1 to VT-D12"; invariants and
   verification "VT-I1 to VT-I6, VT-V1 to VT-V10" (CI decision VT-D10 and
   risks VT-R1 to VT-R5 do not change).
-- [ ] In `ramora/value-type-records.md`: replace the context fact
+- [x] In `ramora/value-type-records.md`: replace the context fact
   "`:non-nil` field metadata is rejected" (line ~69) with the current
   contract; add the non-nil enforcement and field storage type rows to the
   differences table, with the cells in plan.md (Key decisions,
   differences tables).
-- [ ] Update the "Elements that change" table in
+- [x] Update the "Elements that change" table in
   `ramora/value-type-records/embodiment.md` (keep the table shape):
   - Tests row: the id list becomes "VT-V1 to VT-V7, VT-V9 and VT-V10"
     (VT-V8 stays in the `dev/bench` row). Add the placements: VT-V9 in
@@ -166,7 +166,7 @@
     and nowhere else (VT-I6); non-nil fields need no emitter change. If
     slices 1 to 4 made an emitter change, state it and its reason here.
   - `doc/` and `README.md` row: add non-nil fields.
-- [ ] In the public contract of `ramora/value-type-records.md`
+- [x] In the public contract of `ramora/value-type-records.md`
   (lines ~91-118): change the value-type error pass-through example
   (line ~113) to a `:non-nil` field with no tag
   (`:value-type/error :invalid-field`, `:reason :missing-tag`). Add the
@@ -190,17 +190,17 @@
   - a compiled record constant cannot hold nil or a wrong type in a
     non-nil field; value-type owns the load of compiled constants with
     enabled fields.
-- [ ] Update VT-R1 in place: the `defvaluetype*` contract can change
+- [x] Update VT-R1 in place: the `defvaluetype*` contract can change
   before the value-type release. Likelihood: medium (no change).
   Effect: VT-D3, VT-D5, VT-D11 and VT-I6 change. Signals: VT-V2, VT-V6,
   VT-V9. Record the
   `c366f15` defect only as technical evidence (why VT-V9 reads through the
   lookup thunk), not as an event.
-- [ ] Commit slice 5.
+- [x] Commit slice 5.
 
 ## Slice 6: documentation
 
-- [ ] README "Value-type records": add a "Non-nil fields" part with an
+- [x] README "Value-type records": add a "Non-nil fields" part with an
   example; the tag rule in short with a link to value-type's field
   contract at the pinned SHA,
   `https://github.com/hugoduncan/value-type/blob/edc3f79de77bcf044d6234df361e090edc46c813/doc/usage.md#portable-non-nil-fields`
@@ -212,20 +212,20 @@
   and field storage type rows to the differences table, with the cells in
   plan.md (Key decisions, differences tables), the same as the Ramora
   table.
-- [ ] Add one sentence on `:non-nil` with `:value-type true` to the
+- [x] Add one sentence on `:non-nil` with `:value-type true` to the
   `defclosedrecord` docstring; regenerate `doc/API.md`.
-- [ ] Add non-nil fields to the value-type entry in `CHANGELOG.md`
+- [x] Add non-nil fields to the value-type entry in `CHANGELOG.md`
   `## [Unreleased]`.
-- [ ] Commit slice 6.
+- [x] Commit slice 6.
 
 ## Slice 7: finish
 
-- [ ] Update `mementum/state.md` to the current state.
-- [ ] Run T-ID, T-VAL, T-11 and T-RT (plan.md, Test commands).
-- [ ] Run the quality checks: `bb clj-fmt:check`, `bb clj-kondo:lint`,
+- [x] Update `mementum/state.md` to the current state.
+- [x] Run T-ID, T-VAL, T-11 and T-RT (plan.md, Test commands).
+- [x] Run the quality checks: `bb clj-fmt:check`, `bb clj-kondo:lint`,
   `bb vale`, `bb api-docs --check`, `bb dev/link_check_test.clj`,
   `bb lychee:check` (`doc/development.md`).
-- [ ] Commit slice 7. This is the last commit that changes files outside
+- [x] Commit slice 7. This is the last commit that changes files outside
   the task directory.
 - [ ] **Stop and ask the user before the first push** (plan.md, CI and
   push). The task 020 approval for the branch `020-value-type-records`

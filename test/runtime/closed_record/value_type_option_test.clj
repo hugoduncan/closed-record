@@ -1,6 +1,7 @@
 (ns closed-record.value-type-option-test
-  "VT-V1 in the ordinary suite: the `:value-type` option on a class path
-  without value-type."
+  "VT-V1 and VT-V10 in the ordinary suite: the `:value-type` option on a
+  class path without value-type, and `:non-nil` field metadata with no
+  option."
   (:require
    [clojure.edn :as edn]
    [clojure.java.io :as io]
@@ -24,6 +25,19 @@
         (is (= (recorded k)
                (fixture/expansion
                 (form/with-options form [:value-type false]))))))))
+
+(defclosedrecord NonNilField [^String ^:non-nil s])
+
+(deftest non-nil-ordinary-test
+  ;; VT-V10: without `:value-type true`, `:non-nil` has no effect.
+  (testing "->Name"
+    (is (nil? (:s (->NonNilField nil)))))
+  (testing "map->Name"
+    (is (nil? (:s (map->NonNilField {:s nil})))))
+  (testing "assoc"
+    (is (nil? (:s (assoc (->NonNilField "a") :s nil)))))
+  (testing "field storage type"
+    (is (= Object (.getType (.getDeclaredField NonNilField "s"))))))
 
 (deftest invalid-option-value-test
   (doseq [v [nil 1 :yes "true" 'true?]]

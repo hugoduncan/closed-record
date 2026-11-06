@@ -5,6 +5,10 @@
 - Add the `defclosedrecord` option `:value-type true`. It defines the record
   as a value class through value-type, which must be on the class path. See
   the README section "Value-type records".
+- With `:value-type true`, a field with `^:non-nil` metadata and a class
+  tag is non-nil, through value-type. Nil gives `NullPointerException`
+  and a wrong type gives `ClassCastException`. Without the option, the
+  metadata has no effect. See the README part "Non-nil fields".
 
 ## [0.1.190] - 2026-10-29
 

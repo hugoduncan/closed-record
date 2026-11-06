@@ -23,6 +23,10 @@ keys and `dissoc` of declared keys. Main form: `defclosedrecord`.
   `ramora/value-type-records.md`. Tests need the `:value-type-test` alias;
   CI has a Temurin 21 and a Valhalla value-type job. `CHANGELOG.md`
   `## [Unreleased]` has a note for the option.
+- Unreleased: non-nil fields for value-type records (task 021, same
+  branch). `:non-nil` field metadata passes to `defvaluetype*` unchanged
+  (VT-D11); ordinary mode ignores it (VT-D12). The `:value-type-test` pin
+  is value-type `edc3f79`.
 - Verification limits (hosted CI, publication, benchmark scope) are in each
   design's `embodiment.md`.
 
