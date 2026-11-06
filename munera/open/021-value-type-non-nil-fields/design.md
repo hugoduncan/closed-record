@@ -13,10 +13,12 @@ with value-type's field contract:
   :value-type true)
 ```
 
-On value output with an eligible tag, the JVM restricts the field to
-non-null values (JEP 401 null restriction). In all other cases, value-type
-adds constructor checks. In both cases, nil gives `NullPointerException` and
-a value of the wrong type gives `ClassCastException`.
+On value output, with a value-class tag, on a JVM that supports native
+fields, the JVM restricts the field to non-null values (JEP 401 null
+restriction). In all other cases, value-type adds constructor checks: for
+example, a field with an identity-class tag such as `String`, or any field on
+identity fallback. In both cases, nil gives `NullPointerException` and a
+value of the wrong type gives `ClassCastException`.
 
 closed-record adds no validation of its own. value-type owns the field
 contract, the choice of enforcement and the errors. closed-record owns the
@@ -38,7 +40,15 @@ Thus the option can work with no new emitter code, but:
 - the pinned value-type commit (`8bb7c4f`) rejects `:non-nil`, and `c366f15`
   cannot define a closed record with a non-nil field on value output
   (Prerequisite);
-- the design, the docs and VT-V6 say that `:non-nil` is rejected;
+- the Ramora design and the VT-V6 test say that `:non-nil` is rejected:
+  `ramora/value-type-records.md` (the context fact "`:non-nil` field
+  metadata is rejected", and the value-type error example in the public
+  contract), the VT-V6 row in
+  `ramora/value-type-records/invariants-and-verification.md`, and
+  `non-nil-field-test` in
+  `test/value-type/closed_record/value_type/errors_test.clj` (reason
+  `:non-nil-unsupported`). The README, `doc/`, the docstring and the
+  CHANGELOG do not mention `:non-nil`;
 - no test shows that the closed-record contract holds for a record with
   non-nil fields, or that the key-set errors stay unchanged.
 
@@ -171,8 +181,11 @@ thunk, so it detects a return of the defect.
 - closed-record adds no check of field values. Nil and wrong-type values give
   the host exceptions from the constructor (`NullPointerException`,
   `ClassCastException`), on all closed-record paths: `->Name`, `map->Name`,
-  `assoc`, record literals (map and positional) and compiled constants.
-  closed-record does not wrap them. They have no `ex-data`.
+  `assoc` and record literals (map and positional). closed-record does not
+  wrap them. They have no `ex-data`.
+- A compiled record constant comes from a record value that exists, so it
+  cannot hold nil or a wrong type in a non-nil field. value-type owns the
+  load of compiled constants with enabled fields (Invariants and ownership).
 - `map->Name` without a key for a non-nil field gives
   `NullPointerException`, as D-19 gives for a primitive field.
 - Key-set errors come first. On paths that check the key set, a key-set
@@ -194,21 +207,25 @@ Add these to `ramora/value-type-records/decisions.md`. Numbers are proposals.
     value-type owns the contract, the enforcement choice and the errors.
     closed-record emits no value check.
   - Rejected: closed-record checks in `->Name`, `map->Name` and `assoc` with
-    an `ex-info`. They duplicate value-type, miss record literals, compiled
-    constants and Java callers, and are value validation (D-11). Same
-    rationale as D-19.
+    an `ex-info`. They duplicate value-type, miss record literals and Java
+    callers, and are value validation (D-11). Same rationale as D-19.
   - Basis: D-11, D-19, VT-D3.
   - Qualities: + minimality, + one error contract for all paths.
     − Nil and type errors have no `ex-data`.
 - VT-D12 `:non-nil` in ordinary mode.
-  - Choice: ignore it, as `defrecord` does.
-  - Rejected: an `IllegalArgumentException` at macroexpansion. The released
-    version accepts the metadata, so rejection is not an accretion (D-20).
-    A later version can add ordinary enforcement as an accretion only if
-    this version does not reject the metadata.
+  - Choice: ignore it, as `defrecord` does. The field accepts nil. This is
+    public behaviour under D-20.
+  - Rejected:
+    - An `IllegalArgumentException` at macroexpansion. The released version
+      accepts the metadata, so rejection is a change of behaviour, not an
+      accretion (D-20).
+    - Ordinary enforcement of `:non-nil`. The released version accepts nil
+      in such a field, so enforcement is also a change of behaviour (D-20).
+      Ordinary enforcement can come only under a new name or a new option.
   - Basis: D-20, O-VT3, `defrecord` syntax parity.
   - Qualities: + compatibility, + parity. − A user can expect enforcement
     where there is none. The docs state the limit.
+  - Commitment: high (D-20).
 
 ### Emitter
 
@@ -233,8 +250,8 @@ not change the ordinary expansion (VT-I2).
 
 ### Verification
 
-Add the new rows to `ramora/value-type-records/invariants-and-verification.md`.
-Numbers are proposals.
+Add the new rows to `ramora/value-type-records/invariants-and-verification.md`,
+and change the VT-V2 and VT-V6 rows. Numbers are proposals.
 
 - VT-V9 Non-nil fields. In the value-type suite, so it runs on Temurin 21
   (identity fallback) and on Valhalla (value output). Fixture types: a value
@@ -262,22 +279,36 @@ Numbers are proposals.
   failure.
 - VT-V10 Ordinary mode. In the ordinary runtime suite (Clojure 1.11, 1.12,
   1.13): a closed record with a `^String ^:non-nil` field and no option
-  accepts nil on `->Name`, `map->Name` and `assoc`. The expansion fixture
-  (VT-I2) does not change. Add a fixture form with `:non-nil` metadata
-  only if it is recorded from the emitter before any change.
-- VT-I6 (proposed invariant): the expansion of a value-type record with
-  `:non-nil` fields equals the expansion of the same form without the
-  `:non-nil` metadata, except for that field metadata (VT-D11: no value
-  check). Verify by expansion comparison in the value-type suite, with the
-  normalisation of the expansion fixture.
+  accepts nil on `->Name`, `map->Name` and `assoc`. Add one form to the
+  expansion fixture (VT-I2): an ordinary closed record with a
+  `^String ^:non-nil` field and no option. This form is required: it is the
+  check that the ordinary expansion with `:non-nil` does not change. Record
+  its expansion from the emitter at `f034647`, before any emitter change. The
+  recorded expansions of the existing fixture forms do not change.
+- VT-I6 (proposed invariant): `:non-nil` field metadata reaches
+  `defvaluetype*` unchanged, and the emitter adds nothing else for it
+  (VT-D11: no value check). Basis: VT-D11. Enforced by: the emitter puts
+  field metadata only in the `defvaluetype*` field vector. Verified by:
+  VT-V2.
+- VT-V2 Expansion. Add the VT-I6 check. In the value-type suite, expand a
+  value-type record form with `:non-nil` fields, and the same form without
+  the `:non-nil` metadata, as the expansion fixture does (`macroexpand-1` in
+  the fixture namespace, position metadata removed). Checks:
+  - (a) In the expansion of the form with `:non-nil`, each field symbol with
+    `:non-nil` in the `defvaluetype*` field vector carries `:non-nil true`,
+    unchanged. No other place in the expansion carries `:non-nil`.
+  - (b) Remove `:non-nil` from the metadata of those field symbols. Then the
+    printed expansion (`*print-meta*` true, normalised with the fixture
+    `normalise`) equals the printed expansion of the form without
+    `:non-nil`.
 - Enforcement mode (native or generated) is not verified here. value-type
   owns it and verifies it.
 - All existing suites pass with the new pin, in all CI jobs.
 
 ### CI
 
-No new job. The Temurin 21 and Valhalla value-type jobs run VT-V9. The
-ordinary jobs run VT-V10.
+No new job. The Temurin 21 and Valhalla value-type jobs run VT-V9 and the
+VT-I6 check of VT-V2. The ordinary jobs run VT-V10.
 
 ### Documentation
 
@@ -286,22 +317,32 @@ ordinary jobs run VT-V10.
   types give host exceptions with no `ex-data`; missing keys in `map->Name`
   give `NullPointerException`; the metadata has no effect without
   `:value-type true`. Add rows to the differences table: non-nil enforcement
-  and field storage type. Update the dependency SHA.
+  and field storage type. The non-nil enforcement row uses the Intent
+  wording: native null restriction only on value output, with a value-class
+  tag, on a JVM that supports native fields; otherwise constructor checks.
+  Update the dependency SHA.
 - `defclosedrecord` docstring: one sentence on `:non-nil` with
   `:value-type true`. Regenerate `doc/API.md`.
 - `CHANGELOG.md` `## [Unreleased]`: add non-nil fields to the value-type
   entry.
 - Ramora `value-type-records.md`: replace the context fact "`:non-nil` field
   metadata is rejected" with the current contract; update the public contract
-  and the differences table; add VT-D11 and VT-D12, VT-I6, VT-V9, VT-V10;
-  change VT-V6; update the embodiment and the risks (VT-R1 occurred).
+  and the differences table (the non-nil enforcement row as in the README);
+  add VT-D11 and VT-D12, VT-I6 (`verified-by: VT-V2`), VT-V9, VT-V10;
+  change VT-V2 and VT-V6; update the embodiment. Update VT-R1 in place to
+  the current risk: the `defvaluetype*` contract can change before the
+  value-type release; the signals are VT-V2, VT-V6 and VT-V9. The Ramora
+  document rules do not permit status updates or history on design pages.
+  Record the `c366f15` defect only as technical evidence (for example, the
+  reason that VT-V9 reads non-nil fields through the lookup thunk), not as
+  an event.
 - `mementum/state.md`: current state.
 
 ## Invariants and ownership
 
 - value-type owns: the `:non-nil` declaration rules, enforcement selection,
-  field storage types, the nil and type errors, AOT and fallback behaviour of
-  enabled fields.
+  field storage types, the nil and type errors, the load of compiled record
+  constants, AOT and fallback behaviour of enabled fields.
 - closed-record owns: the closed key set and its errors (D-03), which take
   precedence where the path checks keys; the ordinary expansion (VT-I2); the
   pass-through of field metadata (VT-D11, VT-I6).
@@ -325,9 +366,11 @@ ordinary jobs run VT-V10.
    commit that keeps the Prerequisite reproduction passing on Valhalla
    `27-jep401ea3+1-1`).
 2. VT-V9 passes in the Temurin 21 and the Valhalla value-type CI jobs.
-3. VT-V10 passes on Clojure 1.11, 1.12 and 1.13. The expansion fixture is
-   unchanged, or re-recorded only as VT-V10 permits.
-4. VT-V6 uses the new example and passes. VT-I6 is verified.
+3. VT-V10 passes on Clojure 1.11, 1.12 and 1.13. The expansion fixture has
+   the `:non-nil` form, recorded as VT-V10 states, and the existing fixture
+   entries are unchanged.
+4. VT-V6 uses the new example and passes. VT-V2 has the VT-I6 check and
+   passes.
 5. The emitter has no value check. Any emitter change is recorded with its
    reason.
 6. Ramora, README, docstring, `doc/API.md` and CHANGELOG agree with the
