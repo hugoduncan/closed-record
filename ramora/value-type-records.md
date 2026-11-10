@@ -73,15 +73,20 @@ flat (VT-V12).
     `create`;
   - value output removes `__hash` and `__hasheq` and ignores their
     constructor arguments; identity output keeps them;
-  - designed in value-type, not yet implemented (VT-D13, VT-R6; value-type
-    deftype* D9 and D10, value-type task 022): the closed record shape. The
-    `defvaluetype*` form has the record shape and the option
-    `:value-type/closed true`. Value output removes all four hidden fields.
-    In both outputs, the main constructor throws `IllegalArgumentException`
-    for a non-nil `__meta` or `__extmap` argument, before the non-nil field
-    checks;
+  - the closed record shape (VT-D13; value-type deftype* D9 and D10,
+    implemented in value-type commit `e8e0c407`, task 022, and present at
+    `4ed8d0a3`). D10 is firm; D9 is provisional. The `defvaluetype*` form
+    has the record shape and the option `:value-type/closed true`. Value
+    output removes all four hidden fields. In both outputs, the main
+    constructor throws `IllegalArgumentException` for a non-nil `__meta` or
+    `__extmap` argument, before the non-nil field checks. On value output, a
+    captured class that reads or writes a removed field gives `:invalid-field`
+    with `:reason :removed-field-access` at definition. A closed form uses the
+    receiving expansion on both representations, also on identity fallback;
   - the application property `value-type.fallback` selects silent fallback, a
-    warning, or an `Error`;
+    warning, or an `Error`. The property `value-type.value-classes` (`auto`
+    or `off`) can disable value classes: `off` selects identity fallback and
+    disables array allocation;
   - field metadata `:non-nil true` makes a field non-nil, with a tag that
     names a concrete, non-primitive class. Enforcement is native null
     restriction on value output with a value-class tag on a JVM that
@@ -124,8 +129,11 @@ flat (VT-V12).
 
   | Instance fields | Flat atomic array |
   |---|---|
-  | closed record `[^long x]`: `long` + `__meta` + `__extmap` | no |
-  | closed record `[^int x ^int y]`: 2 `int` + 2 references | no |
+  | record shape `[^long x]`: `long` + `__meta` + `__extmap` | no |
+  | record shape `[^int x ^int y]`: 2 `int` + 2 references | no |
+  | closed shape `[^long x]`: `long` (value-type `4ed8d0a3`) | yes |
+  | closed shape `[^int x ^int y]`: 2 `int` (value-type `4ed8d0a3`) | yes |
+  | closed shape `[^long x ^long y]`: 2 `long` (value-type `4ed8d0a3`) | no |
   | `defvaluetype [^long x]` | yes |
   | `defvaluetype [^int x ^int y]` | yes |
   | `defvaluetype [x y]`: 2 references | yes |
@@ -212,4 +220,8 @@ All behaviour of the defclosedrecord design applies, with these differences:
 | Non-nil enforcement | none: `:non-nil` has no effect | native null restriction with a value-class tag on a JVM that supports native fields; otherwise constructor checks | constructor checks |
 | Field storage type | primitive tag: the primitive; other fields: `Object` | `:non-nil` field: the tag class; other fields: as Ordinary | `:non-nil` field: the tag class; other fields: as Ordinary |
 
-The hidden fields stay internal. User code must not read them.
+The hidden fields stay internal. User code must not read them. On value
+output, a user method that reads or writes a hidden field fails at definition
+with value-type's `:invalid-field` error (`:reason :removed-field-access`),
+which passes through with no change. On identity fallback, `__meta` and
+`__extmap` hold nil.

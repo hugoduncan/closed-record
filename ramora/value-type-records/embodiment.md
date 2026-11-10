@@ -7,8 +7,8 @@ the Git SHA of the `:value-type-test` alias (VT-R3).
 
 ## Differences from the design
 
-The pinned value-type (`edc3f79`) has no closed record shape (VT-R6). Until
-task 022:
+The pinned value-type (`edc3f79`) has no closed record shape. value-type
+`4ed8d0a3` has it (VT-R6). Until task 022:
 
 - The form has no `:value-type/closed` option. Value output keeps `__meta` and
   `__extmap`, so value records do not flatten (VT-K8). VT-I7 and VT-I8 do not

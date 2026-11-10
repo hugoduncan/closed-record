@@ -39,23 +39,39 @@ output; VT-D13 extends this to `__meta` and `__extmap`.
 
 ## Prerequisite
 
-value-type must provide the closed record shape of VT-D13. The pinned
-value-type (`edc3f79`) does not. value-type task 022
-(`munera/open/022-closed-record-shape` in value-type) implements it, under
-value-type deftype* D9 and D10. The contract that closed-record needs:
+value-type provides the closed record shape of VT-D13. value-type task 022
+(`munera/closed/022-closed-record-shape` in value-type, commit `e8e0c407`)
+implements it, under value-type deftype* D9 and D10. D10 is firm (the
+value-type closed gate passed). D9 is provisional. value-type `4ed8d0a3`
+(GitHub `master`, full SHA `4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2`)
+contains it. The value-type of the current pin (`edc3f79`) does not.
 
-- the option `:value-type/closed true` in the `defvaluetype*` form, with the
-  record field shape (`__meta __extmap ^int __hash ^int __hasheq`);
+The value-type contract (`ramora/deftype-star-design/public-contract.md`,
+"Closed record shape", and the `defvaluetype*` docstring) agrees with VT-D13:
+
+- the option `:value-type/closed true` in the `deftype*` option position of
+  the `defvaluetype*` form, with the record field shape
+  (`__meta __extmap ^int __hash ^int __hasheq`);
 - value output removes all four hidden fields; the record constructors,
   `create` and `getBasis` keep their descriptors;
 - identity output keeps all four; `__meta` and `__extmap` hold nil;
 - in both outputs, the main constructor rejects a non-nil `__meta` or
   `__extmap` argument with `IllegalArgumentException`, before the non-nil
-  field checks.
+  field checks. An empty map is non-nil.
 
-This work is not part of this task. Start this task only when a
-value-type commit on GitHub `master` provides the contract. If the value-type
-contract differs from VT-D13, change Ramora first (VT-R6), then this design.
+The contract also has these parts. They agree with VT-D13 and VT-D7:
+
+- The caller does not read or write `__meta` or `__extmap`, and passes nil
+  for both in explicit constructor calls.
+- On value output, a captured class that reads or writes a removed field
+  gives `:value-type/error :invalid-field` with
+  `:reason :removed-field-access` when the class is defined.
+- A closed form uses the receiving expansion on both representations, also
+  on identity fallback. The receivers repeat the declaration checks.
+
+The value-type implementation is not part of this task. If a later
+value-type pin changes the contract, change Ramora first (VT-R6), then this
+design.
 
 ## Context
 
@@ -71,6 +87,36 @@ contract differs from VT-D13, change Ramora first (VT-R6), then this design.
   check.
 - `Compiler.emitValue` applies constant metadata only to an `IObj`. A type
   without `IObj` gets none.
+- A closed form is a receiving form on both representations. Thus:
+  - on Temurin 21, each value-mode record goes through the value-type
+    identity backend, which adds the constructor check;
+  - a full expansion outside compilation (for example
+    `clojure.walk/macroexpand-all`) gives value-type `:not-installed`.
+    `macroexpand-1` of `defclosedrecord` gives the `defvaluetype*` form, as
+    before;
+  - AOT identity classes keep the receiving guard. The guard applies the
+    fallback policy when the namespace initialises.
+- A user method in `defclosedrecord` (`specs*`) that reads `__meta` or
+  `__extmap` fails at definition on value output (`:removed-field-access`).
+  On identity fallback it reads nil. This is true now for `__hash` and
+  `__hasheq`.
+- value-type `4ed8d0a3` has the JVM property `value-type.value-classes`
+  (`auto` or `off`). `off` selects identity fallback and disables array
+  allocation. The default fallback policy is still `silent`.
+- Observed with value-type `4ed8d0a3` on Valhalla `27-jep401ea3+1-1`
+  (`--enable-preview`, the `jdk.internal.value` export), arrays from
+  `value-type.array/into-array`:
+
+  | `defvaluetype*` form | Instance fields | `:flat?` |
+  |---|---|---|
+  | closed `[^long x]` | `x` | true |
+  | closed `[^int x ^int y]` | `x y` | true |
+  | closed `[^long x ^long y]` | `x y` | false |
+  | record shape, not closed, `[^long x]` | `x __meta __extmap` | false |
+
+- The current suites pass with value-type `4ed8d0a3` and no emitter change:
+  the value-type suite on Temurin 21 (identity) and on Valhalla (value
+  output), and the Clojure 1.11 case.
 
 ### Current implementation (`closed-record.impl.jvm`)
 
@@ -98,7 +144,9 @@ VT-V3 excludes these parts in value mode. VT-V11 replaces them.
 
 ### Emitter (value mode only)
 
-- Emit the option `:value-type/closed true` (VT-D5, VT-D13).
+- Emit the option `:value-type/closed true` (VT-D5, VT-D13) in the
+  `deftype*` option position: after `:implements` and the user options,
+  before the methods.
 - Do not implement `IMeta` or `IObj`; no `meta` or `withMeta` (VT-D14,
   VT-I9).
 - `assoc` calls the constructor with the declared fields only (VT-D7).
@@ -111,10 +159,12 @@ VT-V3 excludes these parts in value mode. VT-V11 replaces them.
 
 ### Dependencies
 
-- Pin the `:value-type-test` alias to the value-type commit that satisfies
-  the Prerequisite: explicit HTTPS `:git/url` and full SHA.
+- Pin the `:value-type-test` alias to value-type
+  `4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2`: explicit HTTPS `:git/url` and
+  full SHA.
 - Use the same SHA in the README, `doc/value-type-records.md` and other
-  links to the value-type field contract.
+  links to the value-type field contract. Link the closed contract to
+  value-type `doc/usage.md#deftype-forms` at that SHA.
 - Keep the evidence link in `doc/performance.md` (value-type `8bb7c4f`).
 
 ### Verification
@@ -128,6 +178,11 @@ As Ramora states:
 - VT-V11 (new): the closed shape, on both representations.
 - VT-V12 (new): `:flat? true` for arrays of `[^long x]` and `[^int x ^int y]`
   value records, in the Valhalla job only.
+- VT-V1, VT-V5, VT-V6 and VT-V7: no change, but they now run the closed
+  form. The closed form is a receiving form also on identity fallback, so
+  VT-V5 (policy) and VT-V7 (AOT) use a new value-type path.
+- The full value-type suite (`test/value-type`) and the Clojure 1.11 case
+  pass.
 - The ordinary suites do not change and pass.
 
 ### CI
@@ -143,12 +198,16 @@ in `.github/workflows/ci.yml` and in `doc/development.md`.
 - README "Value-type records":
   - Approach: no metadata in value mode.
   - Differences: no metadata; a map literal with an undeclared key throws at
-    read.
+    read; a user method that reads `__meta` or `__extmap` fails at
+    definition on value output.
+  - Requirements: the property `value-type.value-classes`, next to
+    `value-type.fallback`. `off` selects identity fallback.
   - "Arrays and flattening": replace the statement that closed value records
     are not flat with the 64-bit limit of VT-K8 and an example that is flat.
     State that flattening is a JVM choice.
 - `doc/value-type-records.md`: the behaviour table rows of the Ramora public
-  contract (`__meta`, `__extmap`, metadata, map literal), and the flattening
+  contract (`__meta`, `__extmap`, metadata, map literal), the user-method
+  limit on hidden fields, `value-type.value-classes`, and the flattening
   section.
 - `defclosedrecord` docstring: one sentence on metadata and on map literals
   in value mode. Regenerate `doc/API.md`.
@@ -158,7 +217,10 @@ in `.github/workflows/ci.yml` and in `doc/development.md`.
 - Ramora `value-type-records/embodiment.md`: remove "Differences from the
   design" when they no longer apply; update the elements, the generated type
   and the verification limits.
-- `mementum/state.md`: current state.
+- Ramora `value-type-records.md` (Context, closed shape item) and VT-R6
+  name value-type `4ed8d0a3`. If the task pins a later commit, change both.
+  If VT-V12 gives other results, change VT-K8.
+- `mementum/state.md` and `munera/plan.md`: current state.
 
 ## Invariants and ownership
 
@@ -181,10 +243,12 @@ in `.github/workflows/ci.yml` and in `doc/development.md`.
 
 ## Acceptance criteria
 
-1. `deps.edn` and the docs pin a value-type commit that satisfies the
-   Prerequisite.
-2. VT-V2, VT-V3, VT-V4, VT-V9 and VT-V11 pass in the Temurin 21 and the
-   Valhalla value-type CI jobs. VT-V12 passes in the Valhalla job.
+1. `deps.edn` and the docs pin value-type
+   `4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2`, or a later commit that
+   satisfies the Prerequisite.
+2. The full value-type suite (VT-V1 to VT-V7, VT-V9 and VT-V11) passes in the
+   Temurin 21 and the Valhalla value-type CI jobs, and the Clojure 1.11 case
+   passes. VT-V12 passes in the Valhalla job.
 3. The ordinary suites pass on Clojure 1.11, 1.12 and 1.13, and the expansion
    fixture is unchanged.
 4. On Valhalla `27-jep401ea3+1-1`, `(defclosedrecord Cell [^long v]

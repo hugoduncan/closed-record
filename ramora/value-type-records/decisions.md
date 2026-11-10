@@ -193,7 +193,9 @@ See [verification](invariants-and-verification.md#vt-d10-value-output-on-ci).
 - Subject: `__meta` and `__extmap` on value output. They hold 64 bits with
   compressed references, so a value record does not flatten (VT-K8, O-VT1).
 - Choice: emit the record shape with the value-type option
-  `:value-type/closed true` (value-type deftype* D9).
+  `:value-type/closed true` (value-type deftype* D9), in the `deftype*`
+  option position: after `:implements` and the user options, before the
+  methods.
   value-type output then:
   - removes `__meta`, `__extmap`, `__hash` and `__hasheq` on value output;
   - keeps all four on identity output;
@@ -201,7 +203,8 @@ See [verification](invariants-and-verification.md#vt-d10-value-output-on-ci).
     the main constructor with `IllegalArgumentException`, before the
     non-nil field checks (value-type deftype* D10).
   closed-record emits no check for these arguments. value-type owns the
-  option and the exception.
+  option and the exception. A closed form uses the value-type receiving
+  expansion on both representations.
 - Rejected:
   - closed-record emits a plain `deftype*` with no hidden fields. There is
     then no `create`, so map literals fail, printed records cannot be read,
@@ -219,8 +222,9 @@ See [verification](invariants-and-verification.md#vt-d10-value-output-on-ci).
     (VT-D3).
 - Rationale: O-VT1. value-type already removes the hash fields with this
   mechanism. VT-K7 makes one constructor check close all `create` paths.
-- Assumptions: value-type provides the closed shape (VT-R6). JEP 401 still
-  permits the record constructors (VT-R2).
+- Assumptions: value-type provides the closed shape (VT-R6; true from
+  value-type `e8e0c407`). JEP 401 still permits the record constructors
+  (VT-R2).
 - Qualities: + layout: records with at most 64 bits of declared fields can
   flatten (VT-K8); objects are 8 bytes smaller. + A map literal with an
   undeclared key fails at read, not later at `check`. − No metadata

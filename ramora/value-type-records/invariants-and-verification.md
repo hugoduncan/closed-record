@@ -89,7 +89,7 @@ scope: all types with :value-type true
 basis: VT-D13
 enforced-by: value-type closed shape
 verified-by: VT-V4, VT-V11
-confidence: medium (depends on VT-R6)
+confidence: high (value-type deftype* D10 is firm; VT-R6)
 ```
 
 ```text
@@ -101,7 +101,7 @@ scope: value output and identity fallback; thus create with an undeclared key (V
 basis: VT-D13, VT-D15
 enforced-by: value-type closed shape
 verified-by: VT-V11
-confidence: medium (depends on VT-R6)
+confidence: high (value-type deftype* D10 is firm; VT-R6)
 ```
 
 ```text
@@ -121,7 +121,7 @@ confidence: high
 | Id | Item | Check |
 |---|---|---|
 | VT-V1 | Selection | Ordinary test JVM, without value-type: no option and `:value-type false` give an expansion equal to the recorded expansion fixture (printed with `*print-meta*` true, gensyms normalised); `:value-type true` fails with `:closed-record/value-type-unavailable`, `:class-name` and the resolution exception as cause; other values give `IllegalArgumentException`. Absent-var case, in a subprocess JVM with a stub `value-type.core`: the error has no cause. Value-type suite, in a subprocess JVM: an ordinary record does not load value-type. Clojure 1.11 with value-type: `:value-type true` fails with the load failure as cause. |
-| VT-V2 | Expansion | With value-type: `defvaluetype*` replaces `deftype*`; immutable `^int` hash fields; the option `:value-type/closed true`; no generated reference to `__meta`, `__extmap`, `__hash` or `__hasheq`; no `IMeta` or `IObj` in the interfaces (VT-I9); the option is not passed to `defvaluetype*`. VT-I6: expand a form with `:non-nil` fields and the same form without the metadata (`macroexpand-1` in the fixture namespace, position metadata removed). (a) Each `:non-nil` field symbol in the `defvaluetype*` field vector carries `:non-nil true` unchanged, and no other place in the expansion carries `:non-nil`. (b) With `:non-nil` removed from those symbols, the printed expansion (`*print-meta*` true, normalised) equals the printed expansion of the form without `:non-nil`. |
+| VT-V2 | Expansion | With value-type: `defvaluetype*` replaces `deftype*`; immutable `^int` hash fields; the option `:value-type/closed true`; no generated reference to `__meta`, `__extmap`, `__hash` or `__hasheq`; no `IMeta` or `IObj` in the interfaces (VT-I9); the closed-record option `:value-type` is not passed to `defvaluetype*`. VT-I6: expand a form with `:non-nil` fields and the same form without the metadata (`macroexpand-1` in the fixture namespace, position metadata removed). (a) Each `:non-nil` field symbol in the `defvaluetype*` field vector carries `:non-nil true` unchanged, and no other place in the expansion carries `:non-nil`. (b) With `:non-nil` removed from those symbols, the printed expansion (`*print-meta*` true, normalised) equals the printed expansion of the form without `:non-nil`. |
 | VT-V3 | Identity fallback | Run V-01 to V-10, V-12 and V-15 on value-type records, on Temurin 21 with `value-type.fallback=silent` (the default). The shared checks are the ordinary behaviour tests, except tests of options, of argument errors, of class reflection, of the compiler rules, of metadata (VT-D14) and of hidden literal keys (V-14, and the extra-key parts of V-04 and V-15; VT-D15). VT-V11 replaces them. The serialization round trip runs on identity fallback only. |
 | VT-V4 | Value output | Run VT-V3 on Valhalla `27-jep401ea3+1-1` with `--enable-preview`. Also check `.isValue`, `identical?` of equal records, and that the instance fields are the declared fields only (VT-I7). |
 | VT-V5 | Policy | With `value-type.fallback=error` on a JVM without value classes, definition throws value-type's `Error`. |
@@ -129,8 +129,8 @@ confidence: high
 | VT-V7 | AOT | Compile a value-type record namespace, then load it in a subprocess JVM, for each representation. |
 | VT-V9 | Non-nil fields | Fixture types: a value record `Inner`, and a record with a `^Inner ^:non-nil` field, a `^String ^:non-nil` field and a field with no metadata. Field storage types are the tag classes; the field with no metadata is `Object`. On value output, the record class is a value class. Valid values construct through `->Name`, `map->Name`, `assoc` of each declared key, the map literal and the positional literal; the fields read back by keyword at a call site (the lookup thunk), by `get` and by field access. For each non-nil field, nil and a wrong type give `NullPointerException` and `ClassCastException` in the cause chain, through `->Name`, `map->Name` (nil value and missing key), `assoc`, the map literal and the positional literal. The field with no metadata accepts nil on each path. Key-set errors come first: `assoc` of an undeclared key, `dissoc` of a non-nil field, and `map->Name` with an extra key and a missing non-nil key give the closed-record `ex-info` types. `check` returns a valid record. The lookup thunk read detects the `c366f15` stack map defect (value-type), which failed the definition of such a record on Valhalla. |
 | VT-V10 | Ordinary mode | Ordinary suite (Clojure 1.11, 1.12, 1.13): a closed record with a `^String ^:non-nil` field and no option accepts nil on `->Name`, `map->Name` and `assoc`. The expansion fixture (VT-V1, VT-I2) has an ordinary form with a `^String ^:non-nil` field and no option. |
-| VT-V11 | Closed shape | On each representation: (a) the type is not `IMeta` or `IObj`; `meta` gives nil; `with-meta` gives `ClassCastException`. (b) A map literal with an undeclared key throws at read, with `IllegalArgumentException` in the cause chain; `map->Name` with an undeclared key throws `:closed-record/extra-keys`. (c) The main constructor, called through reflection with a non-nil `__meta` or a non-empty `__extmap`, throws `IllegalArgumentException`. (d) `check` returns each record that `->Name`, `map->Name`, `assoc` and literals make. (e) On identity fallback, `__meta` and `__extmap` hold nil after each of these paths. On value output, VT-I7. |
-| VT-V12 | Flattening | On Valhalla `27-jep401ea3+1-1` with `--enable-preview` and the `jdk.internal.value` export: `value-type.array/array-info` of an array of value records `[^long x]` and `[^int x ^int y]` gives `:flat? true`. VT-K8 is a JVM choice. Change this check together with the pin (VT-R5, VT-R7). |
+| VT-V11 | Closed shape | On each representation: (a) the type is not `IMeta` or `IObj`; `meta` gives nil; `with-meta` gives `ClassCastException`. (b) A map literal with an undeclared key throws at read, with `IllegalArgumentException` in the cause chain; `map->Name` with an undeclared key throws `:closed-record/extra-keys`. (c) The main constructor, called through reflection with a non-nil `__meta` or a non-nil `__extmap` (also `{}`), throws `IllegalArgumentException`. (d) `check` returns each record that `->Name`, `map->Name`, `assoc` and literals make. (e) On identity fallback, `__meta` and `__extmap` hold nil after each of these paths. On value output, VT-I7. |
+| VT-V12 | Flattening | On Valhalla `27-jep401ea3+1-1` with `--enable-preview`, the `jdk.internal.value` export and `value-type.value-classes` not `off`: `value-type.array/array-info` of an array of value records `[^long x]` and `[^int x ^int y]` gives `:flat? true`. VT-K8 is a JVM choice. Change this check together with the pin (VT-R5, VT-R7). |
 | VT-V8 | Performance | criterium: `hash` and `=` of value-type records against ordinary closed records. Informational. It is not a pass criterion. |
 
 ## VT-D10 Value output on CI
@@ -196,9 +196,12 @@ Both value-type jobs (`Value-type tests (Temurin 21)` and
   and releases stop. Signal: the download step fails. Response: change the
   pin to the build that value-type tests, in the same change for both projects.
 - VT-R6 value-type does not provide the closed shape of VT-D13, or provides
-  a different contract. Likelihood: medium. Effect: VT-D13 to VT-D15 cannot
-  be implemented as written; the design changes to the value-type contract.
-  Signal: the value-type design and VT-V11.
+  a different contract. Status: value-type `e8e0c407` (task 022) provides
+  the contract of VT-D13; it was checked against value-type `4ed8d0a3`.
+  value-type deftype* D9 (the option) is still provisional. Likelihood: low.
+  Effect: VT-D13 to VT-D15 cannot be implemented as written; the design
+  changes to the value-type contract. Signal: the value-type design and
+  VT-V11 after a pin change.
 - VT-R7 A later Valhalla build changes the flattening limit (VT-K8).
   Likelihood: medium. Effect: VT-V12 fails, or more layouts flatten. Signal:
   VT-V12 after a pin change. Response: update VT-K8 and VT-V12 in the pin
