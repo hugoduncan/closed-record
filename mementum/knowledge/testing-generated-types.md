@@ -2,7 +2,7 @@
 title: Tests of eval'ed forms and compiler-generated types
 status: active
 category: testing
-tags: [scry, eval, expansion-fixture, shared-checks, subprocess, value-type, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site, equality, hash, withMeta, extmap, iterator, test.check, property, keyword-invoke, map-views]
+tags: [scry, eval, reflection, constructor, mode-flags, expansion-fixture, shared-checks, subprocess, value-type, deftype*, macroexpand, class-loader, ns, clj-kondo, emitValue, print-dup, reader-literal, mutation, type-hints, differential, call-site, equality, hash, withMeta, extmap, iterator, test.check, property, keyword-invoke, map-views]
 related: [mementum/knowledge/dev-tooling.md, test/runtime/closed_record/compiler_rules_test.clj, test/runtime/closed_record/defclosedrecord_test.clj, test/runtime/closed_record/checks/support.clj, test/runtime/closed_record/checks/defclosedrecord.clj, test/runtime/closed_record/checks/literal.clj, test/runtime/closed_record/field_value_test.clj, test/runtime/closed_record/checks/field_value.clj, test/runtime/closed_record/checks/equality.clj, test/runtime/closed_record/checks/hidden_key.clj, test/runtime/closed_record/checks/property.clj, test/runtime/closed_record/checks/differential.clj, test/runtime/closed_record/checks/malli.clj, ramora/defclosedrecord/invariants.md]
 depends-on: [mementum/knowledge/dev-tooling.md]
 ---
@@ -35,6 +35,15 @@ Observed in task 002 on Clojure 1.11.4, 1.12.6 and 1.13.0-alpha9. The helpers ar
   between Clojure versions.
 - `.getDeclaredFields`: the Javadoc gives no order. HotSpot gives declaration order (Clojure 1.11, 1.12, 1.13;
   task 011). Remove the static fields to compare the instance layout with `defrecord` (D-01).
+- ❌ An "instance fields = declared fields" check must remove static fields (`Modifier/isStatic`). The class has
+  static `const__N` fields. Task 022 forgot this in two of three copies; the first Valhalla run failed. Use the one
+  helper `closed-record.value-type.support/instance-field-names`.
+- 💡 To test a constructor check, get the exact constructor (`getConstructor` with the parameter types) and call
+  `Constructor/newInstance`. Assert an `InvocationTargetException` whose direct `getCause` is the expected
+  exception. Do not accept the exception at top level or deeper in the chain: `newInstance` itself throws
+  `IllegalArgumentException` for a wrong argument count or type. `clojure.lang.Reflector/invokeConstructor`
+  unwraps the cause, but also throws `IllegalArgumentException` for an arity with no constructor. Also call the
+  same constructor with valid arguments and expect an instance, so a wrong descriptor fails (task 022).
 
 ## Values in forms
 
@@ -202,6 +211,20 @@ Observed in task 020 (`:value-type`; Clojure 1.11.4, 1.12.6, 1.13.0-alpha9). Pat
   `Compiler/SOURCE` and `Compiler/SOURCE_PATH` to the check file during `eval`.
 - 🎯 A test that applies to one mode only: `(when mode? (deftest ...))`. Not an `if` with an assertion that cannot
   fail, and not a `when` in the body (scry fails a test with no assertion).
+- 🔁 Mode flags in shared checks: a placeholder var in `closed-record.checks.support` (a real `def`, so clj-kondo
+  lints the check source), which `transform` replaces with a literal, as for `support/representation`. Each check
+  namespace must require `closed-record.checks.support :as support`, else the symbol does not resolve to the
+  placeholder. Select by the type option (`:record-opts`, for example `metadata-and-hidden-keys?` is false for
+  `:value-type true`), not by `support/representation`: a value-type record is `:identity` on a JVM with no value
+  classes, but the option still changes the type (task 022).
+- ❌ `(when false ...)` still macroexpands its body. A macro in the body that reads a literal at expansion time
+  (the `constant` macro of `checks/literal.clj`) still runs and can throw. Use a macro that reads the flag at
+  expansion time and returns one branch: `(defmacro ^:private if-flag [then & [else]] (if support/flag then
+  else))`. The compiler does not see the other branch (task 022).
+- ❌ In one top-level `(when mode? (defclosedrecord L ...) (deftest ... L ...))`, `->L` resolves but the class name
+  `L` does not: the import runs after the compiler compiles the whole form. Define fixture types at top level,
+  outside the `when`. In a mode-only test, get an optional library namespace with `requiring-resolve` in the test
+  body, so the namespace loads on JVMs where the library cannot (task 022).
 - ❌ An assertion must be able to fail: `(is (some? (.getDeclaredField c n)))` throws, never false. Use
   `(contains? field-names n)`. A child JVM prints one EDN shape for each outcome, so a contract violation is a failure,
   not a read error.
