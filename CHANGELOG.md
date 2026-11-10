@@ -9,6 +9,10 @@
   tag is non-nil, through value-type. Nil gives `NullPointerException`
   and a wrong type gives `ClassCastException`. Without the option, the
   metadata has no effect. See the README part "Non-nil fields".
+- With `:value-type true`, a record has no metadata, and a map literal
+  with an undeclared key throws at read. A value record has only its
+  declared fields, so a record with at most 64 bits of fields can
+  flatten. See the README part "Arrays and flattening".
 
 ## [0.1.190] - 2026-10-29
 

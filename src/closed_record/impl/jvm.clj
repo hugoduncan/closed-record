@@ -118,28 +118,41 @@
 
 (defn- representation
   "The representation description: the differences between ordinary and
-  value mode (VT-D3, VT-D5, VT-D6, VT-D7). `(hash-form field expr)` takes
-  the hash cache field symbol and the hash expression, as `cached-hash`, and
-  gives the method body. `(with-meta-form tname fields m)` takes the type
-  name, the declared field symbols and the metadata local, and gives the
-  `withMeta` body. `preamble` forms come
-  first in the expansion: value mode loads `value-type.core`, so classes
-  compiled ahead of time initialise without a require of value-type in user
-  code (VT-V7)."
+  value mode (VT-D3, VT-D5, VT-D6, VT-D7, VT-D13, VT-D14). `(hash-form field
+  expr)` takes the hash cache field symbol and the hash expression, as
+  `cached-hash`, and gives the method body. `(meta-methods this m tname
+  fields)` takes the this local, the metadata local, the type name and the
+  declared field symbols, and gives the `meta` and `withMeta` method forms.
+  `assoc-hidden-args` are the constructor arguments after the declared
+  fields in `assoc`. `extra-keys-body` is the `-extra-keys` body.
+  `type-options` come after the user options in the type form. `preamble`
+  forms come first in the expansion: value mode loads `value-type.core`, so
+  classes compiled ahead of time initialise without a require of value-type
+  in user code (VT-V7)."
   [value-type?]
   (if value-type?
     {:preamble [`(require '~'value-type.core)]
      :type-head 'value-type.core/defvaluetype*
      :hidden-fields value-hidden-fields
+     :interfaces (vec (remove '#{clojure.lang.IObj} base-interfaces))
+     :type-options [:value-type/closed true]
      :hash-form (fn [_field expr] expr)
-     :with-meta-form (fn [tname fields m]
-                       `(new ~tname ~@fields ~m ~'__extmap))}
+     :meta-methods (fn [_this _m _tname _fields] [])
+     :assoc-hidden-args []
+     :extra-keys-body nil}
     {:preamble []
      :type-head 'deftype*
      :hidden-fields hidden-fields
+     :interfaces base-interfaces
+     :type-options []
      :hash-form cached-hash
-     :with-meta-form (fn [tname fields m]
-                       `(new ~tname ~@fields ~m ~'__extmap ~'__hash ~'__hasheq))}))
+     :meta-methods (fn [this m tname fields]
+                     [`(~'meta [~this] ~'__meta)
+                      `(~'withMeta [~this ~m]
+                                   (new ~tname ~@fields ~m ~'__extmap
+                                        ~'__hash ~'__hasheq))])
+     :assoc-hidden-args '[__meta __extmap]
+     :extra-keys-body '__extmap}))
 
 (defn- key-case
   "A `case` form on `k`, with one clause for each declared keyword and field
@@ -152,7 +165,7 @@
 (defn- generated-methods
   "The methods of the generated type. The field names are locals in the
   method bodies, so every generated local is a gensym."
-  [{:keys [hash-form with-meta-form]} tname cname-str type-hash fields]
+  [{:keys [hash-form meta-methods assoc-hidden-args extra-keys-body]} tname cname-str type-hash fields]
   (let [;; The name that `m#` gives, so the ordinary expansion stays the same
         m (symbol (str (gensym "m__") "__auto__"))
         kws (mapv keyword fields)
@@ -165,102 +178,103 @@
         gclass (gensym "gclass__")
         thunk (gensym "thunk__")
         hinted-target (with-meta gtarget {:tag tname})]
-    [;; IHashEq / Object
-     `(~'hasheq [~this]
-                ~(hash-form '__hasheq
-                            `(int (bit-xor ~type-hash
-                                           (clojure.lang.APersistentMap/mapHasheq ~this)))))
-     `(~'hashCode [~this]
-                  ~(hash-form '__hash
-                              `(clojure.lang.APersistentMap/mapHash ~this)))
-     `(~'equals [~this o#] (clojure.lang.APersistentMap/mapEquals ~this o#))
-     ;; IObj
-     `(~'meta [~this] ~'__meta)
-     `(~'withMeta [~this ~m] ~(with-meta-form tname fields m))
-     ;; ILookup / IKeywordLookup
-     `(~'valAt [~this ~k] (.valAt ~this ~k nil))
-     `(~'valAt [~this ~k ~nf]
-               ~(key-case k kws fields (fn [_ fld] fld) nf))
-     `(~'getLookupThunk [~this ~k]
-                        (let [~gclass (class ~this)]
-                          ~(key-case
-                            k kws fields
-                            (fn [_ fld]
-                              `(reify clojure.lang.ILookupThunk
-                                 (~'get [~thunk ~gtarget]
-                                   (if (identical? (class ~gtarget) ~gclass)
-                                     (. ~hinted-target ~(symbol (str "-" fld)))
-                                     ~thunk))))
-                            nil)))
+    (vec
+     (concat
+      [;; IHashEq / Object
+       `(~'hasheq [~this]
+                  ~(hash-form '__hasheq
+                              `(int (bit-xor ~type-hash
+                                             (clojure.lang.APersistentMap/mapHasheq ~this)))))
+       `(~'hashCode [~this]
+                    ~(hash-form '__hash
+                                `(clojure.lang.APersistentMap/mapHash ~this)))
+       `(~'equals [~this o#] (clojure.lang.APersistentMap/mapEquals ~this o#))]
+      ;; IObj
+      (meta-methods this m tname fields)
+      [     ;; ILookup / IKeywordLookup
+       `(~'valAt [~this ~k] (.valAt ~this ~k nil))
+       `(~'valAt [~this ~k ~nf]
+                 ~(key-case k kws fields (fn [_ fld] fld) nf))
+       `(~'getLookupThunk [~this ~k]
+                          (let [~gclass (class ~this)]
+                            ~(key-case
+                              k kws fields
+                              (fn [_ fld]
+                                `(reify clojure.lang.ILookupThunk
+                                   (~'get [~thunk ~gtarget]
+                                     (if (identical? (class ~gtarget) ~gclass)
+                                       (. ~hinted-target ~(symbol (str "-" fld)))
+                                       ~thunk))))
+                              nil)))
      ;; IPersistentMap
-     `(~'count [~this] ~n)
-     `(~'empty [~this]
-               ~(closed-throw ["Cannot create empty closed record " cname-str]
-                              `{:type :closed-record/empty
-                                :record (class ~this)}))
-     `(~'cons [~this e#]
-              (cond
-                (map-entry? e#)
-                (assoc ~this (key e#) (val e#))
+       `(~'count [~this] ~n)
+       `(~'empty [~this]
+                 ~(closed-throw ["Cannot create empty closed record " cname-str]
+                                `{:type :closed-record/empty
+                                  :record (class ~this)}))
+       `(~'cons [~this e#]
+                (cond
+                  (map-entry? e#)
+                  (assoc ~this (key e#) (val e#))
 
-                (instance? clojure.lang.IPersistentVector e#)
-                (assoc ~this (nth e# 0) (nth e# 1))
+                  (instance? clojure.lang.IPersistentVector e#)
+                  (assoc ~this (nth e# 0) (nth e# 1))
 
-                :else
-                (loop [r# ~this
-                       es# (seq e#)]
-                  (if es#
-                    (let [pair# (first es#)]
-                      (recur (assoc r# (key pair#) (val pair#)) (next es#)))
-                    r#))))
-     `(~'equiv [~this o#]
-               (boolean
-                (or (identical? ~this o#)
-                    (when (identical? (class ~this) (class o#))
-                      (let [~gtarget o#]
-                        (and ~@(map (fn [fld]
-                                      `(= ~fld (. ~hinted-target ~(symbol (str "-" fld)))))
-                                    fields)))))))
-     `(~'containsKey [~this ~k]
-                     (not (identical? ~this (.valAt ~this ~k ~this))))
-     `(~'entryAt [~this ~k]
-                 (let [~v (.valAt ~this ~k ~this)]
-                   (when-not (identical? ~this ~v)
-                     (clojure.lang.MapEntry/create ~k ~v))))
-     `(~'seq [~this]
-             (seq [~@(map (fn [kw fld] `(clojure.lang.MapEntry/create ~kw ~fld))
-                          kws fields)]))
-     `(~'iterator [~this]
-                  (clojure.lang.RecordIterator. ~this ~kws (clojure.lang.RT/iter nil)))
-     `(~'assoc [~this ~k ~v]
-               (condp identical? ~k
-                 ~@(mapcat (fn [kw fld]
-                             [kw `(new ~tname ~@(replace {fld v} fields)
-                                       ~'__meta ~'__extmap)])
-                           kws fields)
-                 (throw (closed-record.runtime/key-error :closed-record/undeclared-key
-                                                         (class ~this) ~k))))
-     `(~'without [~this ~k]
-                 ~(if (seq kws)
-                    `(if (or ~@(map (fn [kw] `(identical? ~k ~kw)) kws))
-                       (throw (closed-record.runtime/key-error :closed-record/declared-key-dissoc
-                                                               (class ~this) ~k))
-                       ~this)
-                    this))
+                  :else
+                  (loop [r# ~this
+                         es# (seq e#)]
+                    (if es#
+                      (let [pair# (first es#)]
+                        (recur (assoc r# (key pair#) (val pair#)) (next es#)))
+                      r#))))
+       `(~'equiv [~this o#]
+                 (boolean
+                  (or (identical? ~this o#)
+                      (when (identical? (class ~this) (class o#))
+                        (let [~gtarget o#]
+                          (and ~@(map (fn [fld]
+                                        `(= ~fld (. ~hinted-target ~(symbol (str "-" fld)))))
+                                      fields)))))))
+       `(~'containsKey [~this ~k]
+                       (not (identical? ~this (.valAt ~this ~k ~this))))
+       `(~'entryAt [~this ~k]
+                   (let [~v (.valAt ~this ~k ~this)]
+                     (when-not (identical? ~this ~v)
+                       (clojure.lang.MapEntry/create ~k ~v))))
+       `(~'seq [~this]
+               (seq [~@(map (fn [kw fld] `(clojure.lang.MapEntry/create ~kw ~fld))
+                            kws fields)]))
+       `(~'iterator [~this]
+                    (clojure.lang.RecordIterator. ~this ~kws (clojure.lang.RT/iter nil)))
+       `(~'assoc [~this ~k ~v]
+                 (condp identical? ~k
+                   ~@(mapcat (fn [kw fld]
+                               [kw `(new ~tname ~@(replace {fld v} fields)
+                                         ~@assoc-hidden-args)])
+                             kws fields)
+                   (throw (closed-record.runtime/key-error :closed-record/undeclared-key
+                                                           (class ~this) ~k))))
+       `(~'without [~this ~k]
+                   ~(if (seq kws)
+                      `(if (or ~@(map (fn [kw] `(identical? ~k ~kw)) kws))
+                         (throw (closed-record.runtime/key-error :closed-record/declared-key-dissoc
+                                                                 (class ~this) ~k))
+                         ~this)
+                      this))
      ;; java.util.Map
-     `(~'size [~this] (.count ~this))
-     `(~'isEmpty [~this] (= 0 (.count ~this)))
-     `(~'containsValue [~this ~v] (boolean (some #{~v} (vals ~this))))
-     `(~'get [~this ~k] (.valAt ~this ~k))
-     `(~'put [~this ~k ~v] (throw (UnsupportedOperationException.)))
-     `(~'remove [~this ~k] (throw (UnsupportedOperationException.)))
-     `(~'putAll [~this m#] (throw (UnsupportedOperationException.)))
-     `(~'clear [~this] (throw (UnsupportedOperationException.)))
-     `(~'keySet [~this] (set (keys ~this)))
-     `(~'values [~this] (vals ~this))
-     `(~'entrySet [~this] (set ~this))
+       `(~'size [~this] (.count ~this))
+       `(~'isEmpty [~this] (= 0 (.count ~this)))
+       `(~'containsValue [~this ~v] (boolean (some #{~v} (vals ~this))))
+       `(~'get [~this ~k] (.valAt ~this ~k))
+       `(~'put [~this ~k ~v] (throw (UnsupportedOperationException.)))
+       `(~'remove [~this ~k] (throw (UnsupportedOperationException.)))
+       `(~'putAll [~this m#] (throw (UnsupportedOperationException.)))
+       `(~'clear [~this] (throw (UnsupportedOperationException.)))
+       `(~'keySet [~this] (set (keys ~this)))
+       `(~'values [~this] (vals ~this))
+       `(~'entrySet [~this] (set ~this))
      ;; ClosedRecord
-     `(~'-extra-keys [~this] ~'__extmap)]))
+       `(~'-extra-keys [~this] ~extra-keys-body)]))))
 
 (defn- positional-factory
   [fn-name classname cname-str fields]
@@ -325,10 +339,11 @@
          (declare ~map->name)
          (~(:type-head rep) ~(symbol (name (ns-name *ns*)) (name tname)) ~classname
                             ~(into (vec fields) (:hidden-fields rep))
-                            :implements ~(vec (distinct (concat base-interfaces
+                            :implements ~(vec (distinct (concat (:interfaces rep)
                                                                 [protocol-interface]
                                                                 (user-interfaces impls))))
                             ~@(mapcat identity opts)
+                            ~@(:type-options rep)
                             ~@methods
                             ~@(user-methods impls))
          (import ~classname)

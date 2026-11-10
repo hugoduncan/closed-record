@@ -218,7 +218,7 @@ jobs:
           cli: '1.12.6.1673'
       - name: Run value-type tests
         id: tests
-        run: clojure -J--enable-preview -J-Dclosed-record.test.representation=value -M:test:value-type-test:clj-1.12 -m scry.cli --dir test/value-type
+        run: clojure -J--enable-preview -J--add-exports=java.base/jdk.internal.value=ALL-UNNAMED -J-Dclosed-record.test.representation=value -M:test:value-type-test:clj-1.12 -m scry.cli --dir test/value-type
       - name: Upload value-type test failures
         if: ${{ failure() && steps.tests.outcome == 'failure' }}
         uses: actions/upload-artifact@v4.6.2

@@ -46,7 +46,8 @@ The option `:value-type true` defines the record through
 [value-type](https://github.com/hugoduncan/value-type). On a JVM with
 JEP 401 value classes, the record is a value object: it has no
 identity, and `^:non-nil` fields reject nil. The closed key set does
-not change. Records without the option do not load value-type.
+not change. A value-type record has no metadata. Records without the
+option do not load value-type.
 
 ## AI usage
 
@@ -92,7 +93,7 @@ Add it as a Git dependency:
 ```clojure
 {:deps {org.hugoduncan/value-type
         {:git/url "https://github.com/hugoduncan/value-type.git"
-         :git/sha "edc3f79de77bcf044d6234df361e090edc46c813"}}}
+         :git/sha "4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2"}}}
 ```
 
 For value classes, start the JVM from a Valhalla early-access JDK with
@@ -100,7 +101,9 @@ For value classes, start the JVM from a Valhalla early-access JDK with
 `--add-exports=java.base/jdk.internal.value=ALL-UNNAMED`. On other
 JVMs, value-type's fallback policy (system property
 `value-type.fallback`) selects an identity class, a warning, or an
-error.
+error. The system property `value-type.value-classes` (`auto` or
+`off`) is next to it: `off` selects identity fallback, also on a
+Valhalla JVM.
 
 ## Usage
 
@@ -174,6 +177,12 @@ The record contract does not change, with these differences:
   throw `IdentityException`.
 - Each `hash` call computes the hash again.
 - Serialization is not promised.
+- The record has no metadata. `meta` gives nil, and `with-meta` throws
+  `ClassCastException`.
+- A map literal with an undeclared key throws at read. There is no
+  hidden key for `check` to find.
+- A user method that reads `__meta` or `__extmap` fails at definition
+  on value output. On identity fallback it reads nil.
 
 On identity fallback, `identical?`, `locking` and weak references work
 as with `defrecord`.
@@ -201,9 +210,18 @@ as with `defrecord`.
 
 The JVM can store value objects inline in an array or in another
 object. This is flattening. Flattening is a JVM choice, not a
-guarantee. On Valhalla `27-jep401ea3+1-1`, arrays of closed-record
-value records are not flat, because a record has hidden reference
-fields. Use `defvaluetype` directly when you need flat storage.
+guarantee. `va/array-info` gives the actual layout in `:flat?`. On
+Valhalla `27-jep401ea3+1-1`, a value record has only its declared
+fields, and a record with at most 64 bits of fields can be flat:
+
+```clojure
+(defclosedrecord Cell [^long v] :value-type true)
+
+(:flat? (va/array-info (va/into-array Cell [(->Cell 1) (->Cell 2)])))
+;=> true on Valhalla 27-jep401ea3+1-1
+```
+
+`Point [^long x ^long y]` (128 bits) is not flat on that JVM.
 
 See [value-type records](doc/value-type-records.md) for the full
 behaviour, field rules, errors and requirements.

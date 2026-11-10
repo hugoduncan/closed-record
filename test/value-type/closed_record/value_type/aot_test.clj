@@ -28,7 +28,7 @@
               := (= p q)
               :hash= (= (hash p) (hash q))
               :assoc (into {} (assoc p :x 3))
-              :meta (meta (with-meta p {:m 1}))
+              :iobj (instance? clojure.lang.IObj p)
               :representation
               ((resolve 'closed-record.value-type.expectation/observed) c)})))))
 
@@ -53,7 +53,7 @@
                   := true
                   :hash= true
                   :assoc {:x 3 :y 2}
-                  :meta {:m 1}
+                  :iobj false
                   :representation expected}
                  (edn/read-string out)))))
       (finally (subprocess/delete-tree tmp)))))

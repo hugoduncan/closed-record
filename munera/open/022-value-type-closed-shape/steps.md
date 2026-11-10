@@ -2,34 +2,34 @@
 
 ## Slice 1: Pin value-type 4ed8d0a3
 
-- [ ] Change the `:value-type-test` alias in `deps.edn` to explicit HTTPS
+- [x] Change the `:value-type-test` alias in `deps.edn` to explicit HTTPS
       `:git/url` and full SHA `4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2`.
-- [ ] Update the README deps snippet to the same SHA.
-- [ ] Update the two value-type links in `doc/value-type-records.md`
+- [x] Update the README deps snippet to the same SHA.
+- [x] Update the two value-type links in `doc/value-type-records.md`
       (field contract `doc/usage.md#portable-non-nil-fields`, array
       documentation `doc/usage.md`) to the same SHA; add the closed
       contract link to `doc/usage.md#deftype-forms` at that SHA.
-- [ ] In `ramora/value-type-records/embodiment.md` ("Differences from
+- [x] In `ramora/value-type-records/embodiment.md` ("Differences from
       the design"), change the pin sentence to the new pin, for example:
       "The pinned value-type (`4ed8d0a3`) has the closed record shape
       (VT-R6). closed-record does not use it yet. Until task 022:". The
       six entries do not change; they stay true until Slices 3 to 5.
-- [ ] Verify no `edc3f79` remains outside Munera, mementum and Git
+- [x] Verify no `edc3f79` remains outside Munera, mementum and Git
       history (`git grep edc3f79`); keep the `8bb7c4f` evidence link in
       `doc/performance.md`.
-- [ ] Run the value-type suite on Temurin 21 and the Clojure 1.11 case;
+- [x] Run the value-type suite on Temurin 21 and the Clojure 1.11 case;
       both pass with no emitter change.
 
 ## Slice 2: Value-mode exclusions (no emitter change)
 
-- [ ] Add the placeholder var
+- [x] Add the placeholder var
       `closed-record.checks.support/metadata-and-hidden-keys?` (value
       `true`, docstring) to `test/runtime/closed_record/checks/support.clj`.
       `transform` replaces the symbol with `false` when `:record-opts` has
       `:value-type true`, else with `true`. Update the `support.clj`
       namespace docstring (source conventions) and the `define-checks`
       docstring.
-- [ ] Exclude in value mode (VT-V3) with the guard forms of `plan.md`:
+- [x] Exclude in value mode (VT-V3) with the guard forms of `plan.md`:
   - `checks/defclosedrecord.clj`: whole tests
     `reader-literal-undeclared-key-test`,
     `equality-ignores-metadata-and-hidden-keys-test`, `metadata-test`,
@@ -52,45 +52,45 @@
       `class` assertions (V-05), with no `meta` assertion.
     - `extra-key-constant-test`: wrap the whole `deftest` at top level,
       `(if-metadata-and-hidden-keys (deftest …))`, no `else`.
-- [ ] Remove `test/value-type/closed_record/value_type/hidden_key_test.clj`
+- [x] Remove `test/value-type/closed_record/value_type/hidden_key_test.clj`
       (V-14 has no value-mode part). Keep the ordinary caller.
-- [ ] VT-V7 (`aot_test.clj`): remove the `:meta` entry of the load script
+- [x] VT-V7 (`aot_test.clj`): remove the `:meta` entry of the load script
       and of the expected map.
-- [ ] VT-V9 (`non_nil_test.clj`): remove the "with-meta keeps the fields"
+- [x] VT-V9 (`non_nil_test.clj`): remove the "with-meta keeps the fields"
       part.
-- [ ] Run the ordinary suite (no change in results; the placeholder is
+- [x] Run the ordinary suite (no change in results; the placeholder is
       `true`), the value-type suite on Temurin 21 and the Clojure 1.11
       case. All pass.
 
 ## Slice 3: Emitter and closed-shape checks
 
-- [ ] Move the new mode differences into the `representation`
+- [x] Move the new mode differences into the `representation`
       description in `src/closed_record/impl/jvm.clj`: interface list
       (no `IObj`), `meta` and `withMeta` methods, `assoc` constructor
       arguments, `-extra-keys` body, and the option
       `:value-type/closed true` emitted after `:implements` and the user
       options, before the methods.
-- [ ] In value mode: no `IMeta` or `IObj`; `assoc` calls the constructor
+- [x] In value mode: no `IMeta` or `IObj`; `assoc` calls the constructor
       with the declared fields only; `-extra-keys` returns nil; no
       generated reference to `__meta`, `__extmap`, `__hash` or
       `__hasheq` in generated method and factory bodies (field vector
       keeps all four; user `specs*` methods may name them).
-- [ ] Confirm `generated-methods` and `base-interfaces` have no
+- [x] Confirm `generated-methods` and `base-interfaces` have no
       `value-type?` test (VT-D8), and no closed-record constructor-check
       or exception wrapping is emitted (VT-D13, VT-D15).
-- [ ] Run the ordinary suite; the expansion fixture is unchanged (VT-I2).
-- [ ] Extend `value-expansion-test` in `representation_test.clj` (VT-V2):
+- [x] Run the ordinary suite; the expansion fixture is unchanged (VT-I2).
+- [x] Extend `value-expansion-test` in `representation_test.clj` (VT-V2):
       the `:value-type/closed true` option is present; no `__meta`,
       `__extmap`, `__hash` or `__hasheq` in the `specs` of the
       `defvaluetype*` form (fixture `Q [a b]`, no user methods) and in
       the `->Q` and `map->Q` `defn` forms of the expansion; no
       `clojure.lang.IMeta` or `clojure.lang.IObj` in the `:implements`
       vector.
-- [ ] VT-V4: in the `:value` branch of `representation-test`, check that
+- [x] VT-V4: in the `:value` branch of `representation-test`, check that
       the instance fields of `VP` are `a` and `b` only (VT-I7).
-- [ ] VT-V7 (`aot_test.clj`): in the loaded JVM, check that the type is
+- [x] VT-V7 (`aot_test.clj`): in the loaded JVM, check that the type is
       not `IObj` (VT-I9).
-- [ ] Add VT-V11 in `test/value-type/closed_record/value_type/closed_shape_test.clj`
+- [x] Add VT-V11 in `test/value-type/closed_record/value_type/closed_shape_test.clj`
       (`closed-record.value-type.closed-shape-test`), on both
       representations:
   - (a) the type is not `IMeta` or `IObj`; `meta` gives nil; `with-meta`
@@ -112,12 +112,14 @@
     of these paths; on value output, the instance fields are the
     declared fields (VT-I7). The branch follows
     `expectation/representation`.
-- [ ] Run the value-type suite on Temurin 21 and the Clojure 1.11 case,
-      and the value-type suite on Valhalla `27-jep401ea3+1-1`. All pass.
+- [x] Run the value-type suite on Temurin 21 and the Clojure 1.11 case.
+      Both pass (local JDK 25, identity).
+- [x] Run the value-type suite on Valhalla `27-jep401ea3+1-1` (local JDK
+      `~/.local/jdks/jdk-27.jdk`, with `JAVA_CMD`; or the CI Valhalla job).
 
 ## Slice 4: Flattening test and CI
 
-- [ ] Add VT-V12 in `test/value-type/closed_record/value_type/flattening_test.clj`
+- [x] Add VT-V12 in `test/value-type/closed_record/value_type/flattening_test.clj`
       (`closed-record.value-type.flattening-test`): `:flat? true` for
       arrays of `[^long x]` and `[^int x ^int y]` value records, and the
       instance fields of each are the declared fields (VT-I7). The test is
@@ -125,10 +127,10 @@
       (top-level `when`); no skip. The test body gets
       `value-type.array/into-array` and `array-info` through
       `requiring-resolve` (no load of `value-type.array` on Temurin 21).
-- [ ] Add `--add-exports=java.base/jdk.internal.value=ALL-UNNAMED` to
+- [x] Add `--add-exports=java.base/jdk.internal.value=ALL-UNNAMED` to
       the Valhalla test command in `.github/workflows/ci.yml` and in
       `doc/development.md`.
-- [ ] Run the full value-type suite on Valhalla `27-jep401ea3+1-1`
+- [x] Run the full value-type suite on Valhalla `27-jep401ea3+1-1`
       (value output) and on Temurin 21. VT-V12 passes on Valhalla. The
       `[^long x]` fixture of VT-V12 is the evidence for acceptance
       criterion 4 (the shape of `Cell [^long v]`: only the declared
@@ -136,22 +138,22 @@
 
 ## Slice 5: Documentation
 
-- [ ] README: Approach (no metadata in value mode); Differences list (no
+- [x] README: Approach (no metadata in value mode); Differences list (no
       metadata; undeclared-key literal throws at read; user method
       reading `__meta`/`__extmap` fails at definition on value output);
       Requirements (`value-type.value-classes` next to
       `value-type.fallback`; `off` selects identity fallback); "Arrays
       and flattening" (64-bit limit of VT-K8, a flat example, flattening
       is a JVM choice).
-- [ ] `doc/value-type-records.md`: behaviour table rows (`__meta`,
+- [x] `doc/value-type-records.md`: behaviour table rows (`__meta`,
       `__extmap`, metadata, map literal), user-method limit,
       `value-type.value-classes`, flattening section.
-- [ ] `defclosedrecord` docstring: one sentence on metadata and on map
+- [x] `defclosedrecord` docstring: one sentence on metadata and on map
       literals in value mode; regenerate `doc/API.md`.
-- [ ] `CHANGELOG.md` `## [Unreleased]`: no metadata in value mode;
+- [x] `CHANGELOG.md` `## [Unreleased]`: no metadata in value mode;
       undeclared-key literals throw; records with at most 64 bits of
       fields can flatten.
-- [ ] Ramora `value-type-records/embodiment.md`:
+- [x] Ramora `value-type-records/embodiment.md`:
   - "Status": VT-D13 to VT-D15 are implemented; remove "except VT-D13 to
     VT-D15 (task 022)".
   - Remove the whole "Differences from the design" section (the
@@ -179,20 +181,24 @@
   - "Verification limits": add that VT-V12 verifies flattening for two
     field shapes (`[^long x]`, `[^int x ^int y]`) on one Valhalla build
     only; flattening is a JVM choice (VT-K8).
-- [ ] Ramora `defclosedrecord/embodiment/artifacts.md`: in the
+- [x] Ramora `defclosedrecord/embodiment/artifacts.md`: in the
       `test/value-type/` row, add VT-V9, VT-V11 and VT-V12 and state that
       the value-type suite does not run V-14; in the `checks/*.clj` and
       `checks/support.clj` rows, add the placeholder
       `metadata-and-hidden-keys?` (from `:record-opts`) and the
       value-mode guards.
-- [ ] Update `mementum/state.md` and `munera/plan.md`.
+- [x] Update `mementum/state.md` and `munera/plan.md`.
 
 ## Slice 6: Final verification
 
-- [ ] Ordinary suites pass on Clojure 1.11, 1.12 and 1.13; expansion
+- [x] Ordinary suites pass on Clojure 1.11, 1.12 and 1.13; expansion
       fixture unchanged.
-- [ ] Full value-type suite passes on Temurin 21 and Valhalla; Clojure
-      1.11 case passes.
-- [ ] Quality checks pass: format, lint, prose, API freshness, links.
-- [ ] All CI jobs pass on the last commit that changes files outside the
+- [x] Full value-type suite passes on Temurin 21 and Valhalla; Clojure
+      1.11 case passes. (Local identity run and 1.11 case pass; Valhalla
+      can run locally with `~/.local/jdks/jdk-27.jdk` or in CI.)
+- [x] Reconcile the local branch with `origin/020-value-type-records`
+      (diverged: ahead 63, behind 128), then push (human decision).
+  - Done 2026-11-10: the user force pushed; origin is at `5e84d9f0`.
+- [x] Quality checks pass: format, lint, prose, API freshness, links.
+- [x] All CI jobs pass on the last commit that changes files outside the
       task directory.

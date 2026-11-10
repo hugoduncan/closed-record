@@ -207,14 +207,16 @@
       (is (instance? NullPointerException e))
       (is (nil? (ex-cause e))))))
 
-(deftest reader-literal-undeclared-key-test
-  (let [v (read-literal "#$P.R{:a 1 :b 2 :z 3}")]
-    (is (instance? R v))
-    (is (nil? (get v :z)))
-    (is (nil? (:z v)))
-    (is (false? (contains? v :z)))
-    (is (= {:type :closed-record/extra-keys :record R :keys #{:z}}
-           (data-of #(check v))))))
+;; VT-V3: value-mode records have no metadata and no hidden keys.
+(when support/metadata-and-hidden-keys?
+  (deftest reader-literal-undeclared-key-test
+    (let [v (read-literal "#$P.R{:a 1 :b 2 :z 3}")]
+      (is (instance? R v))
+      (is (nil? (get v :z)))
+      (is (nil? (:z v)))
+      (is (false? (contains? v :z)))
+      (is (= {:type :closed-record/extra-keys :record R :keys #{:z}}
+             (data-of #(check v)))))))
 
 ;;; V-01: count and seq
 
@@ -250,37 +252,43 @@
 (deftest hash-code-test
   (is (= (.hashCode ^Object {:a 1 :b 2}) (.hashCode ^Object r))))
 
-(deftest equality-ignores-metadata-and-hidden-keys-test
-  (let [m (with-meta r {:m 1})
-        lit (read-literal "#$P.R{:a 1 :b 2 :z 3}")]
-    (is (= r m lit))
-    (is (= (hash r) (hash m) (hash lit)))
-    (is (= (.hashCode ^Object r) (.hashCode ^Object m) (.hashCode ^Object lit)))))
+;; VT-V3: value-mode records have no metadata and no hidden keys.
+(when support/metadata-and-hidden-keys?
+  (deftest equality-ignores-metadata-and-hidden-keys-test
+    (let [m (with-meta r {:m 1})
+          lit (read-literal "#$P.R{:a 1 :b 2 :z 3}")]
+      (is (= r m lit))
+      (is (= (hash r) (hash m) (hash lit)))
+      (is (= (.hashCode ^Object r) (.hashCode ^Object m) (.hashCode ^Object lit))))))
 
 ;;; Metadata and extra-key retention
 
-(deftest metadata-test
-  (let [m {:m 1}]
-    (testing "meta gives the metadata of with-meta"
-      (is (nil? (meta r)))
-      (is (= m (meta (with-meta r m)))))
-    (testing "assoc of a declared key keeps the metadata"
-      (is (= m (meta (assoc (with-meta r m) :a 5)))))
-    (testing "with-meta keeps the hash"
-      (let [x (->R 3 4)
-            h (hash x)
-            hc (.hashCode ^Object x)
-            y (with-meta x m)]
-        (is (= h (hash y)))
-        (is (= hc (.hashCode ^Object y)))))))
+;; VT-V3: value-mode records have no metadata and no hidden keys.
+(when support/metadata-and-hidden-keys?
+  (deftest metadata-test
+    (let [m {:m 1}]
+      (testing "meta gives the metadata of with-meta"
+        (is (nil? (meta r)))
+        (is (= m (meta (with-meta r m)))))
+      (testing "assoc of a declared key keeps the metadata"
+        (is (= m (meta (assoc (with-meta r m) :a 5)))))
+      (testing "with-meta keeps the hash"
+        (let [x (->R 3 4)
+              h (hash x)
+              hc (.hashCode ^Object x)
+              y (with-meta x m)]
+          (is (= h (hash y)))
+          (is (= hc (.hashCode ^Object y))))))))
 
-(deftest extra-key-retention-test
-  (let [lit (read-literal "#$P.R{:a 1 :b 2 :z 3}")
-        extra {:type :closed-record/extra-keys :record R :keys #{:z}}]
-    (testing "assoc of a declared key keeps the extra keys"
-      (is (= extra (data-of #(check (assoc lit :a 5))))))
-    (testing "with-meta keeps the extra keys"
-      (is (= extra (data-of #(check (with-meta lit {:m 1}))))))))
+;; VT-V3: value-mode records have no metadata and no hidden keys.
+(when support/metadata-and-hidden-keys?
+  (deftest extra-key-retention-test
+    (let [lit (read-literal "#$P.R{:a 1 :b 2 :z 3}")
+          extra {:type :closed-record/extra-keys :record R :keys #{:z}}]
+      (testing "assoc of a declared key keeps the extra keys"
+        (is (= extra (data-of #(check (assoc lit :a 5))))))
+      (testing "with-meta keeps the extra keys"
+        (is (= extra (data-of #(check (with-meta lit {:m 1})))))))))
 
 ;;; java.io.Serializable (D-06)
 
@@ -299,12 +307,12 @@
   ;; serialization. scry fails a test with no assertion, so the test is
   ;; defined only for identity output.
   (deftest serializable-test
-    (let [m (with-meta r {:m 1})
-          s (round-trip m)]
+    (let [s (round-trip r)]
       (is (= r s))
       (is (= R (class s)))
-      (is (= {:m 1} (meta s)))
-      (is (= (hash r) (hash s))))))
+      (is (= (hash r) (hash s))))
+    (when support/metadata-and-hidden-keys?
+      (is (= {:m 1} (meta (round-trip (with-meta r {:m 1}))))))))
 
 ;;; Generated methods not in the V-01 tables (no extra keys)
 
@@ -419,10 +427,11 @@
 (deftest check-test
   (testing "closed record with no extra keys gives the record"
     (is (identical? r (check r))))
-  (testing "record from a literal with extra keys throws"
-    (is (= {:type :closed-record/extra-keys :record R :keys #{:y :z}}
-           (data-of #(check (read-literal
-                             "#$P.R{:a 1 :y 2 :z 3}"))))))
+  (when support/metadata-and-hidden-keys?
+    (testing "record from a literal with extra keys throws"
+      (is (= {:type :closed-record/extra-keys :record R :keys #{:y :z}}
+             (data-of #(check (read-literal
+                               "#$P.R{:a 1 :y 2 :z 3}")))))))
   (testing "other values throw"
     (is (= {:type :closed-record/not-closed-record :value-class nil}
            (data-of #(check nil))))

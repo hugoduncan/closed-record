@@ -21,7 +21,7 @@
   :value-type-test {:extra-paths ["test/value-type" "test/value-type-clj-1.11"]
                     :extra-deps  {org.hugoduncan/value-type
                                   {:git/url "https://github.com/hugoduncan/value-type.git"
-                                   :git/sha "edc3f79de77bcf044d6234df361e090edc46c813"}}}
+                                   :git/sha "4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2"}}}
   :bench           {:extra-paths ["dev/bench"]
                     :extra-deps  {org.hugoduncan/criterium {:mvn/version "0.5.251-ALPHA"}}
                     :jvm-opts    ["-XX:+UnlockExperimentalVMOptions"

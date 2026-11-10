@@ -36,7 +36,7 @@ before `-M`:
 Run them on a Valhalla early-access JDK (value output). `JAVA_CMD` selects the
 JDK:
 
-    JAVA_CMD=<Valhalla java> clojure -J--enable-preview -J-Dclosed-record.test.representation=value -M:test:value-type-test:clj-1.12 -m scry.cli --dir test/value-type
+    JAVA_CMD=<Valhalla java> clojure -J--enable-preview -J--add-exports=java.base/jdk.internal.value=ALL-UNNAMED -J-Dclosed-record.test.representation=value -M:test:value-type-test:clj-1.12 -m scry.cli --dir test/value-type
 
 The property `closed-record.test.representation` (`identity` or `value`) is
 the expected representation. Without it, the suite fails.

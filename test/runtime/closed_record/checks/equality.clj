@@ -6,6 +6,7 @@
   operation that differs."
   (:require
    [clojure.test :refer [deftest is testing]]
+   [closed-record.checks.support :as support]
    [closed-record.core :refer [defclosedrecord]]))
 
 (defclosedrecord E [a b])
@@ -78,13 +79,15 @@
                                    (java.util.HashSet. ^java.util.Collection [plain-map])
                                    r)})))))
 
-(deftest metadata-test
-  ;; Metadata: both values exist before a hash call.
-  (testing "r and (with-meta r {:m 1})"
-    (is-diff (with-r (fn [r] (equality-results r (with-meta r {:m 1}))))))
-  (testing "different metadata, separate factory calls"
-    (is-diff (fn [f] (equality-results (with-meta (f 1 2) {:m 1})
-                                       (with-meta (f 1 2) {:m 2}))))))
+;; VT-V3: value-mode records have no metadata and no hidden keys.
+(when support/metadata-and-hidden-keys?
+  (deftest metadata-test
+    ;; Metadata: both values exist before a hash call.
+    (testing "r and (with-meta r {:m 1})"
+      (is-diff (with-r (fn [r] (equality-results r (with-meta r {:m 1}))))))
+    (testing "different metadata, separate factory calls"
+      (is-diff (fn [f] (equality-results (with-meta (f 1 2) {:m 1})
+                                         (with-meta (f 1 2) {:m 2})))))))
 
 (deftest cross-type-test
   ;; Cross type: closed value first only: the reverse calls run only

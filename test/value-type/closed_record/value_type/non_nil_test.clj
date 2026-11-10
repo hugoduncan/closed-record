@@ -104,10 +104,6 @@
     (testing label
       (check-fields v)
       (is (= base v))))
-  (testing "with-meta keeps the fields"
-    (let [m (with-meta base {:k 1})]
-      (check-fields m)
-      (is (= {:k 1} (meta m)))))
   (testing "check returns a valid record"
     (is (identical? base (check base)))))
 

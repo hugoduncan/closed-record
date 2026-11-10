@@ -4,6 +4,7 @@
   `Compiler.emitValue`, not through closed-record code."
   (:require
    [clojure.test :refer [deftest is testing]]
+   [closed-record.checks.support :as support]
    [closed-record.core :refer [check defclosedrecord]]))
 
 (def ^:private test-ns (ns-name *ns*))
@@ -33,6 +34,13 @@
   [s]
   (read-string s))
 
+(defmacro ^:private if-metadata-and-hidden-keys
+  "Give `then` when the records have metadata and hidden keys, else `else`.
+  Only one branch reaches the compiler, so the `constant` literals of the
+  other branch are not read (VT-V3)."
+  [then & [else]]
+  (if support/metadata-and-hidden-keys? then else))
+
 (deftest round-trip-test
   ;; I-06. Each `r` has no metadata.
   (doseq [r round-trip-values]
@@ -58,30 +66,37 @@
     (is (= (->T 1 2) v))
     (is (= T (class v)))))
 
-(deftest extra-key-literal-print-test
-  ;; I-07: print drops __extmap.
-  (let [lit (read-literal "#$P.T{:a 1 :n 2 :x 3}")
-        s   (pr-str lit)
-        v   (read-literal s)]
-    (is (= :closed-record/extra-keys (check-error-type lit)))
-    (is (= (pr-str (->T 1 2)) s))
-    (is (= lit v))
-    (is (identical? v (check v)))))
+;; VT-V3: value-mode records have no metadata and no hidden keys.
+(when support/metadata-and-hidden-keys?
+  (deftest extra-key-literal-print-test
+    ;; I-07: print drops __extmap.
+    (let [lit (read-literal "#$P.T{:a 1 :n 2 :x 3}")
+          s   (pr-str lit)
+          v   (read-literal s)]
+      (is (= :closed-record/extra-keys (check-error-type lit)))
+      (is (= (pr-str (->T 1 2)) s))
+      (is (= lit v))
+      (is (identical? v (check v))))))
 
 (deftest value-constant-test
   ;; V-05: a record value compiled as a constant in a function body.
-  (let [v (constant "^{:m 1} #$P.T{:a 1 :n 2}")]
-    (is (= (->T 1 2) v))
-    (is (= T (class v)))
-    (is (= {:m 1} (meta v)))))
+  (if-metadata-and-hidden-keys
+   (let [v (constant "^{:m 1} #$P.T{:a 1 :n 2}")]
+     (is (= (->T 1 2) v))
+     (is (= T (class v)))
+     (is (= {:m 1} (meta v))))
+   (let [v (constant "#$P.T{:a 1 :n 2}")]
+     (is (= (->T 1 2) v))
+     (is (= T (class v))))))
 
-(deftest extra-key-constant-test
-  ;; I-07, I-09: emitValue builds the constant from the Map view.
-  (let [form '(constant
-               "#$P.T{:a 1 :n 2 :x 3}")
-        c    (in-test-ns #(macroexpand-1 form))]
-    (is (= :closed-record/extra-keys (check-error-type c))))
-  (let [v (constant "#$P.T{:a 1 :n 2 :x 3}")]
-    (is (= (->T 1 2) v))
-    (is (= T (class v)))
-    (is (identical? v (check v)))))
+(if-metadata-and-hidden-keys
+ (deftest extra-key-constant-test
+   ;; I-07, I-09: emitValue builds the constant from the Map view.
+   (let [form '(constant
+                "#$P.T{:a 1 :n 2 :x 3}")
+         c    (in-test-ns #(macroexpand-1 form))]
+     (is (= :closed-record/extra-keys (check-error-type c))))
+   (let [v (constant "#$P.T{:a 1 :n 2 :x 3}")]
+     (is (= (->T 1 2) v))
+     (is (= T (class v)))
+     (is (identical? v (check v))))))

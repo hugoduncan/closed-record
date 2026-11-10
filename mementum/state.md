@@ -26,17 +26,13 @@ keys and `dissoc` of declared keys. Main form: `defclosedrecord`.
 - Unreleased: non-nil fields for value-type records (task 021, same
   branch). `:non-nil` field metadata passes to `defvaluetype*` unchanged
   (VT-D11); ordinary mode ignores it (VT-D12). The `:value-type-test` pin
-  is value-type `edc3f79`.
-- Closed-record value records are not flat in `value-type.array` on
-  Valhalla `27-jep401ea3+1-1` (hidden `__meta`/`__extmap` fields). The
-  README and `doc/value-type-records.md` say this.
-- Designed, not implemented: closed shape for value records (VT-D13 to
-  VT-D15): no hidden fields on value output, no metadata, map literals with
-  undeclared keys throw. Task 022 has `plan.md` and `steps.md`; next:
-  plan review, then implementation. value-type `4ed8d0a3` provides the
-  closed shape (`:value-type/closed true`); the task design was checked
-  against it, and the current suites pass with that pin. The Ramora
-  embodiment lists the current differences.
+  is value-type `4ed8d0a3`.
+- Closed shape for value records (VT-D13 to VT-D15, task 022) is
+  implemented: `:value-type/closed true`, no hidden fields on value output,
+  no metadata, map literals with undeclared keys throw at read. Records
+  with at most 64 bits of fields can flatten (VT-V12). Open (Slice 6, not
+  blocked): the first Valhalla run of VT-V11 (value branch) and VT-V12,
+  local (`~/.local/jdks/jdk-27.jdk`) or CI, then all CI jobs green.
 - Verification limits (hosted CI, publication, benchmark scope) are in each
   design's `embodiment.md`.
 
@@ -57,3 +53,6 @@ keys and `dissoc` of declared keys. Main form: `defclosedrecord`.
 - Default Java is 25. CI uses Temurin 21. For Java 21 checks, set `JAVA_HOME`
   to `/Users/duncan/.local/share/mise/installs/java/temurin-21` and prepend
   `$JAVA_HOME/bin` to `PATH`.
+- Valhalla `27-jep401ea3+1-1` is installed locally: set
+  `JAVA_CMD=~/.local/jdks/jdk-27.jdk/Contents/Home/bin/java` for value-output
+  runs (`doc/development.md`).

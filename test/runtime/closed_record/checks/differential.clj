@@ -13,6 +13,7 @@
    [clojure.test.check.generators :as gen]
    [clojure.test.check.properties :as prop]
    [clojure.test.check.results :as results]
+   [closed-record.checks.support :as support]
    [closed-record.core :refer [defclosedrecord]]))
 
 (defclosedrecord P [a b c])
@@ -38,10 +39,12 @@
 
 (def ^:private gen-step
   (gen/one-of
-   (conj (mapv (fn [op] (gen/tuple (gen/return op) gen-declared-key gen-value))
-               [:assoc :conj :merge :into :update])
-         (gen/tuple (gen/return :dissoc) gen-undeclared-key)
-         (gen/tuple (gen/return :with-meta) gen-meta))))
+   (cond-> (conj (mapv (fn [op] (gen/tuple (gen/return op) gen-declared-key gen-value))
+                       [:assoc :conj :merge :into :update])
+                 (gen/tuple (gen/return :dissoc) gen-undeclared-key))
+     ;; VT-V3: value-mode records have no metadata.
+     support/metadata-and-hidden-keys?
+     (conj (gen/tuple (gen/return :with-meta) gen-meta)))))
 
 (def ^:private gen-steps (gen/vector gen-step 0 100))
 
@@ -128,7 +131,7 @@
       (judge :entry-set #(.entrySet ^java.util.Map %) x y)
       (judge-each :contains-value :value (conj (vec (vals y)) ::nf)
                   #(.containsValue ^java.util.Map %1 %2) x y)
-      (judge :meta meta x y)
+      (when support/metadata-and-hidden-keys? (judge :meta meta x y))
       (judge :hash-code #(.hashCode ^Object %) x y)
       (judge-one :equals #(.equals ^Object x y) true?)
       (compare-outcomes :start-equal

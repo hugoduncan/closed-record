@@ -13,6 +13,9 @@
   - `$P` in a string or a symbol name gives the munged calling namespace
     (the class name prefix).
   - `representation` of this namespace gives the representation value.
+  - `metadata-and-hidden-keys?` of this namespace gives `false` when the
+    record options have `:value-type true`, else `true`. A check guards its
+    metadata and hidden-key parts with it (VT-V3).
   - Each `defclosedrecord` form gets the record options after its field
     vector."
   (:require
@@ -26,6 +29,16 @@
   "Placeholder in a shared check namespace. `define-checks` replaces it with
   the `:representation` value of the caller."
   :identity)
+
+(def metadata-and-hidden-keys?
+  "Placeholder in a shared check namespace. `define-checks` replaces it with
+  `false` when the `:record-opts` of the caller have `:value-type true`, else
+  with `true`. Value-mode records have no metadata and no hidden keys."
+  true)
+
+(defn- value-type-opts?
+  [record-opts]
+  (true? (get (apply hash-map record-opts) :value-type)))
 
 (defn- record-form?
   [form]
@@ -48,13 +61,15 @@
 (defn- transform
   [src-ns {:keys [record-opts representation]} caller form]
   (let [prefix (namespace-munge caller)
+        meta-keys? (not (value-type-opts? record-opts))
         keep-meta (fn [x y] (with-meta y (merge (meta y) (meta x))))]
     (form/walk-form
      (fn [x]
        (cond
          (symbol? x) (let [r (resolve-symbol src-ns prefix x)]
-                       (if (= 'closed-record.checks.support/representation r)
-                         representation
+                       (case r
+                         closed-record.checks.support/representation representation
+                         closed-record.checks.support/metadata-and-hidden-keys? meta-keys?
                          (keep-meta x r)))
          (string? x) (str/replace x "$P" prefix)
          (record-form? x) (keep-meta x (form/with-options x record-opts))
@@ -88,7 +103,9 @@
   "Define the checks of the shared check namespace `src-sym` in the current
   `*ns*`. `opts`: `{:record-opts [k v …] :representation r}`, `r` is
   `:identity` or `:value`. Each `representation` of this namespace in the
-  check source becomes `r`. The compiler gets the check source file as
+  check source becomes `r`. Each `metadata-and-hidden-keys?` of this
+  namespace becomes `false` when `:record-opts` has `:value-type true`, else
+  `true`. The compiler gets the check source file as
   source, so the file and the line of a failure both name the check source."
   [src-sym {:keys [representation] :as opts}]
   (when-not (#{:identity :value} representation)

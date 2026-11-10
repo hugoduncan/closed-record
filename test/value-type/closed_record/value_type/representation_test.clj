@@ -29,6 +29,24 @@
   [form]
   (set (filter symbol? (tree-seq coll? seq form))))
 
+(defn- type-options
+  "The option map of the type form `tform`: the keyword and value pairs
+  after the field vector."
+  [tform]
+  (loop [xs (drop 4 tform)
+         opts {}]
+    (if (keyword? (first xs))
+      (recur (drop 2 xs) (assoc opts (first xs) (second xs)))
+      opts)))
+
+(defn- factory-forms
+  "The `->Q` and `map->Q` defn forms of `expansion`."
+  [expansion]
+  (filter #(and (seq? %)
+                (= 'clojure.core/defn (first %))
+                (contains? '#{->Q map->Q} (second %)))
+          (tree-seq seq? seq expansion)))
+
 (deftest value-expansion-test
   ;; VT-V2: the expansion of a :value-type true definition.
   (let [expansion (value-expansion)
@@ -43,8 +61,16 @@
       (is (not-any? #(some (or (meta %) {}) [:unsynchronized-mutable
                                              :volatile-mutable])
                     fields)))
-    (testing "no generated reference to __hash or __hasheq"
-      (is (not-any? #{'__hash '__hasheq} (symbols specs))))
+    (testing "the closed shape option (VT-D13)"
+      (is (true? (:value-type/closed (type-options tform)))))
+    (testing "no generated reference to a hidden field (VT-I4)"
+      (is (not-any? #{'__meta '__extmap '__hash '__hasheq}
+                    (symbols (concat specs (factory-forms expansion)))))
+      (is (= 2 (count (factory-forms expansion)))))
+    (testing "no IMeta or IObj (VT-I9)"
+      (let [implements (:implements (type-options tform))]
+        (is (vector? implements))
+        (is (not-any? '#{clojure.lang.IMeta clojure.lang.IObj} implements))))
     (testing "the option is not passed to defvaluetype*"
       (is (not-any? #{:value-type} tform)))))
 
@@ -89,7 +115,11 @@
 
 (defn- field-names
   [^Class c]
-  (set (map #(.getName ^java.lang.reflect.Field %) (.getDeclaredFields c))))
+  (->> (.getDeclaredFields c)
+       (remove #(java.lang.reflect.Modifier/isStatic
+                 (.getModifiers ^java.lang.reflect.Field %)))
+       (map #(.getName ^java.lang.reflect.Field %))
+       set))
 
 (deftest representation-test
   ;; VT-V4: compare the observed representation with the expectation.
@@ -101,7 +131,8 @@
       (testing "value output"
         (is (identical? x y))
         (is (not (contains? fields "__hash")))
-        (is (not (contains? fields "__hasheq"))))
+        (is (not (contains? fields "__hasheq")))
+        (is (= #{"a" "b"} fields) "VT-I7: only the declared fields"))
       (testing "identity output"
         (is (not (identical? x y)))
         (is (contains? fields "__hash"))))

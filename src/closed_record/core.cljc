@@ -67,6 +67,8 @@
   with these differences: hashes are computed on each call (no cache); on
   value output, identical? compares field values, locking and weak
   references throw IdentityException, and serialization is not promised.
+  The record has no metadata (with-meta throws), and a map literal with an
+  undeclared key throws at read.
   With :value-type true, ^:non-nil field metadata has value-type's meaning
   and passes to value-type unchanged: nil gives NullPointerException and a
   wrong type gives ClassCastException; without the option it has no effect.

@@ -14,7 +14,11 @@ representation when the class loads:
   JDK with `--enable-preview`), the type is a value class.
 - Identity fallback: on other JVMs, value-type's fallback policy (system
   property `value-type.fallback`) selects an identity class, a warning, or an
-  error.
+  error. The system property `value-type.value-classes` (`auto` or `off`)
+  is read with it: `off` selects identity fallback, also on a Valhalla JVM.
+
+value-type defines the record with its closed record shape; see its
+[closed contract](https://github.com/hugoduncan/value-type/blob/4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2/doc/usage.md#deftype-forms).
 
 ## Requirements
 
@@ -42,17 +46,25 @@ The record contract does not change, with these differences:
 | `locking`, weak references | work | throw `IdentityException` | work |
 | Serialization | as `defrecord` | not promised | as `defrecord` |
 | Non-nil enforcement | none: `:non-nil` has no effect | native null restriction with a value-class tag on a JVM that supports native fields; otherwise constructor checks | constructor checks |
+| `__meta`, `__extmap` fields | yes | no | yes, always nil |
+| Metadata | as `defrecord` | none: `meta` gives nil, `with-meta` throws `ClassCastException` | as Value output |
+| Map literal with an undeclared key | read; the key is hidden, `check` throws | throws at read (`IllegalArgumentException` in the cause chain) | as Value output |
 | Field storage type | primitive tag: the primitive; other fields: `Object` | `:non-nil` field: the tag class; other fields: as Ordinary | `:non-nil` field: the tag class; other fields: as Ordinary |
 
 Each `hash` call computes the hash again. The option makes no performance
 claim; see [performance](performance.md#value-type-records).
+
+A user method (in the `defclosedrecord` specs) that reads `__meta`,
+`__extmap`, `__hash` or `__hasheq` fails at definition on value output
+(value-type `:removed-field-access`). On identity fallback, `__meta` and
+`__extmap` hold nil.
 
 ## Non-nil fields
 
 With `:value-type true`, field metadata `^:non-nil` makes a field non-nil. A
 non-nil field must have a tag that names a defined concrete, non-primitive
 class. value-type owns these rules; see its
-[field contract](https://github.com/hugoduncan/value-type/blob/edc3f79de77bcf044d6234df361e090edc46c813/doc/usage.md#portable-non-nil-fields).
+[field contract](https://github.com/hugoduncan/value-type/blob/4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2/doc/usage.md#portable-non-nil-fields).
 closed-record passes the metadata to value-type with no change.
 
 - Nil gives `NullPointerException`, and a value of the wrong type gives
@@ -72,14 +84,14 @@ closed-record passes the metadata to value-type with no change.
 
 `value-type.array` makes arrays of value-type records. These arrays reject nil
 elements and have atomic element access. See the value-type
-[array documentation](https://github.com/hugoduncan/value-type/blob/edc3f79de77bcf044d6234df361e090edc46c813/doc/usage.md).
+[array documentation](https://github.com/hugoduncan/value-type/blob/4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2/doc/usage.md).
 
 The JVM can store value objects inline in an array or in another object. This
 is flattening. Flattening is a JVM choice, not a guarantee. `va/array-info`
 gives the actual layout in `:flat?`.
 
-On Valhalla `27-jep401ea3+1-1`, arrays of closed-record value records are not
-flat. A record has hidden reference fields for metadata and extension keys.
-These make the object too large to flatten, also for a record with one `long`
-field. A `defvaluetype` type with one `long` field is flat on the same JVM. Use
-`defvaluetype` directly when you need flat storage.
+On Valhalla `27-jep401ea3+1-1`, a value record has only its declared fields.
+An array of records with at most 64 bits of declared fields can be flat: the
+tests show `:flat? true` for `[^long x]` and `[^int x ^int y]`. A record
+`[^long x ^long y]` is not flat on that JVM. Other JVM builds can choose
+differently.

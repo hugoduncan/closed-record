@@ -445,3 +445,108 @@
 - For a later review pass: do not raise again the items recorded as "not a
   finding", "not raised" or "implementation hint" in the plan review notes
   (passes 1 to 5).
+
+## Slice 1: pin (2026-11-10)
+
+- Pinned value-type `4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2` in
+  `deps.edn`, README and `doc/value-type-records.md`. The closed contract
+  link (`#deftype-forms`) is in the "Representation" section of
+  `doc/value-type-records.md`.
+- Verification ran on a local JDK 25 (no Temurin 21 here), identity
+  representation: value-type suite 89 tests pass; Clojure 1.11 case
+  passes. `bb vale` and `bb lychee:check` pass. CI covers Temurin 21.
+- Next: Slice 2. Local command:
+  `clojure -J-Dclosed-record.test.representation=identity -M:test:value-type-test:clj-1.12 -m scry.cli --dir test/value-type`.
+
+## Slice 2: value-mode exclusions (2026-11-10)
+
+- `support/metadata-and-hidden-keys?`: `transform` replaces it through a
+  `case` on the resolved symbol, next to `support/representation`. The
+  value comes from `(:value-type (apply hash-map record-opts))`.
+- `gen-step` in `differential.clj` adds the `:with-meta` generator with
+  `cond->`; `judge :meta` is a `when` in the `or` chain (nil passes).
+- `serializable-test`: the round trip uses `r`; the metadata round trip is a
+  guarded extra assertion.
+- Results (JDK 25, identity): value-type suite 76 tests pass (was 89: V-14
+  caller removed, guarded tests not defined); ordinary 187 tests, same
+  before and after; Clojure 1.11 case passes; clj-kondo and cljfmt clean.
+- Next: Slice 3 (emitter).
+
+## Slice 3: emitter and closed-shape checks (2026-11-10)
+
+- `representation` has new keys: `:interfaces`, `:type-options`
+  (`[:value-type/closed true]` in value mode, after the user options),
+  `:meta-methods` (fn of `this m tname fields`; `[]` in value mode),
+  `:assoc-hidden-args` and `:extra-keys-body`. `:with-meta-form` is gone.
+  `generated-methods` builds its vector with `concat` round the meta
+  methods. Gensym order is unchanged; ordinary suite 187 pass, the
+  expansion fixture is unchanged.
+- VT-V2 tests: `type-options` reads the keyword pairs after the field
+  vector; `factory-forms` finds the `->Q`/`map->Q` defns (count 2 asserted).
+- VT-V11 `closed_shape_test.clj`: (e) identity reads `__meta`/`__extmap`
+  by reflection on the public final fields.
+- Results (JDK 25, identity): value-type 81 tests pass; Clojure 1.11 case
+  passes; lint and format clean. Valhalla not run locally: first value-output
+  run of the closed shape is the CI Valhalla job (check it after Slice 4).
+- Next: Slice 4 (VT-V12, export in ci.yml and doc/development.md).
+
+## Slice 4: flattening test and CI (2026-11-10)
+
+- `flattening_test.clj`: fixtures `L [^long x]`, `II [^int x ^int y]`;
+  instance fields exclude static fields (`Modifier/isStatic`).
+- Export added to the Valhalla command in `ci.yml` and `doc/development.md`
+  as `-J--add-exports=...`.
+- Local (JDK 25, identity): 81 tests pass; VT-V12 not defined there. The
+  Valhalla run (VT-V11 value branch, VT-V12) is open: CI only. If it fails,
+  fix before Slice 6.
+- Next: Slice 5 (documentation).
+
+## Slice 5: documentation (2026-11-10)
+
+- README, `doc/value-type-records.md`, docstring (+ `doc/API.md`),
+  CHANGELOG, both Ramora embodiments, `mementum/state.md`,
+  `munera/plan.md` updated. The value-type embodiment has no
+  "Differences from the design" section now; no difference stays.
+- The flattening text (README `Cell` example, doc page) states the
+  EA3 results of the design table; the Valhalla CI run is still the
+  first check of them for closed-record records. If VT-V12 fails there,
+  change these texts with VT-K8.
+- Checks: vale, lychee, api-docs --check, cljfmt; ordinary 187 and
+  value-type (identity) 81 tests pass.
+- Next: Slice 6 (CI jobs incl. Valhalla, Clojure 1.11/1.13 suites).
+
+## Slice 6: final verification (2026-11-10)
+
+- Local pass: runtime suites on Clojure 1.11, 1.12, 1.13; value-type
+  (identity, JDK 25); Clojure 1.11 case; clj-fmt, clj-kondo, vale,
+  api-docs --check, lychee. Expansion fixture not changed by task 022.
+- No local Valhalla JDK. VT-V11 value branch and VT-V12 need the CI
+  Valhalla job.
+- The local branch and `origin/020-value-type-records` have diverged
+  (ahead 63, behind 128; merge base `ac259424`). Origin has 128 commits
+  of task 020 follow-up work (for example `7534b9cd`) that are not in
+  the local branch. A push needs a merge, a rebase or a force push.
+
+## Branch reconciled (2026-11-10)
+
+- The blocker is resolved. The user force pushed the local branch, so
+  `origin/020-value-type-records` is at `5e84d9f0`, the same as the local
+  branch. CI can run on the task commits (pull request #1).
+- Correction to the Slice 6 note: a local Valhalla JDK exists at
+  `~/.local/jdks/jdk-27.jdk/Contents/Home/bin/java` (`27-jep401ea3+1-1`;
+  use `JAVA_CMD`). The value-output part of VT-V11 and VT-V12 can run
+  locally before CI.
+- Open: the full value-type suite on Valhalla (local or CI), then all CI
+  jobs green on the last commit that changes files outside the task
+  directory.
+
+## Local Valhalla run (2026-11-10)
+
+- First run on local Valhalla (`27-jep401ea3+1-1`): VT-I7 field checks
+  in `representation_test.clj` and `closed_shape_test.clj` failed. They
+  counted the static `const__N` fields of the class. Fix: count only
+  non-static fields (as `flattening_test.clj` does).
+- After the fix: Valhalla value output 80 tests pass (VT-V11 value
+  branch and VT-V12 included; acceptance criterion 4 holds locally);
+  identity (`:clj-1.12`, as CI) 81 tests pass.
+- CI run 42841466683 on `d0f340c9`: all 9 jobs pass (the earlier links failure on `5e84d9f` was GitHub 503s). Task complete.
