@@ -61,7 +61,7 @@
 (defn- transform
   [src-ns {:keys [record-opts representation]} caller form]
   (let [prefix (namespace-munge caller)
-        meta-keys? (not (value-type-opts? record-opts))
+        metadata-and-hidden-keys? (not (value-type-opts? record-opts))
         keep-meta (fn [x y] (with-meta y (merge (meta y) (meta x))))]
     (form/walk-form
      (fn [x]
@@ -69,7 +69,7 @@
          (symbol? x) (let [r (resolve-symbol src-ns prefix x)]
                        (case r
                          closed-record.checks.support/representation representation
-                         closed-record.checks.support/metadata-and-hidden-keys? meta-keys?
+                         closed-record.checks.support/metadata-and-hidden-keys? metadata-and-hidden-keys?
                          (keep-meta x r)))
          (string? x) (str/replace x "$P" prefix)
          (record-form? x) (keep-meta x (form/with-options x record-opts))

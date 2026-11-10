@@ -550,3 +550,104 @@
   branch and VT-V12 included; acceptance criterion 4 holds locally);
   identity (`:clj-1.12`, as CI) 81 tests pass.
 - CI run 42841466683 on `d0f340c9`: all 9 jobs pass (the earlier links failure on `5e84d9f` was GitHub 503s). Task complete.
+
+## Implementation review (2026-11-10)
+
+- added 2 steps to be addressed
+
+## Review follow-up (2026-11-10)
+
+- addressed 2 review steps: `support/instance-field-names` replaces the
+  three copies; `generated-methods` layout tidied (fixture unchanged).
+  Ordinary (187), identity (81) and Valhalla value (80) suites pass.
+
+## Implementation review, pass 2 (2026-11-10)
+
+- added 1 step to be addressed
+
+## Review follow-up, pass 2 (2026-11-10)
+
+- addressed 1 review step: `munera/plan.md` and `mementum/state.md` state
+  that task 022 is complete and ready to close.
+
+## Implementation review, pass 3 (2026-11-10)
+
+- added 1 step to be addressed
+
+## Review follow-up, pass 3 (2026-11-10)
+
+- addressed 1 review step: pushed `7a469a46` (fast-forward); CI run
+  42848080888 on `7a469a46`: all 9 jobs pass. Acceptance criterion 6
+  holds.
+
+## Implementation review, pass 4 (2026-11-10)
+
+- no new issues
+
+## Test review (2026-11-10)
+
+- no new issues
+
+## Test review, pass 2 (2026-11-10)
+
+- added 1 step to be addressed
+
+## Review follow-up, test review pass 2 (2026-11-10)
+
+- addressed 1 review step: the `construct` docstring in
+  `closed_shape_test.clj` names `params`, `m` and `ext`.
+
+## Test review, pass 3 (2026-11-10)
+
+- added 1 step to be addressed
+
+## Review follow-up, test review pass 3 (2026-11-10)
+
+- addressed 1 review step: VT-V12 gives the `array-info` map as the `is`
+  message. Value-type suite passes on local Valhalla (value) and on
+  identity.
+
+## Test review, pass 4 (2026-11-10)
+
+- no new issues
+
+## Docs review (2026-11-10)
+
+- added 2 steps to be addressed
+
+## Review follow-up, docs review (2026-11-10)
+
+- addressed 2 review steps: `doc/value-type-records.md` Requirements names
+  value-type `4ed8d0a3`; Behaviour states the `:not-installed` full-expansion
+  limit; one CHANGELOG line. Vale and lychee pass.
+
+## Docs review, pass 2 (2026-11-10)
+
+- added 1 step to be addressed
+
+## Review follow-up, docs review pass 2 (2026-11-10)
+
+- addressed 1 review step: the `doc/` and `README.md` row of the ramora
+  embodiment names the value-type `4ed8d0a3` requirement and the
+  full-expansion limit.
+
+## Docs review, pass 3 (2026-11-10)
+
+- no new issues
+
+## Code-shaper review (2026-11-10)
+
+- added 3 steps to be addressed
+
+## Review follow-up, code-shaper review (2026-11-10)
+
+- addressed 3 review steps: `transform` local renamed to
+  `metadata-and-hidden-keys?`; `value-constant-test` selects only the
+  literal and guards only the `meta` assertion; `cause-class` removed,
+  `constructor-test` asserts `InvocationTargetException` and an
+  `IllegalArgumentException` cause. Ordinary suite, value-type suite
+  (identity, Valhalla value), format and lint pass.
+
+## Code-shaper review, pass 2 (2026-11-10)
+
+- no new issues

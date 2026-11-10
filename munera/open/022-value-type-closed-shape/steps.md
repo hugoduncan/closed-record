@@ -202,3 +202,109 @@
 - [x] Quality checks pass: format, lint, prose, API freshness, links.
 - [x] All CI jobs pass on the last commit that changes files outside the
       task directory.
+
+## Implementation review
+
+- [x] Move the instance-field helper into
+      `test/value-type/closed_record/value_type/support.clj`
+      (`closed-record.value-type.support`). Today three copies give the
+      non-static declared field names: `field-names` in
+      `representation_test.clj` and `closed_shape_test.clj`,
+      `instance-fields` in `flattening_test.clj`. In the `:value` branch of
+      `representation-test`, remove the `__hash`/`__hasheq` assertions that
+      the VT-I7 equality now covers.
+- [x] Tidy the layout of `generated-methods` in
+      `src/closed_record/impl/jvm.clj`: the `[     ;; ILookup / IKeywordLookup`
+      line, and the `;; IPersistentMap`, `;; java.util.Map` and
+      `;; ClosedRecord` comments, which are not aligned with the forms
+      after the move into `concat`. Wrap the long destructuring parameter
+      line. The expansion fixture must not change.
+
+## Implementation review, pass 2
+
+- [x] Update the stale task 022 state in `munera/plan.md` (item 1) and
+      `mementum/state.md` ("Current state", task 022 item). Both still
+      say Slice 6 is open (the Valhalla run of VT-V11 and VT-V12, then
+      all CI jobs). Slice 6 is done: local Valhalla passes and CI run
+      42841466683 passes. State that the task is complete and ready to
+      close.
+
+## Implementation review, pass 3
+
+- [x] Acceptance criterion 6: push the branch (4 commits ahead of
+      `origin/020-value-type-records`) and check that all CI jobs pass on
+      `5f57ebe6` or a later commit. `8bce68fb` (`impl/jvm.clj`, value-type
+      tests) and `5f57ebe6` (`munera/plan.md`, `mementum/state.md`) change
+      files outside the task directory after CI run 42841466683
+      (`d0f340c9`). Record the run in `implementation.md`.
+  - Pushed `7a469a46`; CI run 42848080888: all 9 jobs pass.
+
+## Test review, pass 2
+
+- [x] Fix the `construct` docstring in
+      `test/value-type/closed_record/value_type/closed_shape_test.clj`. It
+      names `args`, but the parameters are `params`, `m` and `ext`. State
+      that `m` and `ext` are the `__meta` and `__extmap` arguments, and
+      that the declared fields get `1` and `2`.
+
+## Test review, pass 3
+
+- [x] Make a VT-V12 failure show the array properties. In
+      `test/value-type/closed_record/value_type/flattening_test.clj`,
+      `(is (true? (:flat? (array-info …))))` reports only `false` or
+      `nil`. Bind the `array-info` map and give it as the `is` message,
+      so a CI failure shows `:component-value?`, `:null-restricted?` and
+      `:atomic?` (the VT-K8 diagnosis needs them).
+
+## Docs review
+
+- [x] State the value-type version in the "Requirements" list of
+      `doc/value-type-records.md`. Today it says only "value-type on the
+      class path". The closed shape needs value-type `4ed8d0a3` (the README
+      deps SHA). An earlier value-type has no `:value-type/closed` option:
+      the record then keeps `__meta` and `__extmap`, and `check` cannot
+      find a hidden literal key (`-extra-keys` gives nil).
+- [x] Document the full-expansion limit in `doc/value-type-records.md`
+      (Behaviour). A closed form is a receiving form also on identity
+      fallback, so a full expansion outside compilation (for example
+      `clojure.walk/macroexpand-all`) of a `:value-type true` record gives
+      value-type `:not-installed` on all JVMs, also on Temurin 21.
+      `macroexpand-1` gives the `defvaluetype*` form. This is new on
+      identity fallback (design "Facts"; value-type `doc/usage.md`,
+      `:not-installed`). Add one CHANGELOG line if it is user-visible.
+
+## Docs review, pass 2
+
+- [x] Update the `doc/` and `README.md` row of "Elements that change" in
+      `ramora/value-type-records/embodiment.md`. The docs review follow-up
+      added two items to `doc/value-type-records.md` and one CHANGELOG
+      line, but the row does not name them: the value-type version
+      requirement (`4ed8d0a3`; an earlier value-type has no closed shape)
+      and the full-expansion limit (`:not-installed` on all JVMs, also on
+      identity fallback).
+
+## Code-shaper review
+
+- [x] Use one name for the exclusion flag in
+      `test/runtime/closed_record/checks/support.clj`. `transform` binds
+      the local `meta-keys?`, but the placeholder is
+      `metadata-and-hidden-keys?`. Rename the local to
+      `metadata-and-hidden-keys?`, or give `value-type-opts?` a name and
+      result that is the flag itself (one fn, no `not`).
+- [x] Remove the duplicate assertions of `value-constant-test` in
+      `test/runtime/closed_record/checks/literal.clj`. Both branches
+      repeat the `=` and `class` assertions. Choose only the literal with
+      the macro, for example
+      `(let [v (if-metadata-and-hidden-keys (constant "^{:m 1} …") (constant "#$P.T{:a 1 :n 2}"))] …)`,
+      and guard only the `meta` assertion
+      (`(if-metadata-and-hidden-keys (is (= {:m 1} (meta v))))`). The
+      ordinary assertions stay the same.
+- [x] Give `cause-class` in
+      `test/value-type/closed_record/value_type/closed_shape_test.clj` one
+      result shape. Today it gives a class or an exception. Assert in
+      `constructor-test` that the thrown value is an
+      `InvocationTargetException` and that its `getCause` is an
+      `IllegalArgumentException` (two `is` forms with the `[m ext]`
+      message), or make the helper give the direct cause (nil when the
+      exception is not an `InvocationTargetException`) and use
+      `instance?`.

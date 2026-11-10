@@ -6,19 +6,11 @@
   (:require
    [clojure.test :refer [deftest is testing]]
    [closed-record.core :refer [defclosedrecord]]
-   [closed-record.value-type.expectation :as expectation])
-  (:import
-   (java.lang.reflect Field Modifier)))
+   [closed-record.value-type.expectation :as expectation]
+   [closed-record.value-type.support :as support]))
 
 (defclosedrecord L [^long x] :value-type true)
 (defclosedrecord II [^int x ^int y] :value-type true)
-
-(defn- instance-fields
-  [^Class c]
-  (->> (.getDeclaredFields c)
-       (remove #(Modifier/isStatic (.getModifiers ^Field %)))
-       (map #(.getName ^Field %))
-       set))
 
 (when (= :value (expectation/representation))
   (deftest flattening-test
@@ -27,5 +19,6 @@
       (doseq [[c fields r] [[L #{"x"} (->L 1)]
                             [II #{"x" "y"} (->II 1 2)]]]
         (testing (.getSimpleName ^Class c)
-          (is (= fields (instance-fields c)))
-          (is (true? (:flat? (array-info (into-array c [r]))))))))))
+          (is (= fields (support/instance-field-names c)))
+          (let [info (array-info (into-array c [r]))]
+            (is (true? (:flat? info)) info)))))))

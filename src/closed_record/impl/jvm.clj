@@ -165,7 +165,8 @@
 (defn- generated-methods
   "The methods of the generated type. The field names are locals in the
   method bodies, so every generated local is a gensym."
-  [{:keys [hash-form meta-methods assoc-hidden-args extra-keys-body]} tname cname-str type-hash fields]
+  [{:keys [hash-form meta-methods assoc-hidden-args extra-keys-body]}
+   tname cname-str type-hash fields]
   (let [;; The name that `m#` gives, so the ordinary expansion stays the same
         m (symbol (str (gensym "m__") "__auto__"))
         kws (mapv keyword fields)
@@ -191,8 +192,8 @@
        `(~'equals [~this o#] (clojure.lang.APersistentMap/mapEquals ~this o#))]
       ;; IObj
       (meta-methods this m tname fields)
-      [     ;; ILookup / IKeywordLookup
-       `(~'valAt [~this ~k] (.valAt ~this ~k nil))
+      ;; ILookup / IKeywordLookup
+      [`(~'valAt [~this ~k] (.valAt ~this ~k nil))
        `(~'valAt [~this ~k ~nf]
                  ~(key-case k kws fields (fn [_ fld] fld) nf))
        `(~'getLookupThunk [~this ~k]
@@ -206,7 +207,7 @@
                                        (. ~hinted-target ~(symbol (str "-" fld)))
                                        ~thunk))))
                               nil)))
-     ;; IPersistentMap
+       ;; IPersistentMap
        `(~'count [~this] ~n)
        `(~'empty [~this]
                  ~(closed-throw ["Cannot create empty closed record " cname-str]
@@ -261,7 +262,7 @@
                                                                  (class ~this) ~k))
                          ~this)
                       this))
-     ;; java.util.Map
+       ;; java.util.Map
        `(~'size [~this] (.count ~this))
        `(~'isEmpty [~this] (= 0 (.count ~this)))
        `(~'containsValue [~this ~v] (boolean (some #{~v} (vals ~this))))
@@ -273,7 +274,7 @@
        `(~'keySet [~this] (set (keys ~this)))
        `(~'values [~this] (vals ~this))
        `(~'entrySet [~this] (set ~this))
-     ;; ClosedRecord
+       ;; ClosedRecord
        `(~'-extra-keys [~this] ~extra-keys-body)]))))
 
 (defn- positional-factory

@@ -5,9 +5,10 @@
    [clojure.test :refer [deftest is testing]]
    [closed-record.core :refer [check defclosedrecord]]
    [closed-record.probe-support :refer [causes data-of thrown]]
-   [closed-record.value-type.expectation :as expectation])
+   [closed-record.value-type.expectation :as expectation]
+   [closed-record.value-type.support :as support])
   (:import
-   (java.lang.reflect Constructor Field InvocationTargetException Modifier)))
+   (java.lang.reflect Constructor Field InvocationTargetException)))
 
 (def ^:private expected (expectation/representation))
 
@@ -58,22 +59,15 @@
   [Object Object Object Object])
 
 (defn- construct
-  "Call the constructor of `S` with `params` on `args` and the hash
-  arguments that `params` needs."
+  "Call the constructor of `S` that has the parameter types `params`.
+  The declared fields get `1` and `2`; `m` and `ext` are the `__meta`
+  and `__extmap` arguments; the hash arguments that `params` needs
+  get `0`."
   [params m ext]
   (let [^Constructor c (.getConstructor ^Class S
                                         (into-array Class params))
         hashes (repeat (- (count params) 4) (int 0))]
     (.newInstance c (object-array (concat [1 2 m ext] hashes)))))
-
-(defn- cause-class
-  "The class of the direct cause of the `InvocationTargetException` of `f`,
-  or the exception itself when it is not an `InvocationTargetException`."
-  [f]
-  (let [e (thrown f)]
-    (if (instance? InvocationTargetException e)
-      (class (.getCause ^InvocationTargetException e))
-      e)))
 
 (deftest constructor-test
   ;; (c) VT-D13, VT-D15: the constructors reject non-nil __meta and
@@ -82,21 +76,15 @@
     (testing (str "constructor " (count params) " parameters")
       (is (instance? S (construct params nil nil)))
       (doseq [[m ext] [[{:m 1} nil] [nil {:x 1}] [nil {}]]]
-        (is (= IllegalArgumentException
-               (cause-class #(construct params m ext)))
-            (pr-str [m ext]))))))
+        (let [e (thrown #(construct params m ext))]
+          (is (instance? InvocationTargetException e) (pr-str [m ext]))
+          (is (instance? IllegalArgumentException (ex-cause e))
+              (pr-str [m ext])))))))
 
 (deftest check-test
   ;; (d) check returns each record.
   (doseq [[path r] (records)]
     (is (identical? r (check r)) (name path))))
-
-(defn- field-names
-  [^Class c]
-  (->> (.getDeclaredFields c)
-       (remove #(Modifier/isStatic (.getModifiers ^Field %)))
-       (map #(.getName ^Field %))
-       set))
 
 (defn- field-value
   [r field]
@@ -106,7 +94,7 @@
   ;; (e) identity: __meta and __extmap hold nil; value: only the declared
   ;; fields (VT-I7).
   (if (= :value expected)
-    (is (= #{"a" "b"} (field-names S)))
+    (is (= #{"a" "b"} (support/instance-field-names S)))
     (doseq [[path r] (records)
             field ["__meta" "__extmap"]]
       (is (nil? (field-value r field)) (str (name path) " " field)))))

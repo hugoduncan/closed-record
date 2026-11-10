@@ -80,14 +80,13 @@
 
 (deftest value-constant-test
   ;; V-05: a record value compiled as a constant in a function body.
-  (if-metadata-and-hidden-keys
-   (let [v (constant "^{:m 1} #$P.T{:a 1 :n 2}")]
-     (is (= (->T 1 2) v))
-     (is (= T (class v)))
-     (is (= {:m 1} (meta v))))
-   (let [v (constant "#$P.T{:a 1 :n 2}")]
-     (is (= (->T 1 2) v))
-     (is (= T (class v))))))
+  (let [v (if-metadata-and-hidden-keys
+           (constant "^{:m 1} #$P.T{:a 1 :n 2}")
+           (constant "#$P.T{:a 1 :n 2}"))]
+    (is (= (->T 1 2) v))
+    (is (= T (class v)))
+    (if-metadata-and-hidden-keys
+     (is (= {:m 1} (meta v))))))
 
 (if-metadata-and-hidden-keys
  (deftest extra-key-constant-test

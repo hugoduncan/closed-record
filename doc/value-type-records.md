@@ -23,8 +23,12 @@ value-type defines the record with its closed record shape; see its
 ## Requirements
 
 - Clojure 1.12.6. value-type does not load on Clojure 1.11.
-- value-type on the class path at macro expansion and at run time, also for
-  AOT classes.
+- value-type
+  [`4ed8d0a3`](https://github.com/hugoduncan/value-type/tree/4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2)
+  (the SHA in the README dependency) on the class path at macro expansion and at run
+  time, also for AOT classes. An earlier value-type has no closed record
+  shape: the record keeps `__meta` and `__extmap`, and `check` does not find
+  an undeclared key from a map literal (`-extra-keys` gives nil).
 - For value output: a Valhalla early-access JDK and `--enable-preview`.
 - For `value-type.array`: also
   `--add-exports=java.base/jdk.internal.value=ALL-UNNAMED`.
@@ -58,6 +62,13 @@ A user method (in the `defclosedrecord` specs) that reads `__meta`,
 `__extmap`, `__hash` or `__hasheq` fails at definition on value output
 (value-type `:removed-field-access`). On identity fallback, `__meta` and
 `__extmap` hold nil.
+
+A full expansion outside compilation (for example
+`clojure.walk/macroexpand-all`) of a `:value-type true` record throws
+value-type `:not-installed` on all JVMs, also on identity fallback. One step
+of `macroexpand-1` gives the `defvaluetype*` form and does not throw. Evaluate
+the `defclosedrecord` form directly. See value-type
+[errors](https://github.com/hugoduncan/value-type/blob/4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2/doc/usage.md).
 
 ## Non-nil fields
 

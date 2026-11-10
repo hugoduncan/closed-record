@@ -13,6 +13,9 @@
   with an undeclared key throws at read. A value record has only its
   declared fields, so a record with at most 64 bits of fields can
   flatten. See the README part "Arrays and flattening".
+- With `:value-type true`, a full expansion outside compilation (for
+  example `clojure.walk/macroexpand-all`) throws value-type
+  `:not-installed` on all JVMs. `macroexpand-1` does not throw.
 
 ## [0.1.190] - 2026-10-29
 

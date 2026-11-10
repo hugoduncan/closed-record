@@ -113,25 +113,15 @@
       (is (= (fixture/expansion plain-form)
              (fixture/printed (remove-non-nil expansion)))))))
 
-(defn- field-names
-  [^Class c]
-  (->> (.getDeclaredFields c)
-       (remove #(java.lang.reflect.Modifier/isStatic
-                 (.getModifiers ^java.lang.reflect.Field %)))
-       (map #(.getName ^java.lang.reflect.Field %))
-       set))
-
 (deftest representation-test
   ;; VT-V4: compare the observed representation with the expectation.
   (let [x (->VP 1 2)
         y (->VP 1 2)
-        fields (field-names VP)]
+        fields (support/instance-field-names VP)]
     (is (= expected (expectation/observed VP)))
     (if (= :value expected)
       (testing "value output"
         (is (identical? x y))
-        (is (not (contains? fields "__hash")))
-        (is (not (contains? fields "__hasheq")))
         (is (= #{"a" "b"} fields) "VT-I7: only the declared fields"))
       (testing "identity output"
         (is (not (identical? x y)))
