@@ -139,3 +139,309 @@
 - If a later pass adds steps, apply the rules in "Notes for the
   design-steps work" above. Do not raise again the items recorded as "not
   a finding" or "left to the plan" in the pass 2 notes.
+
+## Plan ambiguity review (2026-11-10)
+
+- ambiguity review added 4 new design steps
+- Checked: the shared checks already have an in-source condition on
+  `support/representation` (`checks/defclosedrecord.clj`,
+  `serializable-test`). The ordinary suite calls `define-checks` with
+  `{:record-opts [] :representation :identity}`, the value-type suite with
+  `{:record-opts [:value-type true] …}`. Thus `:record-opts` can tell the
+  modes apart with no new key.
+- For the inconsistency turn: the plan risk "run the Temurin 21 value-type
+  suite after each slice" against the Slice 2 emitter change, which breaks
+  the metadata checks until Slice 3 (raised here as an ambiguity step).
+
+## Plan inconsistency review (2026-11-10)
+
+- inconsistency review added 2 new design steps
+- Not raised again: the "after each slice" risk against Slice 2, and the
+  exclusion mechanism that the plan defers (plan ambiguity review steps 1
+  and 2). Not a finding: steps.md adds VT-V9 to the `artifacts.md` row,
+  though the design names only VT-V11 and VT-V12 (see the inconsistency
+  review pass 2 note).
+
+## Notes for the plan design-steps work (2026-11-10)
+
+- The 6 plan-review steps change `plan.md` and `steps.md`, not
+  `design.md` or Ramora design pages. Exception: the embodiment step edits
+  only `steps.md` now; Slice 5 edits `embodiment.md`. Keep the "Notes for
+  the design-steps work" rules (ASD-STE100 prose, Ramora authority).
+- Order: decide the exclusion mechanism (ambiguity step 1) first. Then the
+  exclusions can move before the emitter change (step 2), and Slices 2
+  and 3 can each end green.
+- Mechanism hook: `transform` in
+  `test/runtime/closed_record/checks/support.clj` swaps the symbol
+  `closed-record.checks.support/representation` for the caller value. A
+  new placeholder works the same way and can read `:record-opts` (already
+  in the `transform` arguments). Also add a `def` for it in `support.clj`,
+  so clj-kondo lints the check sources.
+- Parts to guard in the check source: `gen-step` (`:with-meta`) and
+  `judge :meta` in `checks/differential.clj`; `check-test` literal part and
+  `serializable-test` `meta` assertion in `checks/defclosedrecord.clj`.
+- VT-V2 factories: `positional-factory` and `map-factory` in
+  `src/closed_record/impl/jvm.clj` are top-level `defn` forms in the
+  expansion, outside the `defvaluetype*` form that
+  `closed-record.value-type.support/type-form` returns.
+- Stale-state paths: `munera/plan.md` item 1; `mementum/state.md` "Current
+  state" (the task 022 item).
+
+## Plan design-steps done (2026-11-10)
+
+- All 6 plan-review steps are done; `plan.md` and `steps.md` changed.
+  `design.md` and Ramora design pages did not change.
+- Slices changed: Slice 2 is now the value-mode exclusions with no
+  emitter change; Slice 3 is the emitter and the checks that need the
+  closed shape. All `artifacts.md` edits are in Slice 5.
+- Checked: `eval` of `(when false …)` still expands the macros in its
+  body. Thus a `when` guard cannot stop the expansion-time read of the
+  `constant` macro in `checks/literal.clj`; the plan uses a private macro
+  there.
+- scry fails a test with no assertion (comment at `serializable-test` in
+  `checks/defclosedrecord.clj`). Thus whole-test guards are top-level
+  `when` forms, also for VT-V12.
+- `hidden_key.clj` is excluded by removal of its value-type caller, not by
+  guards. No other file names `closed-record.value-type.hidden-key-test`.
+- `munera/plan.md` item 1 and `mementum/state.md` now say "next: plan
+  review, then implementation". Slice 5 sets the final state.
+
+## Plan ambiguity review, pass 2 (2026-11-10)
+
+- ambiguity review added 1 new design step
+- Checked: the other guard sites of Slice 2 (`check-test`,
+  `serializable-test`, `gen-step`, `judge :meta`, `metadata-test`,
+  `extra-key-literal-print-test`) read at run time, so a `when` works.
+  No other shared check or value-type test uses metadata or an
+  undeclared-key literal. The factories (`positional-factory`,
+  `map-factory`) have no hidden-field reference today. Fixture
+  normalisation numbers gensyms by first appearance, so moving `meta` and
+  `withMeta` into `representation` does not change the fixture.
+- For implementation: `field-names` in `representation_test.clj` uses
+  `getDeclaredFields`, which also gives static fields (a `deftype` class
+  has `const__N` static fields for keyword constants). The VT-I7 checks
+  (VT-V4, VT-V11 (e), VT-V12) compare instance fields: remove static
+  fields (`java.lang.reflect.Modifier/isStatic`) before the comparison.
+
+## Plan inconsistency review, pass 2 (2026-11-10)
+
+- no inconsistency review feedback
+- Checked: no file outside Munera names the value-type
+  `hidden_key_test.clj`. The stale Ramora rows (`artifacts.md`
+  `test/value-type/`, embodiment Tests and "Differences") are already
+  covered by Slice 5. `munera/plan.md` and `mementum/state.md` agree with the
+  task files. The open `value-constant-test` step (ambiguity pass 2) is
+  not raised again.
+
+## Notes for the plan design-steps work, pass 2 (2026-11-10)
+
+- One open step: the `value-constant-test` form and the private macro
+  shape (design-steps "Plan ambiguity review, pass 2"). It changes only
+  `plan.md` (the "Literals read at macroexpansion time" item) and
+  `steps.md` Slice 2 (the `checks/literal.clj` item). Not `design.md` or
+  Ramora: VT-V3 already excludes the metadata part.
+- Keep: the ordinary test does not change (the placeholder is `true`);
+  value mode keeps assertions in each defined test (scry); a guard that
+  must stop an expansion-time read is a macro, not `when`.
+- The macro can take the flag as an argument
+  (`support/metadata-and-hidden-keys?`) or name it in its body: `transform`
+  replaces the symbol in all forms, the `defmacro` form included. The
+  macro is defined in the calling namespace, as each form is.
+- Paths: `test/runtime/closed_record/checks/literal.clj` (`constant`,
+  `value-constant-test`, `extra-key-constant-test`);
+  `test/runtime/closed_record/checks/support.clj` (`transform`);
+  the mode-only test pattern in
+  `mementum/knowledge/testing-generated-types.md`.
+
+## Plan design-steps done, pass 2 (2026-11-10)
+
+- The one open step is done: `plan.md` ("Literals read at macroexpansion
+  time", and an exception note in "Whole test") and `steps.md` Slice 2
+  (`checks/literal.clj` item). `design.md` and Ramora did not change.
+- Decision: option (a), the two-branch macro `if-metadata-and-hidden-keys`
+  (`[then & [else]]`). `extra-key-constant-test` uses it at top level
+  with no `else`.
+- Checked (plain `clojure -M -e`): `eval` of a top-level call of a macro
+  that returns nil, with a `deftest` holding a `constant` read that is not
+  valid, defines no test and does not read the literal. The branch that is
+  not chosen is not read.
+- `checks/literal.clj` has no `support` alias today; Slice 2 adds it.
+
+## Plan ambiguity review, pass 3 (2026-11-10)
+
+- ambiguity review added 1 new design step (VT-V11 (c) constructor call)
+- For the inconsistency turn: steps.md Slice 1 checks "no `edc3f79`
+  outside Munera, mementum and Git history", but
+  `ramora/value-type-records/embodiment.md` ("Differences from the
+  design", line 10) names `edc3f79` until Slice 5 removes the section.
+- Implementation hints, not findings:
+  - `gen-step` (`checks/differential.clj`): `(conj … (when flag …))` adds
+    nil to the `gen/one-of` vector, and `gen/one-of` rejects it. Use
+    `cond->`. A guard of `judge :meta` inside the `or` can be `when` (nil
+    is a pass).
+  - `serializable-test`: `with-meta` is in the `let` binding, so a `when`
+    cannot guard it; bind `r` itself in value mode, then guard the `meta`
+    assertion.
+  - VT-V12: define the fixture records at top level, outside the `when`
+    that holds the `deftest`. With a `defclosedrecord` in the same `when`
+    form, `->L` resolves (`declare`), but the short class name `L` (the
+    `into-array` argument) does not: the `import` runs after the compiler
+    compiles the `deftest` body (checked, plain `clojure -M -e`).
+
+## Plan inconsistency review, pass 3 (2026-11-10)
+
+- inconsistency review added 1 new design step (Slice 1 `edc3f79` check
+  against the embodiment pin sentence)
+- Checked, no finding: the VT-V3 exclusion list in Slice 2 matches Ramora
+  VT-V3 (metadata; extra-key parts of V-01, V-04, V-05, V-15; V-14); the
+  export and VT-V12 land in one slice; `munera/plan.md` and
+  `mementum/state.md` agree with the task files.
+
+## Notes for the plan design-steps work, pass 3 (2026-11-10)
+
+- Two open steps (design-steps "Plan ambiguity review, pass 3" and "Plan
+  inconsistency review, pass 3"). Both change only `plan.md` and
+  `steps.md`. Exception: the recommended option of the `edc3f79` step adds
+  an edit of `ramora/value-type-records/embodiment.md` to Slice 1 (a
+  steps.md item now; the edit itself happens in Slice 1). Not `design.md`;
+  not Ramora design pages (VT-V11 stays as it is). Keep the earlier rules:
+  ASD-STE100 prose, Ramora authority, embodiment states only the current
+  state.
+- VT-V11 (c) facts (checked on an ordinary closed record `[x y]`):
+  constructor parameter types are `[Object Object]`,
+  `[Object Object Object Object]` and
+  `[Object Object Object Object int int]` (`__meta`, `__extmap` are
+  `Object`). `clojure.lang.Reflector/invokeConstructor` unwraps
+  `InvocationTargetException`, but throws `IllegalArgumentException` itself
+  for an arity with no constructor. Thus the Clojure reflector is no
+  better than `Constructor/newInstance` for a clean signal; the test needs
+  an exact constructor (`getConstructor` with the parameter types) and a
+  check that the exception comes from the constructor body.
+- `edc3f79` step paths: `ramora/value-type-records/embodiment.md` lines
+  10–11 (the pin sentence; the six "Until task 022" entries stay true until
+  Slice 3/4/5); steps.md Slice 1 (`git grep edc3f79` item) and Slice 5
+  (embodiment item, which names the `edc3f79` pin sentence and must then
+  match the new wording).
+
+## Plan design-steps done, pass 3 (2026-11-10)
+
+- Both open steps are done: `plan.md` (VT-V11 part (c) form; Slice 1
+  exception in the documentation item; "Slice order" item 1) and
+  `steps.md` (Slice 1 embodiment item; Slice 3 (c); Slice 5 pin-sentence
+  wording). `design.md` and Ramora design pages did not change.
+- Decisions: VT-V11 (c) calls both the main and the `__meta __extmap`
+  constructor through `getConstructor` + `newInstance` and expects
+  `InvocationTargetException` with a direct `IllegalArgumentException`
+  cause; nil for both gives an instance. Slice 1 changes the embodiment
+  pin sentence to `4ed8d0a3` (recommended option); the `git grep
+  edc3f79` check stays in Slice 1.
+- Checked (value-type `4ed8d0a3`, Java 25 without preview, so identity
+  fallback; a hand-written closed `defvaluetype*` `[a b …]` with
+  `IRecord`): the three constructors exist with the descriptors above;
+  both constructors give `InvocationTargetException` → `IllegalArgumentException`
+  for `{:m 1}`, `{:x 1}` and `{}`; nil for both gives an instance;
+  `newInstance` with a wrong argument count gives a top-level
+  `IllegalArgumentException` with no cause; `create` with an undeclared
+  key gives `IllegalArgumentException` with no wrapper. Value output keeps
+  the descriptors (value-type `doc/usage.md`, closed shape paragraph); not
+  run on EA3 in this pass.
+- value-type source for contract checks: the gitlib checkout
+  `~/.gitlibs/libs/org.hugoduncan/value-type/4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2`
+  (`doc/usage.md`, "`deftype*` forms").
+
+## Plan ambiguity review, pass 4 (2026-11-10)
+
+- no ambiguity review feedback
+- Checked, no finding: the option position (the user options are only
+  `:no-print` and `:load-ns`); the one Valhalla test command in `ci.yml`
+  and `doc/development.md`; the Slice 2 guard sites against the check
+  sources (`serializable-test` already sits in a top-level
+  `(when (= :identity support/representation) …)`); `transform` already
+  gets `:record-opts`.
+- Implementation hint, not a finding: VT-V11 (e) on identity can read
+  `__meta` and `__extmap` with
+  `clojure.lang.Reflector/getInstanceField`, as `field` does in
+  `test/runtime/closed_record/compiler_rules_test.clj`. On value output,
+  the source must not need these fields at compile time.
+
+## Plan inconsistency review, pass 4 (2026-11-10)
+
+- inconsistency review added 1 new design step (Slice 5 embodiment rows
+  `closed-record.core` and `doc/` and `README.md`)
+- Checked, no finding: the other embodiment parts that Slice 5 names
+  ("Status", "Differences from the design", "Generated type in value
+  mode", "Verification limits") and the `deps.edn` row (it says only "a
+  pinned Git SHA"). The `artifacts.md` rows that Slice 5 names exist
+  (`test/value-type/`, `checks/*.clj`, `checks/support.clj`); the
+  `deps.edn` and `ci.yml` rows of `artifacts.md` need no change (the
+  `:enable-preview` alias already has the export).
+- Not raised: Slices 1 and 2 do not run the Valhalla suite, but the plan
+  says "each slice ends with all suites green". Slice 3 runs it, and
+  Slice 2 only removes checks.
+
+## Notes for the plan design-steps work, pass 4 (2026-11-10)
+
+- One open step (design-steps "Plan inconsistency review, pass 4"). It
+  changes only steps.md, the Slice 5 item for
+  `ramora/value-type-records/embodiment.md`: add the
+  `closed-record.core` row and the `doc/` and `README.md` row to the
+  "Elements that change" sub-item. The embodiment itself changes in
+  Slice 5, not now. Not `plan.md` (its Slice 5 line names only "Ramora
+  embodiments"), not `design.md`, not Ramora design pages.
+- Keep: ASD-STE100 prose; the embodiment states the current state only;
+  the row text names what exists after Slice 5, as the other sub-items do.
+- Current row text (embodiment table): `closed-record.core` says "The
+  docstring of `defclosedrecord` describes the option. It also has one
+  sentence on `:non-nil` with `:value-type true`." The `doc/` and
+  `README.md` row says "The option, the differences table, the runtime
+  dependency, the hash cost and non-nil fields."
+- Docstring source: `src/closed_record/core.cljc` (`defclosedrecord`;
+  the value-type text starts near line 57, the `:non-nil` sentence near
+  line 70).
+
+## Plan design-steps work, pass 4 (2026-11-10)
+
+- Applied the one open step: steps.md Slice 5, "Elements that change"
+  sub-item, now names the `closed-record.core` row and the `doc/` and
+  `README.md` row. `plan.md`, `design.md` and Ramora did not change.
+- The `doc/` and `README.md` row text also names the user-method limit
+  (the review list did not). The Slice 5 README and
+  `doc/value-type-records.md` items add that limit, so the row must name
+  it to state the current state.
+- All design-steps items are now ticked.
+
+## Plan ambiguity review, pass 5 (2026-11-10)
+
+- no ambiguity review feedback
+- Checked, no finding: the VT-V11 parts (a) to (e) and VT-V12 against
+  Ramora VT-V11 and VT-V12; no other value-type test or shared check uses
+  metadata or an undeclared-key literal (`malli`, `field_value`,
+  `property`, `rejected_key_message`, `errors_test`, `non_nil_test`
+  line 183 are `map->NN` or declared-key paths).
+- Implementation hints, not findings:
+  - `checks/differential.clj` and `checks/equality.clj` have no
+    `closed-record.checks.support :as support` require today (only
+    `defclosedrecord.clj` has it). Slice 2 adds it there too, as for
+    `literal.clj`; else `transform` does not match the symbol.
+  - `base-interfaces` has `IObj` third. If the representation description
+    gives the interface list, keep the ordinary order (the expansion
+    fixture compares the printed form).
+
+## Plan inconsistency review, pass 5 (2026-11-10)
+
+- no inconsistency review feedback
+- Not raised: from Slice 3 to Slice 5 the "Differences from the design"
+  entries of `ramora/value-type-records/embodiment.md` are stale. The plan
+  chooses this (embodiment edits after code and tests; Slice 1 changes
+  only the pin sentence), and Slice 5 removes the section.
+
+## After plan review pass 5 (2026-11-10)
+
+- Pass 5 (ambiguity, inconsistency) added no design steps; `design-steps.md`
+  has no unchecked items. No design-steps work is due. Next: implementation,
+  Slice 1. Then change "Next" in `munera/plan.md` (item 1) and
+  `mementum/state.md` ("Current state", task 022 item) from plan review to
+  implementation.
+- For a later review pass: do not raise again the items recorded as "not a
+  finding", "not raised" or "implementation hint" in the plan review notes
+  (passes 1 to 5).

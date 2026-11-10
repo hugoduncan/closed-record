@@ -32,9 +32,10 @@ keys and `dissoc` of declared keys. Main form: `defclosedrecord`.
   README and `doc/value-type-records.md` say this.
 - Designed, not implemented: closed shape for value records (VT-D13 to
   VT-D15): no hidden fields on value output, no metadata, map literals with
-  undeclared keys throw. Task 022, ready for a plan. value-type `4ed8d0a3`
-  provides the closed shape (`:value-type/closed true`); the task design was
-  checked against it, and the current suites pass with that pin. The Ramora
+  undeclared keys throw. Task 022 has `plan.md` and `steps.md`; next:
+  plan review, then implementation. value-type `4ed8d0a3` provides the
+  closed shape (`:value-type/closed true`); the task design was checked
+  against it, and the current suites pass with that pin. The Ramora
   embodiment lists the current differences.
 - Verification limits (hosted CI, publication, benchmark scope) are in each
   design's `embodiment.md`.

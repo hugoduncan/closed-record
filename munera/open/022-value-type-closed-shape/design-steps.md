@@ -83,3 +83,149 @@
       mode this gives `ClassCastException` (VT-D14). Move VT-V7 to the
       verification items that change: remove the metadata read, or check
       that the loaded type is not `IObj`.
+
+## Plan ambiguity review (2026-11-10)
+
+- [x] Decide the value-mode exclusion mechanism in `plan.md`; do not leave
+      it to implementation time. Some exclusions are parts of a test, not
+      whole tests: the `:with-meta` step is inside the `gen-step` generator
+      of `checks/differential.clj`; the literal part of `check-test`; the
+      metadata part of `serializable-test`; the reader metadata of
+      `value-constant-test`. A list of test names to skip cannot exclude
+      them. The checks need an in-source condition. State its form
+      (recommended: a placeholder in `closed-record.checks.support`, for
+      example `metadata?`, that `define-checks` replaces, as it replaces
+      `support/representation`, which `checks/defclosedrecord.clj` already
+      uses in `(when (= :identity support/representation) …)`), and its
+      source: the `:record-opts` (`:value-type true`) or a new
+      `define-checks` key. Update steps.md Slice 3 to match.
+- [x] State the expected result of the Temurin 21 value-type run at the end
+      of Slice 2. After the emitter change, the shared checks that use
+      metadata or undeclared literal keys, `aot_test.clj` (`with-meta`) and
+      `non_nil_test.clj` ("with-meta keeps the fields") fail until Slice 3.
+      The plan risk "run the Temurin 21 value-type suite after each slice"
+      expects a pass. Choose one: do the exclusions, the VT-V7 and the
+      VT-V9 metadata removals before the emitter change (recommended: each
+      slice then ends green), merge Slices 2 and 3, or list the expected
+      failures.
+- [x] Name the test files and the parts of the new checks. The design left
+      the files of VT-V11 and VT-V12 to the plan; the plan and steps.md do
+      not name them. Name the file for VT-V11 and for VT-V12 (new files in
+      `test/value-type/closed_record/value_type/`, or existing ones), and
+      list the VT-V11 parts (a) to (e) in steps.md. Say where the VT-V4
+      field check goes (recommended: the `:value` branch of
+      `representation-test` in `representation_test.clj`) and that it runs
+      on value output only. Say that the VT-V12 `[^long x]` fixture with the
+      VT-I7 field check is the evidence for acceptance criterion 4, or add a
+      `Cell` check. The VT-V12 file loads on Temurin 21 too: say if it
+      requires `value-type.array` at namespace load or only in the `:value`
+      branch.
+- [x] Define the scope of the VT-V2 check in Slice 2. steps.md says "no
+      hidden-field references in generated bodies". The current
+      `value-expansion-test` walks only the `specs` of the `defvaluetype*`
+      form. Ramora VT-V2 (VT-I4) also covers the factory bodies (`->Name`,
+      `map->Name`), which are outside that form. State that the check walks
+      the generated methods (the fixture form has no user methods) and the
+      two factory `defn` forms, and that the `IMeta`/`IObj` check reads the
+      `:implements` vector.
+
+## Plan inconsistency review (2026-11-10)
+
+- [x] Make the Slice 5 embodiment step agree with the design and with
+      `ramora/value-type-records/embodiment.md`. steps.md says to remove
+      "the export and VT-V7 entries" of "Differences from the design". The
+      design says to remove the differences "when they no longer apply".
+      The embodiment section has an `edc3f79` pin sentence and six entries,
+      all "until task 022": no `:value-type/closed` option (VT-I7, VT-I8);
+      `IMeta`/`IObj` (VT-I9); literals with undeclared keys; VT-V3, VT-V7
+      and no VT-V11/VT-V12; no export (VT-D10); README and
+      `doc/value-type-records.md`. After the task, none applies. Change the
+      step: remove the whole section (or keep only the differences that
+      still apply), and update the `closed-record.impl.jvm` and Tests rows
+      of "Elements that change" (today: `withMeta` "with no hash fields";
+      no VT-V11 or VT-V12).
+- [x] Bring `munera/plan.md` and `mementum/state.md` into agreement with
+      the task files. Both say that the next step is the plan ("Next:
+      plan"; "Task 022, ready for a plan"). `plan.md` and `steps.md` exist
+      (`b83677fd`) and are in review. Change "Next" to the current step.
+      Slice 5 then sets the final state.
+
+## Plan ambiguity review, pass 2 (2026-11-10)
+
+- [x] State the value-mode form of `value-constant-test` and the shape of
+      the private macro in `checks/literal.clj`. The reader metadata is
+      inside the literal string (`"^{:m 1} #$P.T{:a 1 :n 2}"`). In value
+      mode the reader throws `IllegalArgumentException` ("Metadata can only
+      be applied to IMetas") when the `constant` macro expands, because `T`
+      is not `IMeta`. The plan macro "gives the guarded forms only when it
+      is `true`". If it guards only the `meta` assertion, the `let` still
+      reads the string and fails. If it guards the whole `let`, the test
+      has no assertion and scry fails it. Choose one:
+      (a) a two-branch macro that gives the metadata literal and the `meta`
+      assertion in ordinary mode, and the literal without metadata
+      (`"#$P.T{:a 1 :n 2}"`) in value mode;
+      (b) split the test: a constant without metadata in both modes, and a
+      guarded constant with metadata.
+      Recommended: (a), so the ordinary test does not change.
+      Either way, value mode keeps the V-05 value constant check (VT-K7:
+      constants come from `create` with the Map view), so the test has
+      assertions. Also state that the macro wraps
+      `extra-key-constant-test` at top level (a guard in the test body
+      gives a test with no assertion). Update steps.md Slice 2 to match.
+
+## Plan ambiguity review, pass 3 (2026-11-10)
+
+- [x] State how VT-V11 (c) calls the main constructor and how it identifies
+      the `IllegalArgumentException`. Ramora VT-V11 says "called through
+      reflection"; `plan.md` and steps.md Slice 3 repeat it. A record has
+      three constructors: the declared fields (`a b`), with `__meta
+      __extmap`, and the main constructor with all six (`__hash __hasheq`
+      are `int`). Java reflection (`Constructor/newInstance`) wraps the
+      constructor exception in `InvocationTargetException`, and itself
+      throws `IllegalArgumentException` for a wrong argument count or type.
+      Thus a test that only looks for `IllegalArgumentException` (top level
+      or in the cause chain) can pass with no constructor check. Choose the
+      call and the assertion, for example: get the six-parameter
+      constructor with `getConstructor`; call `newInstance`; the exception
+      is `InvocationTargetException` with an `IllegalArgumentException`
+      cause. Say if the `__meta __extmap` constructor is also called (`create`
+      uses it, VT-K7). Also call the same constructor with nil for both, and
+      expect a record, so a wrong descriptor fails the test. Update
+      `plan.md` (the VT-V11 item) and steps.md Slice 3 (c). Ramora does not
+      change.
+
+## Plan inconsistency review, pass 3 (2026-11-10)
+
+- [x] Make the Slice 1 `edc3f79` check agree with the Slice 5 embodiment
+      step. steps.md Slice 1 says to verify that no `edc3f79` stays outside
+      Munera, mementum and Git history (`git grep edc3f79`). Slice 1 changes
+      only `deps.edn`, the README and `doc/value-type-records.md`. The
+      sentence "The pinned value-type (`edc3f79`) has no closed record
+      shape" in `ramora/value-type-records/embodiment.md` ("Differences
+      from the design") stays until Slice 5 removes the section. Thus the
+      Slice 1 check fails, and from Slice 1 to Slice 5 the embodiment names
+      a pin that is not the pin. Choose one: in Slice 1, change that
+      sentence to the new pin (value-type `4ed8d0a3` has the closed shape;
+      closed-record does not use it yet), so the check passes in Slice 1
+      (recommended: the embodiment then states the current state after
+      each slice); or move the `git grep edc3f79` check to Slice 5 or
+      Slice 6. Update steps.md (and `plan.md` "Slice order" item 1 if
+      Slice 1 changes the embodiment).
+
+## Plan inconsistency review, pass 4 (2026-11-10)
+
+- [x] Make the Slice 5 list of "Elements that change" rows agree with the
+      design and with the Slice 5 edits. The design says to "update the
+      elements" of `ramora/value-type-records/embodiment.md`. steps.md
+      Slice 5 names only the `closed-record.impl.jvm`, Tests and `ci.yml`
+      rows. Slice 5 also changes two other elements, and their rows then
+      do not state the current state:
+  - `closed-record.core`: the row says that the docstring describes the
+    option and "has one sentence on `:non-nil`". Slice 5 adds a sentence
+    on metadata and map literals in value mode.
+  - `doc/` and `README.md`: the row lists "the option, the differences
+    table, the runtime dependency, the hash cost and non-nil fields".
+    Slice 5 adds: no metadata, map literals with undeclared keys,
+    `value-type.value-classes` and flattening (VT-K8).
+      Add both rows to the Slice 5 embodiment item in steps.md. Do not
+      change `design.md` or the Ramora design pages.
