@@ -651,3 +651,16 @@
 ## Code-shaper review, pass 2 (2026-11-10)
 
 - no new issues
+
+## Closure (2026-11-10)
+
+- Task closed at the user's request. All items in `steps.md` are ticked.
+  Implementation, test, docs and code-shaper reviews converged; knowledge
+  extracted (`7c958b0a`).
+- Acceptance 6: CI run 42848080888 passed all 9 jobs on `7a469a46`. The
+  review commits after it (test, docs, CHANGELOG, Ramora embodiment,
+  knowledge page) were checked locally at `965c05be` (identity 81, Valhalla
+  80, ordinary 187, quality checks) but were not pushed at closure. CI must
+  pass after the push.
+- Pushed after closure: CI run 42855790514 on `5ef5da81` passed all 9 jobs.
+  Acceptance 6 holds.

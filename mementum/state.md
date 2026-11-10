@@ -30,9 +30,8 @@ keys and `dissoc` of declared keys. Main form: `defclosedrecord`.
 - Closed shape for value records (VT-D13 to VT-D15, task 022) is
   implemented: `:value-type/closed true`, no hidden fields on value output,
   no metadata, map literals with undeclared keys throw at read. Records
-  with at most 64 bits of fields can flatten (VT-V12). Slice 6 is done:
-  local Valhalla passes and CI run 42841466683 passes. The task is
-  complete and ready to close.
+  with at most 64 bits of fields can flatten (VT-V12). Task 022 is closed.
+  CI run 42855790514 (`5ef5da81`) passes all 9 jobs.
 - Verification limits (hosted CI, publication, benchmark scope) are in each
   design's `embodiment.md`.
 
