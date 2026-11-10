@@ -16,7 +16,9 @@
 - Scope: JVM emitter.
 - Commitment: medium. If `deftype*` changes, only the emitter changes.
 - Value mode: `:value-type true` uses immutable hash fields through `defvaluetype*`
-  ([VT-D3, VT-D5](../../value-type-records/decisions.md)).
+  ([VT-D3, VT-D5](../../value-type-records/decisions.md)). The form has the option
+  `:value-type/closed true`, and value output has no hidden fields
+  ([VT-D13](../../value-type-records/decisions.md#vt-d13-closed-record-shape-no-hidden-fields-on-value-output)).
 
 ## D-06 Record identity
 
@@ -32,6 +34,8 @@
 - Qualities: + `defrecord` parity, + minimality.
 - Scope: JVM emitter. Other hosts use their own record identity.
 - Commitment: high for `record?` and printing. Medium for the interface list.
+- Value mode: `:value-type true` does not implement `IObj`
+  ([VT-D14](../../value-type-records/decisions.md#vt-d14-no-metadata-in-value-mode)).
 
 ## D-07 Equality and hash
 

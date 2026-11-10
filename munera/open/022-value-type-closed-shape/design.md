@@ -129,16 +129,30 @@ design.
 ### Tests that use metadata or hidden literal keys
 
 The value-type suite runs the shared checks of `test/runtime/closed_record/checks/`
-through `define-checks`. These shared checks use `with-meta`, `meta` or
-literals with undeclared keys:
+through `define-checks`. These shared checks use `with-meta`, `meta`, reader
+metadata or literals with undeclared keys:
 
-- `defclosedrecord.clj`: metadata, and `with-meta` keeps the extra keys.
-- `differential.clj`: the `:with-meta` step and the `:meta` comparison.
-- `equality.clj`: equality with metadata.
-- `hidden_key.clj`: V-14.
-- `literal.clj`: the extra-key parts of V-04.
+- `defclosedrecord.clj`:
+  - `reader-literal-undeclared-key-test` (V-01);
+  - `equality-ignores-metadata-and-hidden-keys-test` (V-01);
+  - `metadata-test`;
+  - `extra-key-retention-test` (`assoc` and `with-meta` keep the extra keys);
+  - the literal part of `check-test` (V-15);
+  - the metadata part of `serializable-test` (D-06). This test runs on
+    identity output, thus also in the Temurin 21 value-type job.
+- `differential.clj`: the `:with-meta` step and the `:meta` comparison (V-02).
+- `equality.clj`: `metadata-test` (V-12).
+- `hidden_key.clj`: all (V-14).
+- `literal.clj`:
+  - `extra-key-literal-print-test` (V-04);
+  - `extra-key-constant-test` (V-05);
+  - the reader metadata and `meta` of `value-constant-test` (V-05).
 
 VT-V3 excludes these parts in value mode. VT-V11 replaces them.
+
+The value-type suite also uses metadata outside the shared checks:
+`aot_test.clj` (VT-V7) and `non_nil_test.clj` (VT-V9, "with-meta keeps the
+fields").
 
 ## Scope
 
@@ -151,20 +165,40 @@ VT-V3 excludes these parts in value mode. VT-V11 replaces them.
   VT-I9).
 - `assoc` calls the constructor with the declared fields only (VT-D7).
 - No generated reference to `__meta`, `__extmap`, `__hash` or `__hasheq`
-  (VT-I4). `-extra-keys` returns nil.
+  (VT-I4). `-extra-keys` returns nil. The rule applies to the bodies of the
+  generated methods and of the factories (`->Name`, `map->Name`) only. The
+  `defvaluetype*` field vector has the four fields (VT-D5). User methods
+  (`specs*`) can name them; the rule and VT-V2 do not apply to them.
 - No closed-record check of constructor arguments (VT-D13). No wrapping of
   the `IllegalArgumentException` (VT-D15).
-- The ordinary expansion does not change (VT-I2). The expansion fixture does
-  not change.
+- The representation description (`representation` in
+  `closed-record.impl.jvm`) holds all mode differences, the new ones
+  included: the interfaces (no `IObj`), the `meta` and `withMeta` methods,
+  the constructor arguments of `assoc`, the `-extra-keys` body and the
+  option `:value-type/closed true`. The shared method emitter
+  (`generated-methods`) and `base-interfaces` have no `value-type?` test
+  (VT-D8: one method set).
+- The ordinary expansion does not change (VT-I2). The ordinary values of the
+  representation description give the current expansion. The expansion
+  fixture does not change.
 
 ### Dependencies
 
 - Pin the `:value-type-test` alias to value-type
   `4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2`: explicit HTTPS `:git/url` and
   full SHA.
-- Use the same SHA in the README, `doc/value-type-records.md` and other
-  links to the value-type field contract. Link the closed contract to
-  value-type `doc/usage.md#deftype-forms` at that SHA.
+- Use the same SHA in the README deps snippet and in the two value-type
+  links of `doc/value-type-records.md`: the field contract
+  (`doc/usage.md#portable-non-nil-fields`) and the array documentation
+  (`doc/usage.md`). After the change, no `edc3f79` stays outside Munera,
+  mementum and Git history.
+- In `doc/value-type-records.md` only, link the closed contract to
+  value-type `doc/usage.md#deftype-forms` at that SHA. The README links to
+  `doc/value-type-records.md`.
+- The task pins `4ed8d0a3` only. A different pin is a design change: change
+  Ramora first (VT-R6, VT-R7; the context, VT-K8 and VT-V12), then this
+  design (the pin, the links and acceptance criteria 1, 2 and 4) in one
+  change.
 - Keep the evidence link in `doc/performance.md` (value-type `8bb7c4f`).
 
 ### Verification
@@ -177,10 +211,17 @@ As Ramora states:
 - VT-V9: no `with-meta` part.
 - VT-V11 (new): the closed shape, on both representations.
 - VT-V12 (new): `:flat? true` for arrays of `[^long x]` and `[^int x ^int y]`
-  value records, in the Valhalla job only.
-- VT-V1, VT-V5, VT-V6 and VT-V7: no change, but they now run the closed
-  form. The closed form is a receiving form also on identity fallback, so
-  VT-V5 (policy) and VT-V7 (AOT) use a new value-type path.
+  value records, in the Valhalla job only. Both value-type jobs run all of
+  `test/value-type`, so the test selects itself: it runs when the expected
+  representation is `:value` (`expectation/representation`, from
+  `closed-record.test.representation`). It does not skip. Without the
+  `jdk.internal.value` export, or with `value-type.value-classes=off`, it
+  fails.
+- VT-V7 changes: in the loaded JVM, remove the metadata read (`with-meta`,
+  `meta`), and check that the type is not `IObj` (VT-I9).
+- VT-V1, VT-V5 and VT-V6: no change, but they now run the closed form. The
+  closed form is a receiving form also on identity fallback, so VT-V5
+  (policy) and VT-V7 (AOT) use a new value-type path.
 - The full value-type suite (`test/value-type`) and the Clojure 1.11 case
   pass.
 - The ordinary suites do not change and pass.
@@ -218,8 +259,18 @@ in `.github/workflows/ci.yml` and in `doc/development.md`.
   design" when they no longer apply; update the elements, the generated type
   and the verification limits.
 - Ramora `value-type-records.md` (Context, closed shape item) and VT-R6
-  name value-type `4ed8d0a3`. If the task pins a later commit, change both.
-  If VT-V12 gives other results, change VT-K8.
+  name value-type `4ed8d0a3`. They do not change (pin rule in
+  "Dependencies").
+- Ramora `defclosedrecord/embodiment.md`: the pointer of "Generated type" to
+  the value-mode differences covers "Method behaviour" (`meta`, `withMeta`,
+  `-extra-keys`) and "State" (`__meta`, `__extmap`). Keep it.
+- Ramora `defclosedrecord/embodiment/artifacts.md`: add VT-V11 and VT-V12
+  to the `test/value-type/` row. If the value-mode exclusions of VT-V3
+  change `define-checks` or the shared checks, update their rows.
+- These Ramora design pages already agree with this design: the value-mode
+  notes of D-01 (VT-D13), D-06 (VT-D14) and D-09 (VT-D15); VT-V2, VT-V3,
+  VT-V7, VT-V12 and VT-D10 (the `jdk.internal.value` export). They do not
+  change.
 - `mementum/state.md` and `munera/plan.md`: current state.
 
 ## Invariants and ownership
@@ -244,8 +295,7 @@ in `.github/workflows/ci.yml` and in `doc/development.md`.
 ## Acceptance criteria
 
 1. `deps.edn` and the docs pin value-type
-   `4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2`, or a later commit that
-   satisfies the Prerequisite.
+   `4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2`.
 2. The full value-type suite (VT-V1 to VT-V7, VT-V9 and VT-V11) passes in the
    Temurin 21 and the Valhalla value-type CI jobs, and the Clojure 1.11 case
    passes. VT-V12 passes in the Valhalla job.

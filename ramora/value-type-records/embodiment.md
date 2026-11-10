@@ -19,8 +19,9 @@ The pinned value-type (`edc3f79`) has no closed record shape. value-type
 - A map literal with an undeclared key is read; the key is hidden in
   `__extmap`, and `check` throws `:closed-record/extra-keys` (I-02, I-07,
   I-08).
-- VT-V3 runs the metadata and hidden-key checks. VT-V11 and VT-V12 do not
-  exist.
+- VT-V3 runs the metadata and hidden-key checks. VT-V7 reads metadata in the
+  loaded JVM. VT-V11 and VT-V12 do not exist.
+- The Valhalla job command has no `jdk.internal.value` export (VT-D10).
 - The README and `doc/value-type-records.md` describe this behaviour.
 
 ## Elements that change

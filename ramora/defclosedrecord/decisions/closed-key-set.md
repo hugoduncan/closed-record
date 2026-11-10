@@ -60,6 +60,8 @@
   automatically. − Print, code constants and positional reads drop the extra keys, and after that `check` passes (I-07).
 - Scope: JVM. Other hosts decide when they are added.
 - Commitment: high for printing and `check`. Medium for `__extmap`.
+- Value mode: `:value-type true` has no `__extmap`. A map literal with an undeclared key throws when it is read
+  ([VT-D15](../../value-type-records/decisions.md#vt-d15-undeclared-literal-keys-fail-at-read-in-value-mode)).
 
 ## D-19 Missing primitive field
 
