@@ -58,7 +58,7 @@ The commitment levels are the same.
   record methods. One form changes, so both modes share the method emitter.
 - Assumptions: `defvaluetype*` follows its design (VT-R1).
 - Qualities: + `defrecord` parity, + local change. − closed-record depends on
-  an unreleased library.
+  an experimental library (value-type `0.1.127`).
 - Scope: JVM emitter.
 - Commitment: medium.
 

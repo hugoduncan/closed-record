@@ -65,7 +65,8 @@ flat (VT-V12).
 
 ### Interacting systems
 
-- value-type (`org.hugoduncan/value-type`). It has no release yet. Its
+- value-type (`org.hugoduncan/value-type`), released on Clojars from
+  `0.1.127` (tag `v0.1.127`, commit `3557ed0e`); it is experimental. Its
   `defvaluetype*` design (`ramora/deftype-star-design.md` in value-type)
   gives the contract that this design uses:
   - the same arguments as `deftype*`, and the expansion evaluates to the class;
@@ -74,8 +75,8 @@ flat (VT-V12).
   - value output removes `__hash` and `__hasheq` and ignores their
     constructor arguments; identity output keeps them;
   - the closed record shape (VT-D13; value-type deftype* D9 and D10,
-    implemented in value-type commit `e8e0c407`, task 022, and present at
-    `4ed8d0a3`). D10 is firm; D9 is provisional. The `defvaluetype*` form
+    implemented in value-type commit `e8e0c407`, task 022, and released in
+    `0.1.127`). D10 is firm; D9 is provisional. The `defvaluetype*` form
     has the record shape and the option `:value-type/closed true`. Value
     output removes all four hidden fields. In both outputs, the main
     constructor throws `IllegalArgumentException` for a non-nil `__meta` or

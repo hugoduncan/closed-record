@@ -20,8 +20,7 @@
                                   metosin/malli          {:mvn/version "0.20.3"}}}
   :value-type-test {:extra-paths ["test/value-type" "test/value-type-clj-1.11"]
                     :extra-deps  {org.hugoduncan/value-type
-                                  {:git/url "https://github.com/hugoduncan/value-type.git"
-                                   :git/sha "4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2"}}}
+                                  {:mvn/version "0.1.127"}}}
   :bench           {:extra-paths ["dev/bench"]
                     :extra-deps  {org.hugoduncan/criterium {:mvn/version "0.5.251-ALPHA"}}
                     :jvm-opts    ["-XX:+UnlockExperimentalVMOptions"

@@ -18,17 +18,18 @@ representation when the class loads:
   is read with it: `off` selects identity fallback, also on a Valhalla JVM.
 
 value-type defines the record with its closed record shape; see its
-[closed contract](https://github.com/hugoduncan/value-type/blob/4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2/doc/usage.md#deftype-forms).
+[closed contract](https://github.com/hugoduncan/value-type/blob/v0.1.127/doc/usage.md#deftype-forms).
 
 ## Requirements
 
 - Clojure 1.12.6. value-type does not load on Clojure 1.11.
 - value-type
-  [`4ed8d0a3`](https://github.com/hugoduncan/value-type/tree/4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2)
-  (the SHA in the README dependency) on the class path at macro expansion and at run
-  time, also for AOT classes. An earlier value-type has no closed record
-  shape: the record keeps `__meta` and `__extmap`, and `check` does not find
-  an undeclared key from a map literal (`-extra-keys` gives nil).
+  [0.1.127](https://github.com/hugoduncan/value-type/releases/tag/v0.1.127)
+  or later (the version in the README dependency) on the class path at macro
+  expansion and at run time, also for AOT classes. An earlier value-type
+  commit has no closed record shape: the record keeps `__meta` and
+  `__extmap`, and `check` does not find an undeclared key from a map literal
+  (`-extra-keys` gives nil).
 - For value output: a Valhalla early-access JDK and `--enable-preview`.
 - For `value-type.array`: also
   `--add-exports=java.base/jdk.internal.value=ALL-UNNAMED`.
@@ -68,14 +69,14 @@ A full expansion outside compilation (for example
 value-type `:not-installed` on all JVMs, also on identity fallback. One step
 of `macroexpand-1` gives the `defvaluetype*` form and does not throw. Evaluate
 the `defclosedrecord` form directly. See value-type
-[errors](https://github.com/hugoduncan/value-type/blob/4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2/doc/usage.md).
+[errors](https://github.com/hugoduncan/value-type/blob/v0.1.127/doc/usage.md).
 
 ## Non-nil fields
 
 With `:value-type true`, field metadata `^:non-nil` makes a field non-nil. A
 non-nil field must have a tag that names a defined concrete, non-primitive
 class. value-type owns these rules; see its
-[field contract](https://github.com/hugoduncan/value-type/blob/4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2/doc/usage.md#portable-non-nil-fields).
+[field contract](https://github.com/hugoduncan/value-type/blob/v0.1.127/doc/usage.md#portable-non-nil-fields).
 closed-record passes the metadata to value-type with no change.
 
 - Nil gives `NullPointerException`, and a value of the wrong type gives
@@ -95,7 +96,7 @@ closed-record passes the metadata to value-type with no change.
 
 `value-type.array` makes arrays of value-type records. These arrays reject nil
 elements and have atomic element access. See the value-type
-[array documentation](https://github.com/hugoduncan/value-type/blob/4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2/doc/usage.md).
+[array documentation](https://github.com/hugoduncan/value-type/blob/v0.1.127/doc/usage.md).
 
 The JVM can store value objects inline in an array or in another object. This
 is flattening. Flattening is a JVM choice, not a guarantee. `va/array-info`

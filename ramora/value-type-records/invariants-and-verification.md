@@ -179,16 +179,17 @@ Both value-type jobs (`Value-type tests (Temurin 21)` and
 
 ## Risks
 
-- VT-R1 The `defvaluetype*` contract can change before the value-type
-  release. Likelihood: medium. Effect: VT-D3, VT-D5, VT-D11, VT-D13, VT-I6
+- VT-R1 The `defvaluetype*` contract can change in a later value-type
+  release (value-type is experimental). Likelihood: medium. Effect: VT-D3, VT-D5, VT-D11, VT-D13, VT-I6
   and VT-I7 to VT-I8 change. Signals: VT-V2, VT-V6, VT-V9, VT-V11.
 - VT-R2 JEP 401 rejects value-class constructors that call `this(…)`. The
   compiler-generated record constructors do this. Likelihood: low. Effect:
   value output is not possible with the record shape. Signal: VT-V4. The pinned
   build gives value output with the record shape.
-- VT-R3 The value-type dependency in tests is not reproducible, because
-  value-type has no release. Likelihood: medium. Effect: CI differs from local
-  tests. Mitigation: pin a Git SHA in the test alias.
+- VT-R3 The value-type dependency in tests is not reproducible. Status:
+  the test alias uses the Clojars release `0.1.127`, a fixed version.
+  Likelihood: low. Effect: CI differs from local tests. Mitigation: a fixed
+  release version in the test alias.
 - VT-R4 Users expect better performance. Likelihood: medium. Effect: wrong
   adoption. Mitigation: the user documentation states the hash cost and the
   value-type size results, and gives no performance claim.
@@ -198,8 +199,9 @@ Both value-type jobs (`Value-type tests (Temurin 21)` and
   pin to the build that value-type tests, in the same change for both projects.
 - VT-R6 value-type does not provide the closed shape of VT-D13, or provides
   a different contract. Status: value-type `e8e0c407` (task 022) provides
-  the contract of VT-D13; it was checked against value-type `4ed8d0a3`.
-  value-type deftype* D9 (the option) is still provisional. Likelihood: low.
+  the contract of VT-D13. It was checked against value-type `4ed8d0a3`,
+  which has the same source as the release `0.1.127`. value-type deftype*
+  D9 (the option) is still provisional. Likelihood: low.
   Effect: VT-D13 to VT-D15 cannot be implemented as written; the design
   changes to the value-type contract. Signal: the value-type design and
   VT-V11 after a pin change.

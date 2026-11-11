@@ -65,7 +65,7 @@ The API changes only by addition. See the [changelog](CHANGELOG.md).
   1.13.
 
 `:value-type true` is experimental and is not released. It depends on
-value-type, which has no release, and on a Valhalla early-access JDK
+value-type, which is experimental, and on a Valhalla early-access JDK
 for value classes. Its behaviour can change.
 
 ## Installation
@@ -86,14 +86,12 @@ Leiningen (`project.clj`):
 
 ### Value-type records (optional)
 
-`:value-type true` needs Clojure 1.12.6 and value-type on the class
-path, at macro expansion and at run time. value-type has no release.
-Add it as a Git dependency:
+`:value-type true` needs Clojure 1.12.6 and value-type 0.1.127 or later
+on the class path, at macro expansion and at run time. value-type is on
+[Clojars](https://clojars.org/org.hugoduncan/value-type):
 
 ```clojure
-{:deps {org.hugoduncan/value-type
-        {:git/url "https://github.com/hugoduncan/value-type.git"
-         :git/sha "4ed8d0a3c4ce8ed6a74607da312fd33a8c80dea2"}}}
+{:deps {org.hugoduncan/value-type {:mvn/version "0.1.127"}}}
 ```
 
 For value classes, start the JVM from a Valhalla early-access JDK with

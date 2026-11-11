@@ -25,8 +25,8 @@ keys and `dissoc` of declared keys. Main form: `defclosedrecord`.
   `## [Unreleased]` has a note for the option.
 - Unreleased: non-nil fields for value-type records (task 021, same
   branch). `:non-nil` field metadata passes to `defvaluetype*` unchanged
-  (VT-D11); ordinary mode ignores it (VT-D12). The `:value-type-test` pin
-  is value-type `4ed8d0a3`.
+  (VT-D11); ordinary mode ignores it (VT-D12). The `:value-type-test` alias
+  uses the value-type release `0.1.127` (Clojars).
 - Closed shape for value records (VT-D13 to VT-D15, task 022) is
   implemented: `:value-type/closed true`, no hidden fields on value output,
   no metadata, map literals with undeclared keys throw at read. Records
