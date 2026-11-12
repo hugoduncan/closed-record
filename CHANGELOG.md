@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.229] - 2026-11-12
+
 - Add the `defclosedrecord` option `:value-type true`. It defines the record
   as a value class through value-type (`org.hugoduncan/value-type` 0.1.127
   or later, which must be on the class path). A value record:
