@@ -57,7 +57,8 @@ this project, under the direction of a human developer.
 ## Status
 
 Released on Clojars. The API is small: `defclosedrecord` and `check`.
-The API changes only by addition. See the [changelog](CHANGELOG.md).
+The API changes only by addition, except for the experimental
+`:value-type true` option. See the [changelog](CHANGELOG.md).
 
 - Host: Clojure on the JVM. ClojureScript and Babashka are not
   supported.

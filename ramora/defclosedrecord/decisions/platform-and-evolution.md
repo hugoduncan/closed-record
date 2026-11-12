@@ -47,5 +47,6 @@
 - Rejected: semantic versioning with breaking major versions.
 - Rationale: lifecycle "long-lived, with a small and stable API". K-03 applies only before the first release.
 - Qualities: + stability for users. − Mistakes in the API stay.
-- Scope: all hosts, after the first release.
+- Scope: all hosts, after the first release. Exception: the behaviour of a record with the experimental option
+  `:value-type true` can change (VT-K6 in [value-type records](../../value-type-records.md)).
 - Commitment: high.

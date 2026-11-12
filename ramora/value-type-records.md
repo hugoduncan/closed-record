@@ -114,8 +114,13 @@ flat (VT-V12).
   a later build can replace an old build. value-type tests
   `27-jep401ea3+1-1`.
 - VT-K6 After the first release, the public API changes only by accretion
-  (D-20). The option is an accretion. The option is not released, so its
-  contract can change before its release (K-03).
+  (D-20). The option is an accretion. The option is released (0.1.229) but
+  is experimental: D-20 does not apply to the behaviour of a
+  `:value-type true` record, which can change in a later release. It
+  depends on value-type and on Valhalla early-access builds, which are
+  experimental (VT-R1, VT-K5). D-20 continues to apply to records without
+  the option, also to how they treat field metadata such as `:non-nil`
+  (VT-D12).
 - VT-K7 The compiler-generated `create` calls the main constructor with
   `null` for `__meta` and `RT.seqOrElse(rest)` for `__extmap`. `rest` is the
   input map without the declared keys. Thus the `__extmap` argument is nil
