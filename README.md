@@ -64,9 +64,9 @@ The API changes only by addition. See the [changelog](CHANGELOG.md).
 - Clojure versions: 1.11 and later. The tests run on 1.11, 1.12 and
   1.13.
 
-`:value-type true` is experimental and is not released. It depends on
-value-type, which is experimental, and on a Valhalla early-access JDK
-for value classes. Its behaviour can change.
+`:value-type true` is experimental. It is in release 0.1.229. It
+depends on value-type, which is experimental, and on a Valhalla
+early-access JDK for value classes. Its behaviour can change.
 
 ## Installation
 
@@ -75,13 +75,13 @@ The library is on [Clojars](https://clojars.org/org.hugoduncan/closed-record).
 Clojure CLI (`deps.edn`):
 
 ```clojure
-{:deps {org.hugoduncan/closed-record {:mvn/version "0.1.190"}}}
+{:deps {org.hugoduncan/closed-record {:mvn/version "0.1.229"}}}
 ```
 
 Leiningen (`project.clj`):
 
 ```clojure
-[org.hugoduncan/closed-record "0.1.190"]
+[org.hugoduncan/closed-record "0.1.229"]
 ```
 
 ### Value-type records (optional)

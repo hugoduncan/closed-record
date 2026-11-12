@@ -2,7 +2,7 @@
 
 This page gives the details of the `defclosedrecord` option
 `:value-type true`. The [README](../README.md#value-type-records) has an
-introduction. The option is experimental and is not released.
+introduction. The option is experimental. It is in release 0.1.229.
 
 ## Representation
 
