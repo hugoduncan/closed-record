@@ -14,24 +14,16 @@ keys and `dissoc` of declared keys. Main form: `defclosedrecord`.
 
 ## Current state
 
-- Released: `org.hugoduncan/closed-record` `0.1.190` on Clojars, Git tag
-  `v0.1.190`, and a GitHub Release. This is the first release.
+- Released: `org.hugoduncan/closed-record` `0.1.229` on Clojars, Git tag
+  `v0.1.229` (`6aa7a2c5`), and a GitHub Release. It adds `:value-type true`
+  (tasks 020 to 022). The first release was `0.1.190`.
 - The release workflow calls CI (`workflow_call`), so a CI failure stops a
   release. `doc/releases.md` has the steps.
-- Unreleased: the `:value-type true` option (task 020, branch
-  `020-value-type-records`, pull request #1). Design:
-  `ramora/value-type-records.md`. Tests need the `:value-type-test` alias;
-  CI has a Temurin 21 and a Valhalla value-type job. `CHANGELOG.md`
-  `## [Unreleased]` has a note for the option.
-- Unreleased: non-nil fields for value-type records (task 021, same
-  branch). `:non-nil` field metadata passes to `defvaluetype*` unchanged
-  (VT-D11); ordinary mode ignores it (VT-D12). The `:value-type-test` alias
-  uses the value-type release `0.1.127` (Clojars).
-- Closed shape for value records (VT-D13 to VT-D15, task 022) is
-  implemented: `:value-type/closed true`, no hidden fields on value output,
-  no metadata, map literals with undeclared keys throw at read. Records
-  with at most 64 bits of fields can flatten (VT-V12). Task 022 is closed.
-  CI run 42855790514 (`5ef5da81`) passes all 9 jobs.
+- Nothing is unreleased. `CHANGELOG.md` `## [Unreleased]` is empty.
+- Value-type records: design `ramora/value-type-records.md`, user details
+  `doc/value-type-records.md`. Tests need the `:value-type-test` alias
+  (value-type `0.1.127` from Clojars). CI has a Temurin 21 and a Valhalla
+  value-type job. value-type is not a runtime dependency of the JAR.
 - Verification limits (hosted CI, publication, benchmark scope) are in each
   design's `embodiment.md`.
 
